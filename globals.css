@@ -1,0 +1,16 @@
+/* 문법 에러 방지를 위해 표준 방식으로 변경 */
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+body {
+  background-color: white;
+  color: black;
+  margin: 0;
+  padding: 0;
+}
