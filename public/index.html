@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPNR - Global Pi News Room</title>
+    <style>
+        :root {
+            --pi-color: #6d28d9; /* 파이 네트워크 상징색 */
+            --bg-color: #ffffff;
+            --sub-text: #999999;
+        }
+        body {
+            font-family: 'Pretendard', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+        
+        /* 헤더 스타일 */
+        header {
+            background-color: var(--pi-color);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        /* 17개 카테고리 가로 스크롤 영역 (포맷 유지) */
+        .category-container {
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            background: white;
+            padding: 12px 10px;
+            border-bottom: 1px solid #eeeeee;
+            -webkit-overflow-scrolling: touch;
+            position: sticky;
+            top: 54px; /* 헤더 높이에 맞춤 */
+            z-index: 99;
+        }
+        .category-container::-webkit-scrollbar { display: none; }
+        
+        .category-item {
+            display: inline-block;
+            padding: 8px 15px;
+            margin-right: 8px;
+            background: #f1f5f9;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+        }
+        .category-item.active {
+            background: var(--pi-color);
+            color: white;
+        }
+
+        /* 이미지 포맷을 적용한 뉴스 리스트 영역 */
+        .news-section {
+            background-color: white;
+        }
+        
+        .news-item {
+            display: flex;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .news-content {
+            flex: 1;
+            padding-right: 12px;
+        }
+
+        /* 이미지처럼 제목 앞에 빨간 점 추가 */
+        .news-title {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #333;
+            line-height: 1.4;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .news-title::before {
+            content: "•";
+            color: #ff4d4d;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+
+        .news-info {
+            font-size: 0.8rem;
+            color: var(--sub-text);
+        }
+
+        /* 우측 썸네일 및 댓글수 포맷 */
+        .news-right-box {
+            position: relative;
+            width: 60px;
+            height: 60px;
+        }
+
+        .news-thumbnail {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            background-color: #eee;
+        }
+
+        .comment-badge {
+            position: absolute;
+            top: 0;
+            right: -28px; /* 이미지처럼 옆으로 살짝 삐져나온 배치 */
+            width: 30px;
+            font-size: 0.75rem;
+            text-align: center;
+            color: #666;
+            line-height: 1.2;
+        }
+        
+        /* 플로팅 버튼 (이미지 우하단 녹색 버튼 스타일) */
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #58a65c;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>GPNR (Global Pi News Room)</header>
+
+<div class="category-container" id="categoryBar"></div>
+
+<main class="news-section" id="newsList">
+    </main>
+
+<div class="fab">✎</div>
+
+<script>
+    const categories = [
+        "전체", "Mainnet", "Node", "GCV", "Ecosystem", 
+        "Apps", "Mining", "Wallet", "KYC", "Security", 
+        "Exchanges", "Blockchain", "Community", "Tutorial", 
+        "Developer", "Governance", "Events"
+    ];
+
+    const categoryBar = document.getElementById('categoryBar');
+    const newsList = document.getElementById('newsList');
+
+    // 카테고리 버튼 생성
+    categories.forEach((cat, index) => {
+        const div = document.createElement('div');
+        div.className = 'category-item' + (index === 0 ? ' active' : '');
+        div.innerText = cat;
+        div.onclick = () => selectCategory(div, cat);
+        categoryBar.appendChild(div);
+    });
+
+    function selectCategory(element, name) {
+        document.querySelectorAll('.category-item').forEach(item => item.classList.remove('active'));
+        element.classList.add('active');
+
+        // 이미지와 똑같은 HTML 포맷으로 뉴스 생성
+        newsList.innerHTML = `
+            <div class="news-item">
+                <div class="news-content">
+                    <h2 class="news-title">${name} 관련 최신 업데이트 소식입니다</h2>
+                    <p class="news-info">GPNR 리포터 🎖️ 18:05 조회 1,240</p>
+                </div>
+                <div class="news-right-box">
+                    <img src="https://via.placeholder.com/60" class="news-thumbnail">
+                    <div class="comment-badge">15<br>댓글</div>
+                </div>
+            </div>
+            <div class="news-item">
+                <div class="news-content">
+                    <h2 class="news-title">${name} 생태계 확장을 위한 새로운 가이드라인 발표</h2>
+                    <p class="news-info">Pi-Expert 🌱 17:50 조회 850</p>
+                </div>
+                <div class="news-right-box">
+                    <img src="https://via.placeholder.com/60" class="news-thumbnail">
+                    <div class="comment-badge">8<br>댓글</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 초기 로드
+    selectCategory(document.querySelector('.category-item'), '전체');
+</script>
+
+</body>
+</html>
