@@ -1,0 +1,14 @@
+[
+  {
+    "title": "GPNR 서비스 시작",
+    "description": "글로벌 파이 뉴스룸(GPNR)이 공식적으로 서비스를 시작했습니다. 실시간 뉴스를 확인하세요.",
+    "image": "https://picsum.photos/id/1/300/200",
+    "url": "https://pinetwork.com/news/gpnr-service-start" 
+  },
+  {
+    "title": "파이 네트워크 업데이트",
+    "description": "새로운 메인넷 전환 소식을 확인하세요.",
+    "image": "https://picsum.photos/id/2/300/200",
+    "url": "https://pinetwork.com/news/mainnet-update"
+  }
+]
