@@ -1,0 +1,89 @@
+/* 문법 에러 방지를 위해 표준 방식으로 유지 */
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+:root {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+}
+
+/* 1. 배경색 및 레이아웃 복구 (상단 밀림 절대 방어) */
+body {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  top: 0 !important; 
+  position: static !important;
+}
+
+/* 2. [스텔스 박멸] 구글 번역 관련 모든 루트/컨테이너 요소를 투명화하고 최하위 레이어로 강제 강하 */
+.goog-te-banner-frame,
+.goog-te-banner,
+.skiptranslate,
+[class*="goog-te"],
+[id*="goog-gt"],
+[class*="VIpgJd"],
+iframe[class*="goog"],
+div[class*="goog"] {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  display: none !important; /* 화면에서 아예 렌더링하지 않도록 추가 */
+  background-color: transparent !important;
+  color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  z-index: -999999 !important; /* 레이어 순위를 더 극단적으로 낮춤 */
+}
+
+/* 3. 구글 번역 내부 하위 요소 정밀 차단 */
+[class*="goog-te"] font,
+[class*="goog-te"] img,
+[class*="goog-te"] div,
+[class*="goog-te"] span,
+[class*="VIpgJd"] iframe,
+[class*="VIpgJd"] div {
+  color: transparent !important;
+  background: transparent !important;
+  display: none !important;
+  z-index: -999999 !important;
+}
+
+/* 4. 브라우저가 강제로 삽입하는 상단 여백 원천 차단 */
+html {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* 5. 번역 후 텍스트 노란 하이라이트 및 툴팁 제거 */
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#goog-gt-tt, 
+.goog-te-balloon-frame,
+.goog-tooltip {
+  display: none !important;
+  z-index: -999999 !important;
+}
+
+/* 6. 모바일 스크롤바 숨김 */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
