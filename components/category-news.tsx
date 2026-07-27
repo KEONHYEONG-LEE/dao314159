@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Zap, Monitor, TrendingUp, Wallet, Compass, Map, FileText, Users, ShoppingBag, Key, HelpCircle, Shield, Landmark } from "lucide-react";
 
-// 17개 고유 카테고리별 원본 데이터 스키마 구성 (절대 깨지지 않는 고해상도 테크 이미지 주소로 전면 전개)
+// 17개 고유 카테고리별 원본 데이터 스키마 구성
 const categories = [
   {
     name: "MAINNET",
@@ -177,5 +177,21 @@ export function CategoryNews({ selectedCategory = "all" }: { selectedCategory?: 
                       </div>
                     </div>
 
-                    {/* 🚀 구글 번역기 및 모바일 프록시 환경에서 절대 안 터지도록 차단 보완 */}
-                    <div className="relative w-16 h-16 flex
+                    {/* 이미지 영역 */}
+                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-slate-800">
+                      <img
+                        src={article.image}
+                        alt={article.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  </article>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
