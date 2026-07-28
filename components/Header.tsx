@@ -137,7 +137,7 @@ export function Header({
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600/90 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-900/30 active:scale-95 transition-all disabled:opacity-50"
               >
                 <Coins className="w-4 h-4 text-yellow-300" />
-                <span>{isPaymentLoading ? "진행 중..." : "0.01 Pi 테스트"}</span>
+                <span>{isPaymentLoading ? "진행 중..." : "0.01 Pi 후원"}</span>
               </button>
 
               <button
