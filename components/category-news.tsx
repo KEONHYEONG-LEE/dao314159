@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Zap, Monitor, TrendingUp, Wallet, Compass, Map, FileText, Users, ShoppingBag, Key, HelpCircle, Shield, Landmark } from "lucide-react";
+import { 
+  Zap, Monitor, TrendingUp, Wallet, Compass, Map, FileText, 
+  Users, ShoppingBag, Key, HelpCircle, Shield, Landmark,
+  Check, Star, Heart
+} from "lucide-react";
 
 interface NewsItem {
   id: string;
@@ -49,6 +53,26 @@ export function CategoryNews({
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // 체크(읽음/확인), 별(북마크), 하트(좋아요) 상태 관리
+  const [checkedIds, setCheckedIds] = useState<{ [id: string]: boolean }>({});
+  const [starredIds, setStarredIds] = useState<{ [id: string]: boolean }>({});
+  const [likedIds, setLikedIds] = useState<{ [id: string]: boolean }>({});
+
+  // localStorage에서 이전에 저장된 반응 상태 로드
+  useEffect(() => {
+    try {
+      const savedChecked = localStorage.getItem("gpnr_news_checked");
+      const savedStarred = localStorage.getItem("gpnr_news_starred");
+      const savedLiked = localStorage.getItem("gpnr_news_liked");
+
+      if (savedChecked) setCheckedIds(JSON.parse(savedChecked));
+      if (savedStarred) setStarredIds(JSON.parse(savedStarred));
+      if (savedLiked) setLikedIds(JSON.parse(savedLiked));
+    } catch (error) {
+      console.error("저장된 반응 상태 로드 실패:", error);
+    }
+  }, []);
+
   useEffect(() => {
     async function fetchRealNews() {
       setLoading(true);
@@ -68,6 +92,37 @@ export function CategoryNews({
 
     fetchRealNews();
   }, [selectedCategory]);
+
+  // 토글 액션 핸들러 (링크 이동 방지 적용)
+  const toggleCheck = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCheckedIds((prev) => {
+      const updated = { ...prev, [id]: !prev[id] };
+      localStorage.setItem("gpnr_news_checked", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const toggleStar = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setStarredIds((prev) => {
+      const updated = { ...prev, [id]: !prev[id] };
+      localStorage.setItem("gpnr_news_starred", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const toggleLike = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setLikedIds((prev) => {
+      const updated = { ...prev, [id]: !prev[id] };
+      localStorage.setItem("gpnr_news_liked", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   // 다국어 텍스트 파싱 지원 함수
   const getParsedText = (field: any) => {
@@ -122,6 +177,10 @@ export function CategoryNews({
                   const imageSrc = article.imageUrl || article.image || "https://picsum.photos/id/10/200/200";
                   const targetUrl = article.sourceUrl || article.url || "#";
 
+                  const isChecked = !!checkedIds[article.id];
+                  const isStarred = !!starredIds[article.id];
+                  const isLiked = !!likedIds[article.id];
+
                   return (
                     <a
                       key={article.id}
@@ -137,11 +196,58 @@ export function CategoryNews({
                             {titleStr}
                           </h3>
                           
-                          {/* 하단 정보 영역 */}
+                          {/* 하단 정보 및 반응 버튼 영역 */}
                           <div className="flex items-center justify-between gap-2 mt-3">
                             <div className="flex items-center gap-2 text-[10px] text-slate-500 whitespace-nowrap">
                               <span className="text-blue-500 font-bold">{sourceStr}</span>
+                              <span>•</span>
                               <span>{dateStr}</span>
+                            </div>
+
+                            {/* 체크, 별, 하트 버튼 세트 */}
+                            <div className="flex items-center gap-3">
+                              {/* 1. 체크 (읽음/확인) */}
+                              <button
+                                onClick={(e) => toggleCheck(e, article.id)}
+                                title="체크 표시"
+                                className="p-0.5 transition-transform active:scale-125"
+                              >
+                                {isChecked ? (
+                                  <Check className="w-4 h-4 text-amber-700 stroke-[3]" />
+                                ) : (
+                                  <div className="w-3.5 h-3.5 rounded-full border border-slate-600 hover:border-slate-400" />
+                                )}
+                              </button>
+
+                              {/* 2. 별 (즐겨찾기) */}
+                              <button
+                                onClick={(e) => toggleStar(e, article.id)}
+                                title="즐겨찾기"
+                                className="p-0.5 transition-transform active:scale-125"
+                              >
+                                <Star
+                                  className={`w-4 h-4 ${
+                                    isStarred
+                                      ? "text-yellow-400 fill-yellow-400"
+                                      : "text-slate-600 hover:text-slate-400"
+                                  }`}
+                                />
+                              </button>
+
+                              {/* 3. 하트 (좋아요) */}
+                              <button
+                                onClick={(e) => toggleLike(e, article.id)}
+                                title="좋아요"
+                                className="p-0.5 transition-transform active:scale-125"
+                              >
+                                <Heart
+                                  className={`w-4 h-4 ${
+                                    isLiked
+                                      ? "text-rose-500 fill-rose-500"
+                                      : "text-slate-600 hover:text-slate-400"
+                                  }`}
+                                />
+                              </button>
                             </div>
                           </div>
                         </div>
