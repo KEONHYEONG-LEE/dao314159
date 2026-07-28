@@ -1,4 +1,32 @@
-export const translations: Record<string, Record<string, string>> = {
+export interface TranslationKeys {
+  search: string;
+  trending: string;
+  all: string;
+  categories: string;
+  more: string;
+  login_msg: string;
+  verified_error: string;
+  support: string;
+  ai_assistant: string;
+  share: string;
+  source: string;
+  translating: string;
+  no_results: string;
+  loading: string;
+  launcher: string;
+  calendar: string;
+  calendar_title: string;
+  wallet_connected: string;
+  change_id: string;
+  reset_kyc: string;
+  top_news: string;
+  mainnet: string;
+  node: string;
+  mining: string;
+  wallet: string;
+}
+
+export const translations: Record<string, TranslationKeys> = {
   ko: {
     search: "GPNR 글로벌 뉴스 검색...",
     trending: "지금 뜨는 소식",
@@ -16,7 +44,15 @@ export const translations: Record<string, Record<string, string>> = {
     loading: "로딩 중...",
     launcher: "메뉴 런처",
     calendar: "달력",
-    calendar_title: "파이 생태계 주요 일정"
+    calendar_title: "파이 생태계 주요 일정",
+    wallet_connected: "Pi 네트워크 지갑 연동 완료",
+    change_id: "ID 변경",
+    reset_kyc: "KYC ID 해제 및 다시 입력하기",
+    top_news: "헤드라인 뉴스",
+    mainnet: "메인넷",
+    node: "노드",
+    mining: "채굴",
+    wallet: "지갑"
   },
   en: {
     search: "Search Global Pi news...",
@@ -35,26 +71,15 @@ export const translations: Record<string, Record<string, string>> = {
     loading: "Loading...",
     launcher: "Menu Launcher",
     calendar: "Calendar",
-    calendar_title: "Pi Ecosystem Schedule"
-  },
-  es: {
-    search: "Buscar noticias globales de Pi...",
-    trending: "Tendencias",
-    all: "Ver todo",
-    categories: "Categorías",
-    more: "Más",
-    login_msg: "Por favor, inicie sesión para leer los detalles.",
-    verified_error: "Se requiere aprobación de dominio en el modo desarrollador de Pi Browser.",
-    support: "Apoyar 0.001π",
-    ai_assistant: "Asistente de AI",
-    share: "Compartir",
-    source: "Fuente",
-    translating: "Traduciendo...",
-    no_results: "No se encontraron resultados.",
-    loading: "Cargando...",
-    launcher: "Lanzador",
-    calendar: "Calendario",
-    calendar_title: "Calendario del Ecosistema Pi"
+    calendar_title: "Pi Ecosystem Schedule",
+    wallet_connected: "Pi Network Wallet Connected",
+    change_id: "Change ID",
+    reset_kyc: "Reset & Re-enter KYC ID",
+    top_news: "Top News",
+    mainnet: "Mainnet",
+    node: "Node",
+    mining: "Mining",
+    wallet: "Wallet"
   },
   ja: {
     search: "グローバルPiニュースを検索...",
@@ -73,9 +98,17 @@ export const translations: Record<string, Record<string, string>> = {
     loading: "読み込み中...",
     launcher: "ランチャー",
     calendar: "カレンダー",
-    calendar_title: "Piエコシステムスケジュール"
+    calendar_title: "Piエコシステムスケジュール",
+    wallet_connected: "Piネットワークウォレット連携完了",
+    change_id: "ID変更",
+    reset_kyc: "KYC ID解除および再入力",
+    top_news: "トップニュース",
+    mainnet: "メインネット",
+    node: "ノード",
+    mining: "マイニング",
+    wallet: "ウォレット"
   },
-  zh_cn: {
+  zh: {
     search: "搜索全球派新闻...",
     trending: "热门趋势",
     all: "查看全部",
@@ -92,26 +125,42 @@ export const translations: Record<string, Record<string, string>> = {
     loading: "加载中...",
     launcher: "应用启动器",
     calendar: "日历",
-    calendar_title: "Pi 生态系统日程"
+    calendar_title: "Pi 生态系统日程",
+    wallet_connected: "Pi 网络钱包已连接",
+    change_id: "更改 ID",
+    reset_kyc: "重置并重新输入 KYC ID",
+    top_news: "头条新闻",
+    mainnet: "主网",
+    node: "节点",
+    mining: "挖矿",
+    wallet: "钱包"
   },
-  zh_tw: {
-    search: "搜尋全球派新聞...",
-    trending: "熱門趨勢",
-    all: "查看全部",
-    categories: "分類",
-    more: "更多",
-    login_msg: "請登入以查看完整詳情。",
-    verified_error: "需要在 Pi Browser 開發者模式中獲得網域批准。",
-    support: "贊助 0.001π",
-    ai_assistant: "AI 助手",
-    share: "分享",
-    source: "來源",
-    translating: "翻譯中...",
-    no_results: "未找到結果。",
-    loading: "加載中...",
-    launcher: "應用啟動器",
-    calendar: "日曆",
-    calendar_title: "Pi 生態系統日程"
+  es: {
+    search: "Buscar noticias globales de Pi...",
+    trending: "Tendencias",
+    all: "Ver todo",
+    categories: "Categorías",
+    more: "Más",
+    login_msg: "Por favor, inicie sesión para leer los detalles.",
+    verified_error: "Se requiere aprobación de dominio en el modo desarrollador de Pi Browser.",
+    support: "Apoyar 0.001π",
+    ai_assistant: "Asistente de AI",
+    share: "Compartir",
+    source: "Fuente",
+    translating: "Traduciendo...",
+    no_results: "No se encontraron resultados.",
+    loading: "Cargando...",
+    launcher: "Lanzador",
+    calendar: "Calendario",
+    calendar_title: "Calendario del Ecosistema Pi",
+    wallet_connected: "Billetera Pi Network Conectada",
+    change_id: "Cambiar ID",
+    reset_kyc: "Restablecer y reingresar ID de KYC",
+    top_news: "Noticias Principales",
+    mainnet: "Red Principal",
+    node: "Nodo",
+    mining: "Minería",
+    wallet: "Billetera"
   },
   vi: {
     search: "Tìm kiếm tin tức Pi toàn cầu...",
@@ -130,215 +179,18 @@ export const translations: Record<string, Record<string, string>> = {
     loading: "Đang tải...",
     launcher: "Trình khởi chạy",
     calendar: "Lịch",
-    calendar_title: "Lịch Trình Hệ Sinh Thái Pi"
-  },
-  sr: {
-    search: "Pretraži globalne Pi vesti...",
-    trending: "Aktuelno",
-    all: "Pogledaj sve",
-    categories: "Kategorije",
-    more: "Više",
-    login_msg: "Molimo prijavite se za više detalja.",
-    verified_error: "Potrebno je odobrenje domena u Pi Browser režimu za programere.",
-    support: "Podrži 0.001π",
-    ai_assistant: "AI Asistent",
-    share: "Podeli",
-    source: "Izvor",
-    translating: "Prevođenje...",
-    no_results: "Nema rezultata.",
-    loading: "Učitavanje...",
-    launcher: "Pokretač",
-    calendar: "Kalendar",
-    calendar_title: "Raspored Pi Ekosistema"
-  },
-  bg: {
-    search: "Търсене на глобални Pi новини...",
-    trending: "Трендове",
-    all: "Виж всички",
-    categories: "Категории",
-    more: "Повече",
-    login_msg: "Моля, влезте, за да прочетете подробностите.",
-    verified_error: "Изисква се одобрение на домейн в режим за разработчици на Pi Browser.",
-    support: "Подкрепа 0.001π",
-    ai_assistant: "AI Асистент",
-    share: "Сподели",
-    source: "Източник",
-    translating: "Превежда се...",
-    no_results: "Няма намерени резултати.",
-    loading: "Зареждане...",
-    launcher: "Стартов панел",
-    calendar: "Календар",
-    calendar_title: "График на Pi Екосистемата"
-  },
-  mk: {
-    search: "Пребарај глобални Pi вести...",
-    trending: "Трендови",
-    all: "Види се",
-    categories: "Категории",
-    more: "Повеќе",
-    login_msg: "Ве молиме најавете се за повеќе детали.",
-    verified_error: "Потребно е одобрување на домен во режим на програмери на Pi Browser.",
-    support: "Поддршка 0.001π",
-    ai_assistant: "AI Асистент",
-    share: "Сподели",
-    source: "Извор",
-    translating: "Се преведува...",
-    no_results: "Нема резултати.",
-    loading: "Се вчитува...",
-    launcher: "Стартер",
-    calendar: "Календар",
-    calendar_title: "Распоред на Pi Екосистемот"
-  },
-  el: {
-    search: "Αναζήτηση παγκόσμιων νέων Pi...",
-    trending: "Δημοφιλή",
-    all: "Προβολή όλων",
-    categories: "Κατηγορίες",
-    more: "Περισσότερα",
-    login_msg: "Παρακαλώ συνδεθείτε για λεπτομέρειες.",
-    verified_error: "Απαιτείται έγκριση τομέα στη λειτουργία προγραμματιστή του Pi Browser.",
-    support: "Υποστήριξη 0.001π",
-    ai_assistant: "Βοηθός AI",
-    share: "Κοινοποίηση",
-    source: "Πηγή",
-    translating: "Μετάφραση...",
-    no_results: "Δεν βρέθηκαν αποτελέσματα.",
-    loading: "Φόρτωση...",
-    launcher: "Εκκινητής",
-    calendar: "Ημερολόγιο",
-    calendar_title: "Πρόγραμμα Οικοσυστήματος Pi"
-  },
-  pt: {
-    search: "Buscar notícias globais da Pi...",
-    trending: "Tendências",
-    all: "Ver tudo",
-    categories: "Categorias",
-    more: "Mais",
-    login_msg: "Por favor, faça login para ler os detalhes.",
-    verified_error: "Aprovação de domínio necessária no modo de desenvolvedor do Pi Browser.",
-    support: "Apoiar 0.001π",
-    ai_assistant: "Assistente de IA",
-    share: "Compartilhar",
-    source: "Fonte",
-    translating: "Traduzindo...",
-    no_results: "Nenhum resultado encontrado.",
-    loading: "Carregando...",
-    launcher: "Lançador",
-    calendar: "Calendário",
-    calendar_title: "Cronograma do Ecossistema Pi"
-  },
-  nl: {
-    search: "Zoek wereldwijd Pi-nieuws...",
-    trending: "Trending",
-    all: "Bekijk alles",
-    categories: "Categorieën",
-    more: "Meer",
-    login_msg: "Log in om volledige details te lezen.",
-    verified_error: "Domeingoedkeuring vereist in ontwikkelaarsmodus van Pi Browser.",
-    support: "Steun 0.001π",
-    ai_assistant: "AI-assistent",
-    share: "Delen",
-    source: "Bron",
-    translating: "Vertalen...",
-    no_results: "Geen resultaten gevonden.",
-    loading: "Laden...",
-    launcher: "Launcher",
-    calendar: "Kalender",
-    calendar_title: "Pi Ecosysteem Schema"
-  },
-  fr: {
-    search: "Rechercher des actualités Pi globales...",
-    trending: "Tendances",
-    all: "Voir tout",
-    categories: "Catégories",
-    more: "Plus",
-    login_msg: "Veuillez vous connecter pour lire les détails.",
-    verified_error: "Approbation de domaine requise dans le mode développeur de Pi Browser.",
-    support: "Soutenir 0.001π",
-    ai_assistant: "Assistant IA",
-    share: "Partager",
-    source: "Source",
-    translating: "Traduction...",
-    no_results: "Aucun résultat trouvé.",
-    loading: "Chargement...",
-    launcher: "Lanceur",
-    calendar: "Calendrier",
-    calendar_title: "Calendrier de l'Écosystème Pi"
-  },
-  it: {
-    search: "Cerca notizie globali su Pi...",
-    trending: "Tendenze",
-    all: "Vedi tutto",
-    categories: "Categorie",
-    more: "Su di più",
-    login_msg: "Accedi per leggere i dettagli completi.",
-    verified_error: "Approvazione del dominio richiesta nella modalità sviluppatore di Pi Browser.",
-    support: "Supporta 0.001π",
-    ai_assistant: "Assistente AI",
-    share: "Condividi",
-    source: "Fonte",
-    translating: "Traduzione...",
-    no_results: "Nessun risultato trovato.",
-    loading: "Caricamento...",
-    launcher: "Avviatore",
-    calendar: "Calendario",
-    calendar_title: "Programma dell'Ecosistema Pi"
-  },
-  de: {
-    search: "Globale Pi-News suchen...",
-    trending: "Trends",
-    all: "Alle anzeigen",
-    categories: "Kategorien",
-    more: "Mehr",
-    login_msg: "Bitte einloggen, um Details zu lesen.",
-    verified_error: "Domänenfreigabe im Pi Browser-Entwicklermodus erforderlich.",
-    support: "Unterstützen 0.001π",
-    ai_assistant: "KI-Assistent",
-    share: "Teilen",
-    source: "Quelle",
-    translating: "Übersetzung...",
-    no_results: "Keine Ergebnisse gefunden.",
-    loading: "Laden...",
-    launcher: "Launcher",
-    calendar: "Kalender",
-    calendar_title: "Pi-Ökosystem-Zeitplan"
-  },
-  da: {
-    search: "Søg i globale Pi-nyheder...",
-    trending: "Trender",
-    all: "Se alle",
-    categories: "Kategorier",
-    more: "Mere",
-    login_msg: "Log venligst ind for at læse detaljer.",
-    verified_error: "Domænegodkendelse påkrævet i Pi Browser-udviklertilstand.",
-    support: "Støt 0.001π",
-    ai_assistant: "AI Assistant",
-    share: "Del",
-    source: "Kilde",
-    translating: "Oversætter...",
-    no_results: "Ingen resultater fundet.",
-    loading: "Indlæser...",
-    launcher: "Starter",
-    calendar: "Kalender",
-    calendar_title: "Pi Økosystem Tidsplan"
-  },
-  ru: {
-    search: "Поиск глобальных новостей Pi...",
-    trending: "В тренде",
-    all: "Посмотреть все",
-    categories: "Категории",
-    more: "Еще",
-    login_msg: "Пожалуйста, войдите, чтобы прочитать подробности.",
-    verified_error: "Требуется одобрение домена в режиме разработчика Pi Browser.",
-    support: "Поддержать 0.001π",
-    ai_assistant: "AI Помощник",
-    share: "Поделиться",
-    source: "Источник",
-    translating: "Перевод...",
-    no_results: "Результатов не найдено.",
-    loading: "Загрузка...",
-    launcher: "Запуск",
-    calendar: "Календарь",
-    calendar_title: "Расписание Экосистемы Pi"
+    calendar_title: "Lịch Trình Hệ Sinh Thái Pi",
+    wallet_connected: "Ví Pi Network Đã Kết Nối",
+    change_id: "Đổi ID",
+    reset_kyc: "Đặt lại & Nhập lại ID KYC",
+    top_news: "Tin Nổi Bật",
+    mainnet: "Mạng Chính",
+    node: "Nút Node",
+    mining: "Khai Thác",
+    wallet: "Ví"
   }
 };
+
+// 호환성을 위한 지명 키 매핑 (zh_cn, zh_tw 방어 코드)
+translations['zh_cn'] = translations['zh'];
+translations['zh_tw'] = translations['zh'];
