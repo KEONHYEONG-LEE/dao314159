@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { 
   Flame, Globe, Monitor, Zap, Wallet, Compass, 
   Map, FileText, Users, ShoppingCart, ShieldCheck, 
-  Code, Home, TrendingUp, DollarSign, Shield, Gavel 
+  Code, Home, TrendingUp, DollarSign, Shield, Gavel,
+  Coins
 } from "lucide-react";
 
 interface HeaderProps {
@@ -14,7 +15,12 @@ interface HeaderProps {
   onLanguageChange?: (lang: string) => void;
 }
 
-// 17개 카테고리 퀵링크 정의 (아이콘, 한국어/영어 라벨, 카테고리 ID)
+declare global {
+  interface Window {
+    Pi: any;
+  }
+}
+
 const QUICK_LINKS = [
   { id: "all", label: "주요뉴스", icon: <Flame className="w-5 h-5 text-rose-500" /> },
   { id: "mainnet", label: "메인넷", icon: <Globe className="w-5 h-5 text-blue-400" /> },
@@ -43,10 +49,58 @@ export function Header({
 }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const [isLauncherOpen, setIsLauncherOpen] = useState(false); 
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 파이 메인넷 10단계 검증용 테스트 결제 함수
+  const handleTestPayment = async () => {
+    if (typeof window === "undefined" || !window.Pi) {
+      alert("Pi Browser에서 접속해 주세요.");
+      return;
+    }
+
+    try {
+      setIsPaymentLoading(true);
+      
+      // 파이 결제 객체 생성
+      window.Pi.createPayment({
+        amount: 0.01,
+        memo: "GPNR Mainnet Verification Test Payment",
+        metadata: { type: "mainnet_verification" },
+      }, {
+        onReadyForServerApproval: async (paymentId: string) => {
+          await fetch("/api/pi/approve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId }),
+          });
+        },
+        onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+          await fetch("/api/pi/complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId, txid }),
+          });
+          alert("테스트 결제가 완료되었습니다! Developer Portal을 확인하세요.");
+          setIsPaymentLoading(false);
+        },
+        onCancel: (paymentId: string) => {
+          setIsPaymentLoading(false);
+        },
+        onError: (error: any) => {
+          console.error("Payment error:", error);
+          alert("결제 중 오류가 발생했습니다.");
+          setIsPaymentLoading(false);
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      setIsPaymentLoading(false);
+    }
+  };
 
   if (!mounted) {
     return (
@@ -56,17 +110,16 @@ export function Header({
 
   const handleCategorySelect = (categoryId: string) => {
     onCategoryChange?.(categoryId);
-    setIsLauncherOpen(false); // 선택 후 모달 닫기
+    setIsLauncherOpen(false);
   };
 
   return (
     <div className="notranslate" translate="no">
-      {/* 본체 헤더 영역 */}
       <header className="sticky top-0 z-[60] w-full bg-[#0f172a]/90 border-b border-slate-800 backdrop-blur-xl transition-colors">
         <div className="mx-auto max-w-7xl px-4">
           <div className="flex h-[60px] items-center justify-between">
             
-            {/* 로고 영역 */}
+            {/* 로고 */}
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => onCategoryChange?.('all')}>
               <span className="font-black text-2xl tracking-tighter text-purple-500 drop-shadow-[0_2px_10px_rgba(168,85,247,0.5)]">
                 GPNR
@@ -76,8 +129,17 @@ export function Header({
               </span>
             </div>
             
-            {/* 우측 상단 Quick Link 9점 그리드 버튼 */}
-            <div className="flex items-center gap-3">
+            {/* 우측 영역 (10단계 테스트 결제 버튼 + 9점 그리드 메뉴) */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleTestPayment}
+                disabled={isPaymentLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600/90 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-900/30 active:scale-95 transition-all disabled:opacity-50"
+              >
+                <Coins className="w-4 h-4 text-yellow-300" />
+                <span>{isPaymentLoading ? "진행 중..." : "0.01 Pi 테스트"}</span>
+              </button>
+
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 title="Quick Navigation"
@@ -87,7 +149,6 @@ export function Header({
                     : 'text-slate-300 bg-slate-800/80 hover:bg-slate-700'
                 }`}
               >
-                {/* 9점 아이콘 SVG Grid */}
                 <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
                   <path d="M6 10a2 2 0 110-4 2 2 0 010 4zm6 0a2 2 0 110-4 2 2 0 010 4zm6 0a2 2 0 110-4 2 2 0 010 4zM6 16a2 2 0 110-4 2 2 0 010 4zm6 0a2 2 0 110-4 2 2 0 010 4zm6 0a2 2 0 110-4 2 2 0 010 4zM6 22a2 2 0 110-4 2 2 0 010 4zm6 0a2 2 0 110-4 2 2 0 010 4zm6 0a2 2 0 110-4 2 2 0 010 4z" />
                 </svg>
@@ -98,7 +159,6 @@ export function Header({
         </div>
       </header>
 
-      {/* 배경 오버레이 (바깥 누르면 닫힘) */}
       {isLauncherOpen && (
         <div 
           className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-xs" 
@@ -106,7 +166,6 @@ export function Header({
         />
       )}
 
-      {/* 17개 카테고리 그리드 팝업 모달 */}
       {isLauncherOpen && (
         <div className="fixed left-1/2 top-[70px] -translate-x-1/2 z-[80] w-[92%] max-w-sm bg-[#131b2e] border border-slate-700/80 p-4 rounded-3xl shadow-2xl animate-in fade-in zoom-in-95">
           <div className="grid grid-cols-3 gap-2.5">
