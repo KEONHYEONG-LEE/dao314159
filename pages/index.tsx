@@ -2,11 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Header } from "../components/Header"; 
-
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
-
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
+import { translations } from "../lib/translations";
 
 const CATEGORIES = [
   "all", "poll", "mainnet", "node", "mining", "wallet", "browser", 
@@ -17,24 +16,28 @@ const CATEGORIES = [
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [currentLang, setCurrentLang] = useState('en'); // 기본 언어 설정 (en, ko, ja, zh, es, vi)
   
   const { user, isAuthenticated, isLoading, loginWithKycId, logout } = usePiNetworkAuthentication();
 
   const [inputKycId, setInputKycId] = useState("");
   const [inputError, setInputError] = useState("");
 
+  const t = translations[currentLang] || translations['en'];
+
   const [tickerStats, setTickerStats] = useState<string[]>([
     "📢 실시간 글로벌 파이 뉴스룸 핫이슈 동기화 중입니다...",
     "📢 최신 생태계 핵심 소식 및 마이그레이션 모니터링 가동"
   ]);
 
+  // 실시간 뉴스 패치 로직
   useEffect(() => {
     const loadHotNewsForTicker = async () => {
       try {
-        const response = await fetch("/api/fetch-news?category=all");
+        const response = await fetch(`/api/fetch-news?category=${activeCategory}&t=${Date.now()}`);
         const allNews = await response.json();
         
-        if (allNews && allNews.length > 0) {
+        if (Array.isArray(allNews) && allNews.length > 0) {
           const cleanText = (text: string) => text.replace(/<\/?[^>]+(>|$)/g, "").trim();
           
           const hotHeadlines = allNews.slice(0, 5).map((item: any, idx: number) => {
@@ -49,9 +52,9 @@ export default function Home() {
     };
 
     loadHotNewsForTicker();
-    const interval = setInterval(loadHotNewsForTicker, 10 * 60 * 1000);
+    const interval = setInterval(loadHotNewsForTicker, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeCategory]);
 
   const sXRef = useRef<number | null>(null);
   const eXRef = useRef<number | null>(null);
@@ -91,7 +94,6 @@ export default function Home() {
     const success = loginWithKycId(inputKycId);
     if (success) {
       setInputError("");
-      // 알림창(alert) 없이 곧바로 메인 앱 화면이 렌더링되도록 처리
     }
   };
 
@@ -100,12 +102,12 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center text-slate-100">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-        <p className="text-sm font-medium tracking-wide">Pi Network 인증 정보 확인 중...</p>
+        <p className="text-sm font-medium tracking-wide">{t.loading}</p>
       </div>
     );
   }
 
-  // 2. [핵심 수정] 미인증 상태일 때: Header나 뉴스 등 본체는 읽지도 않고 오직 팝업만 단독 리턴!
+  // 2. 미인증 상태일 때: KYC 인증 모달 단독 리턴
   if (!isAuthenticated || !user || !user.username) {
     return (
       <div className="fixed inset-0 z-[99999] bg-[#0f172a] flex items-center justify-center p-4">
@@ -116,12 +118,12 @@ export default function Home() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">KYC 인증 ID 로그인</h2>
-              <p className="text-xs text-slate-400">10단계 통과 및 GPNR 앱 진입 단계</p>
+              <p className="text-xs text-slate-400">GPNR 글로벌 앱 진입 단계</p>
             </div>
           </div>
 
           <p className="text-xs text-slate-300 leading-relaxed mb-4 bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-            파이 네트워크 KYC 인증 ID 또는 56자리 지갑 주소를 입력하시면 지갑이 정상 연동되며 앱 메인에 진입합니다.
+            {t.login_msg}
           </p>
 
           <form onSubmit={handleManualLogin} className="space-y-4">
@@ -162,18 +164,20 @@ export default function Home() {
       : user.username
     : "";
 
-  // 3. 인증이 통과되었을 때만 비로소 아래 메인 GPNR 앱 화면을 그립니다.
+  // 3. 인증 완료 시 메인 화면
   return (
     <main 
-      className="min-h-screen bg-[#0f172a] text-slate-100 touch-pan-y relative"
+      className="min-h-screen bg-[#0f172a] text-slate-100 touch-pan-y relative pb-12"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* 1. 글로벌 상단 헤더 */}
+      {/* 1. 글로벌 상단 헤더 (다국어 및 Quick Link 바인딩 추가) */}
       <Header 
         currentCategory={activeCategory} 
         onCategoryChange={setActiveCategory}
+        currentLang={currentLang}
+        onLanguageChange={setCurrentLang}
       />
 
       {/* 2. 전광판 */}
@@ -197,6 +201,7 @@ export default function Home() {
         <CategoryTabs 
           selectedCategory={activeCategory} 
           onCategoryChange={setActiveCategory} 
+          currentLang={currentLang}
         />
       </div>
 
@@ -206,7 +211,7 @@ export default function Home() {
           <div className="bg-[#1e293b] border border-slate-700/60 rounded-xl p-3 flex items-center justify-between shadow-inner">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-xs text-slate-400 font-medium">Pi 네트워크 지갑 연동 완료</span>
+              <span className="text-xs text-slate-300 font-medium">{t.wallet_connected}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-purple-400 bg-purple-950/40 px-2.5 py-1 rounded border border-purple-800/30">
@@ -216,16 +221,32 @@ export default function Home() {
                 onClick={logout} 
                 className="text-[10px] text-slate-400 hover:text-rose-400 underline ml-1"
               >
-                ID 변경
+                {t.change_id}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 5. 메인 콘텐츠 및 투표 피드 영역 */}
+      {/* 5. 메인 콘텐츠 피드 영역 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
-        <CategoryNews selectedCategory={activeCategory} />
+        <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
+      </div>
+
+      {/* 하단 6개 언어 선택 플로팅 버튼 */}
+      <div className="fixed bottom-4 right-4 z-[99]">
+        <select
+          value={currentLang}
+          onChange={(e) => setCurrentLang(e.target.value)}
+          className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3 py-2 rounded-full shadow-lg border border-blue-400/30 focus:outline-none cursor-pointer"
+        >
+          <option value="en" className="bg-[#1e293b] text-white">🌐 English</option>
+          <option value="ko" className="bg-[#1e293b] text-white">🌐 한국어</option>
+          <option value="ja" className="bg-[#1e293b] text-white">🌐 日本語</option>
+          <option value="zh" className="bg-[#1e293b] text-white">🌐 简体中文</option>
+          <option value="es" className="bg-[#1e293b] text-white">🌐 Español</option>
+          <option value="vi" className="bg-[#1e293b] text-white">🌐 Tiếng Việt</option>
+        </select>
       </div>
 
       {/* 전광판 애니메이션 */}
