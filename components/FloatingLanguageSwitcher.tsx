@@ -22,12 +22,23 @@ export function FloatingLanguageSwitcher() {
     const savedLang = localStorage.getItem("gpnr_lang") || "en";
     setCurrentLang(savedLang);
 
-    // 구글 기본 UI 배너 강제 숨기기 스타일
+    // 구글 번역 위젯의 잔상 및 자동 생성 래퍼 완벽 숨김 처리
     const style = document.createElement("style");
     style.innerHTML = `
-      .goog-te-banner-frame, .skiptranslate, #goog-gt-tt, .goog-te-balloon-frame { 
+      .goog-te-banner-frame, 
+      #goog-gt-tt, 
+      .goog-te-balloon-frame,
+      .VIpgJd-yD22b-y03Lfd,
+      .VIpgJd-yD22b-y03Lfd-v922d,
+      .goog-te-gadget-icon { 
         display: none !important; 
         visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+      .goog-te-gadget {
+        font-size: 0 !important;
+        color: transparent !important;
       }
       body { top: 0 !important; position: static !important; }
     `;
@@ -49,7 +60,7 @@ export function FloatingLanguageSwitcher() {
   const handleLanguageChange = (langCode: string) => {
     localStorage.setItem("gpnr_lang", langCode);
     
-    // 1. 모든 경로와 도메인의 구글 번역 쿠키를 싹 다 밀어버립니다.
+    // 쿠키 제거
     const domains = [window.location.hostname, "." + window.location.hostname, ""];
     domains.forEach(domain => {
       document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${domain ? ` domain=${domain};` : ""}`;
@@ -57,10 +68,8 @@ export function FloatingLanguageSwitcher() {
     });
 
     if (langCode === 'en') {
-      // 영어 선택 시: 메인 홈 주소로 클린 새로고침
       window.location.href = window.location.origin;
     } else {
-      // 다국어 선택 시: 새로운 쿠키를 주입하여 구글 번역 강제 갱신 유도
       document.cookie = `googtrans=/en/${langCode}; path=/;`;
       document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname};`;
       
@@ -71,7 +80,6 @@ export function FloatingLanguageSwitcher() {
         setCurrentLang(langCode);
       }
       
-      // 화면 전환을 확실하게 적용하기 위한 즉시 새로고침
       window.location.reload();
     }
     setIsOpen(false);
@@ -80,15 +88,15 @@ export function FloatingLanguageSwitcher() {
   const currentLabel = LANGUAGES.find(l => l.code === currentLang)?.label || "English";
 
   return (
-    <div className="fixed bottom-6 right-5 z-[9999] flex flex-col items-end">
+    <div className="fixed bottom-6 right-5 z-[99999] flex flex-col items-end isolate select-none">
       {isOpen && (
-        <div className="mb-2 max-h-60 w-36 overflow-y-auto rounded-xl border border-white/10 bg-slate-900/90 p-1 shadow-2xl backdrop-blur-md">
+        <div className="mb-2 max-h-60 w-36 overflow-y-auto rounded-2xl border border-slate-700/80 bg-[#1e293b]/95 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95">
           {LANGUAGES.map((lang) => (
             <button
               key={lang.code}
               onClick={() => handleLanguageChange(lang.code)}
-              className={`w-full rounded-lg px-4 py-2 text-left text-sm font-semibold transition-colors ${
-                currentLang === lang.code ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-white/5'
+              className={`w-full rounded-xl px-3.5 py-2 text-left text-xs font-semibold transition-colors ${
+                currentLang === lang.code ? 'bg-blue-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800'
               }`}
             >
               {lang.label}
@@ -96,13 +104,14 @@ export function FloatingLanguageSwitcher() {
           ))}
         </div>
       )}
+      
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-11 items-center gap-2 rounded-full bg-blue-600 px-5 text-sm font-bold text-white shadow-lg shadow-blue-900/20 transition-transform active:scale-95"
+        className="relative z-10 flex h-11 items-center gap-2 rounded-full bg-blue-600 px-4 text-xs font-bold text-white shadow-xl shadow-blue-950/50 hover:bg-blue-500 transition-all active:scale-95 border border-blue-400/30"
       >
-        <Globe size={18} />
+        <Globe size={16} />
         <span>{currentLabel}</span>
-        <ChevronUp size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronUp size={15} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
     </div>
   );
