@@ -27,24 +27,46 @@ export default function Home() {
 
   const [tickerStats, setTickerStats] = useState<string[]>([
     "📢 실시간 글로벌 파이 뉴스룸 핫이슈 동기화 중입니다...",
-    "📢 최신 생태계 핵심 소식 및 마이그레이션 모니터링 가동"
+    "📢 최신 생태계 핵심 소식 및 마이그레이션 모니터링 가동 중"
   ]);
 
-  // 실시간 뉴스 패치 로직
+  // 실시간 전광판(화이트 바) 뉴스 패치 로직
   useEffect(() => {
     const loadHotNewsForTicker = async () => {
       try {
-        const response = await fetch(`/api/fetch-news?category=${activeCategory}&t=${Date.now()}`);
+        // 상단 전광판은 카테고리 이동과 관계없이 항상 전체(all) 최신 핫이슈를 불러옵니다.
+        const response = await fetch(`/api/fetch-news?category=all&t=${Date.now()}`);
+        if (!response.ok) throw new Error("Network response was not ok");
+
         const allNews = await response.json();
         
         if (Array.isArray(allNews) && allNews.length > 0) {
-          const cleanText = (text: string) => text.replace(/<\/?[^>]+(>|$)/g, "").trim();
-          
-          const hotHeadlines = allNews.slice(0, 5).map((item: any, idx: number) => {
-            return `🔥 [실시간 핫이슈 ${idx + 1}] ${cleanText(item.title)}`;
-          });
-          
-          setTickerStats(hotHeadlines);
+          // HTML 태그 및 엔티티 정제 함수
+          const cleanText = (text: string) => {
+            if (!text) return "";
+            return text
+              .replace(/<\/?[^>]+(>|$)/g, "") // HTML 태그 제거
+              .replace(/&quot;/g, '"')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&#39;/g, "'")
+              .replace(/&nbsp;/g, ' ')
+              .trim();
+          };
+
+          const hotHeadlines = allNews
+            .slice(0, 5)
+            .map((item: any, idx: number) => {
+              const rawTitle = item.title || item.snippet || "";
+              const cleanedTitle = cleanText(rawTitle);
+              return `🔥 [실시간 핫이슈 ${idx + 1}] ${cleanedTitle}`;
+            })
+            .filter((headline: string) => headline.length > 15); // 제목이 정상 추출된 경우만 사용
+
+          if (hotHeadlines.length > 0) {
+            setTickerStats(hotHeadlines);
+          }
         }
       } catch (error) {
         console.error("전광판 실시간 뉴스 연동 실패:", error);
@@ -52,9 +74,9 @@ export default function Home() {
     };
 
     loadHotNewsForTicker();
-    const interval = setInterval(loadHotNewsForTicker, 5 * 60 * 1000);
+    const interval = setInterval(loadHotNewsForTicker, 5 * 60 * 1000); // 5분마다 자동 갱신
     return () => clearInterval(interval);
-  }, [activeCategory]);
+  }, []);
 
   const sXRef = useRef<number | null>(null);
   const eXRef = useRef<number | null>(null);
@@ -172,7 +194,7 @@ export default function Home() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* 1. 글로벌 상단 헤더 (다국어 및 Quick Link 바인딩 추가) */}
+      {/* 1. 글로벌 상단 헤더 */}
       <Header 
         currentCategory={activeCategory} 
         onCategoryChange={setActiveCategory}
@@ -180,7 +202,7 @@ export default function Home() {
         onLanguageChange={setCurrentLang}
       />
 
-      {/* 2. 전광판 */}
+      {/* 2. 전광판 (화이트 바) */}
       <div className="w-full bg-gradient-to-r from-slate-100 via-white to-slate-100 border-b border-slate-300 py-2.5 overflow-hidden sticky top-[60px] z-[55] shadow-md shadow-black/20">
         <div className="flex whitespace-nowrap gap-16 text-[12px] font-bold text-slate-900 tracking-wide compliance-marquee">
           <div className="flex gap-16 shrink-0 justify-around min-w-full">
