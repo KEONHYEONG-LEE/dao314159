@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// 카테고리별 구글 뉴스 검색 쿼리 맵 (특정 카테고리에 매칭되는 영문 키워드 풍부화)
+// 카테고리별 구글 뉴스 검색 쿼리 맵
 const SEARCH_QUERIES: { [key: string]: string } = {
   ALL: 'Pi Network OR cryptocurrency OR Web3 news',
   MAINNET: 'Pi Network mainnet OR blockchain mainnet',
@@ -98,12 +98,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return {
         id: generatedId,
         category: currentCat,
-        // 프론트엔드의 { ko, en } 다국어 형태와 호환
-        title: {
+        // 단순 문자열을 찾는 프론트엔드(전광판/Index)와 객체 형태를 찾는 컴포넌트 모두 호환
+        title: englishTitle, 
+        content: contentText,
+        titleObj: {
           ko: englishTitle,
           en: englishTitle
         },
-        content: {
+        contentObj: {
           ko: contentText,
           en: contentText
         },
@@ -125,16 +127,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error) {
     console.error('Google RSS Fetch Error:', error);
 
-    // 에러 발생 시 서번트 백업 데이터
+    // 에러 발생 시 서번트 백업 데이터 (문자열 및 객체 호환)
     const fallbackNews = [
       {
         id: `fb-${Date.now()}`,
         category: currentCat,
-        title: {
+        title: 'Pi Network Mainnet & Web3 Updates',
+        content: 'Latest updates on Pi Network ecosystem and global Web3 trends.',
+        titleObj: {
           ko: 'Pi Network Mainnet & Web3 Updates',
           en: 'Pi Network Mainnet & Web3 Updates'
         },
-        content: {
+        contentObj: {
           ko: 'Latest updates on Pi Network ecosystem and global Web3 trends.',
           en: 'Latest updates on Pi Network ecosystem and global Web3 trends.'
         },
