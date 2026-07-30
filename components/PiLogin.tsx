@@ -15,7 +15,7 @@ const PiLogin = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // 구글 번역/투명 래퍼 관련 스타일 주입 (기존 로직 100% 보존)
+    // 1. 구글 번역/투명 래퍼 관련 스타일 주입
     if (typeof document !== 'undefined') {
       const style = document.createElement('style');
       style.innerHTML = `
@@ -26,6 +26,20 @@ const PiLogin = () => {
         body { top: 0px !important; position: static !important; }
       `;
       document.head.appendChild(style);
+    }
+
+    // 2. [파이 권장사항] 파이 브라우저 광고 네트워크(ad_network) 지원 여부 체크
+    if (typeof window !== 'undefined' && window.Pi) {
+      try {
+        window.Pi.nativeFeaturesList().then((features: string[]) => {
+          const isAdSupported = features.includes("ad_network");
+          console.log("Pi Ad Network Supported:", isAdSupported);
+        }).catch((err: any) => {
+          console.log("Native features check error:", err);
+        });
+      } catch (err) {
+        console.log("Pi SDK Native Features Init Error:", err);
+      }
     }
   }, []);
 
