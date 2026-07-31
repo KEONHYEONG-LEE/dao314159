@@ -58,6 +58,29 @@ export function CategoryNews({
   const [starredIds, setStarredIds] = useState<{ [id: string]: boolean }>({});
   const [likedIds, setLikedIds] = useState<{ [id: string]: boolean }>({});
 
+  // 💡 [수정] 화면 표시용 날짜 정제 함수 (시/분/초 및 UTC 표시 완전 제거)
+  const formatDateOnly = (rawDate: string) => {
+    if (!rawDate) return "";
+
+    // 1. 이미 "2026년 7월 30일 오후..." 형식인 경우 년/월/일 부분만 정규식으로 추출
+    if (rawDate.includes("년")) {
+      const match = rawDate.match(/\d{4}년\s*\d{1,2}월\s*\d{1,2}일/);
+      if (match) return match[0];
+    }
+
+    // 2. ISO 포맷 (2026-07-30T16:35:59Z) 또는 유효한 Date 문자열인 경우
+    const dateObj = new Date(rawDate);
+    if (!isNaN(dateObj.getTime())) {
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1;
+      const day = dateObj.getDate();
+      return `${year}년 ${month}월 ${day}일`;
+    }
+
+    // 3. 예외적인 문자열인 경우 공백 및 T 기준으로 날짜 부분만 분리
+    return rawDate.split("T")[0].split(" ")[0];
+  };
+
   // localStorage에서 이전에 저장된 반응 상태 로드
   useEffect(() => {
     try {
@@ -81,7 +104,7 @@ export function CategoryNews({
         const data = await response.json();
         
         if (Array.isArray(data)) {
-          // 💡 핵심 수정: 불러온 기사들을 publishedAt / date 기준으로 최신순(내림차순) 정렬
+          // 불러온 기사들을 publishedAt / date 기준으로 최신순(내림차순) 정렬 (시/분/초가 유지된 상태로 정확히 정렬)
           const sorted = [...data].sort((a, b) => {
             const dateARaw = a.publishedAt || a.date || "";
             const dateBRaw = b.publishedAt || b.date || "";
@@ -89,11 +112,10 @@ export function CategoryNews({
             const timeA = dateARaw ? new Date(dateARaw).getTime() : 0;
             const timeB = dateBRaw ? new Date(dateBRaw).getTime() : 0;
 
-            // 유효하지 않은 날짜 처리
             const validA = isNaN(timeA) ? 0 : timeA;
             const validB = isNaN(timeB) ? 0 : timeB;
 
-            return validB - validA; // 최신 날짜가 위에 오도록 설정
+            return validB - validA; // 최신 날짜가 위에 오도록 정렬
           });
 
           setNewsList(sorted);
@@ -188,7 +210,11 @@ export function CategoryNews({
                 {articles.map((article) => {
                   const titleStr = getParsedText(article.title);
                   const sourceStr = article.author || article.source || "GPNR News";
-                  const dateStr = article.publishedAt || article.date || "";
+                  
+                  // 💡 [수정] 원본 날짜 값을 formatDateOnly() 함수를 거쳐 시/분/초 제거 후 날짜만 표시
+                  const rawDateStr = article.publishedAt || article.date || "";
+                  const dateStr = formatDateOnly(rawDateStr);
+
                   const imageSrc = article.imageUrl || article.image || "https://picsum.photos/id/10/200/200";
                   const targetUrl = article.sourceUrl || article.url || "#";
 
