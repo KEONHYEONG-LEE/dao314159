@@ -8,7 +8,7 @@ import { FloatingLanguageSwitcher } from '../components/FloatingLanguageSwitcher
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
-    // 구글 번역 기본 상단 바 디자인을 숨기고 모바일 레이아웃 밀림을 방지하는 최적화 스크립트
+    // 구글 번역 기본 상단 바 및 팝업 프레임 제거
     const removeGoogleBar = () => {
       const selectors = [
         '.goog-te-banner-frame', 
@@ -38,6 +38,28 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       <Head>
         <title>GPNR - Global Pi Newsroom</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+        
+        {/* 구글 순정 번역 위젯 UI 숨김 전용 스타일 */}
+        <style>{`
+          .goog-te-gadget,
+          .goog-te-gadget-simple,
+          .goog-te-menu-frame,
+          .VIpgJd-yD22b-y03Lfd,
+          .VIpgJd-yD22b-y03Lfd-v922d,
+          #goog-gt-tt,
+          .goog-te-balloon-frame {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            height: 0 !important;
+            width: 0 !important;
+          }
+          body {
+            top: 0px !important;
+            position: static !important;
+          }
+        `}</style>
       </Head>
 
       {/* 파이 SDK 스크립트 */}
@@ -46,7 +68,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
         strategy="afterInteractive"
       />
 
-      {/* [업데이트] 새로 추가한 다국어 코드를 엔진에 등록하여 정상 작동 유도 */}
+      {/* 구글 번역 엔진 초기화 */}
       <Script id="google-translate-config" strategy="afterInteractive">
         {`
           function googleTranslateElementInit() {
@@ -64,15 +86,14 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       />
 
       <div className="min-h-screen bg-[#0f172a] text-slate-100 overflow-x-hidden">
-        {/* [중복 차단] 상단 헤더 이중 호출은 완전히 배제하여 겹침 현상 해결 */}
         <main>
           <Component {...pageProps} />
         </main>
         
-        {/* [복구] 원본 구글 번역 엔진 위젯 백그라운드 구동 */}
-        <div id="google_translate_element" style={{ display: 'none' }}></div>
+        {/* 백그라운드용 번역 엔진 영역 (숨김) */}
+        <div id="google_translate_element" style={{ display: 'none', width: 0, height: 0, overflow: 'hidden' }}></div>
         
-        {/* [복구] 화면 하단에 뜨는 한국어 번역 활성화 스위처 버튼 */}
+        {/* 직접 제작한 커스텀 스위처만 노출 */}
         <FloatingLanguageSwitcher />
       </div>
     </ThemeProvider>
