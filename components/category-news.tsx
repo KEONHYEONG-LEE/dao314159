@@ -81,7 +81,22 @@ export function CategoryNews({
         const data = await response.json();
         
         if (Array.isArray(data)) {
-          setNewsList(data);
+          // 💡 핵심 수정: 불러온 기사들을 publishedAt / date 기준으로 최신순(내림차순) 정렬
+          const sorted = [...data].sort((a, b) => {
+            const dateARaw = a.publishedAt || a.date || "";
+            const dateBRaw = b.publishedAt || b.date || "";
+
+            const timeA = dateARaw ? new Date(dateARaw).getTime() : 0;
+            const timeB = dateBRaw ? new Date(dateBRaw).getTime() : 0;
+
+            // 유효하지 않은 날짜 처리
+            const validA = isNaN(timeA) ? 0 : timeA;
+            const validB = isNaN(timeB) ? 0 : timeB;
+
+            return validB - validA; // 최신 날짜가 위에 오도록 설정
+          });
+
+          setNewsList(sorted);
         }
       } catch (error) {
         console.error("뉴스 데이터 수집 실패:", error);
