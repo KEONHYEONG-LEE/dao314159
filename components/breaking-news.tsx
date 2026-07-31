@@ -13,7 +13,7 @@ interface NewsItem {
   link?: string;
 }
 
-// API 연결 실패 시 사용할 기본 백업 데이터 (오역 없는 정확한 한국어/영어 매핑)
+// API 연결 실패 시 사용할 기본 백업 데이터
 const FALLBACK_BREAKING_NEWS = [
   {
     id: "brk-1",
@@ -56,8 +56,8 @@ export function BreakingNews() {
         const data = await res.json();
 
         if (Array.isArray(data) && data.length > 0) {
+          // 최신순 상위 5개 헤드라인 자동 추출
           const formatted = data.slice(0, 5).map((item: NewsItem, idx: number) => {
-            // title이 string인지 object인지 범용 처리
             let titleKo = "";
             let titleEn = "";
 
@@ -87,8 +87,8 @@ export function BreakingNews() {
 
             return {
               id: item.id || `brk-api-${idx}`,
-              textKo: titleKo,
-              textEn: titleEn,
+              textKo: titleKo || "최신 뉴스 헤드라인을 불러오는 중입니다...",
+              textEn: titleEn || "Loading latest headline...",
               detailKo: detailKo || titleKo,
               detailEn: detailEn || titleEn,
               link: item.sourceUrl || item.link || "https://minepi.com"
@@ -105,13 +105,14 @@ export function BreakingNews() {
     fetchNews();
   }, []);
 
-  // 3. 자동 롤링 효과 (확장 시 일시정지)
+  // 3. 자동 롤링 효과 (5초 간격으로 자동으로 최신 기사 1~5번 교체)
   useEffect(() => {
     if (isExpanded || newsItems.length <= 1) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % newsItems.length);
     }, 5000);
+
     return () => clearInterval(interval);
   }, [newsItems.length, isExpanded]);
 
@@ -122,20 +123,21 @@ export function BreakingNews() {
   return (
     <div className="bg-red-950/20 border-y border-white/[0.05] backdrop-blur-sm transition-all duration-300">
       <div className="mx-auto max-w-7xl px-4 py-2.5">
-        {/* 상단 속보 바 (클릭 시 토글) */}
+        {/* 상단 속보 바 (클릭 시 풀다운 확장) */}
         <div 
           className="flex items-center gap-3 cursor-pointer group"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center gap-1.5 flex-shrink-0 bg-red-600 px-2 py-0.5 rounded shadow-sm shadow-red-900/50">
             <AlertCircle className="h-3 w-3 text-white animate-pulse" />
-            <span className="text-[10px] font-black text-white uppercase tracking-tighter">
+            <span className="text-[10px] font-black text-white uppercase tracking-tighter notranslate" translate="no">
               {currentLang === "ko" ? "실시간 핫이슈" : "LIVE"}
             </span>
           </div>
           
-          <div className="relative overflow-hidden flex-1">
-            <p className="text-[13px] font-semibold text-slate-200 truncate group-hover:text-white transition-colors">
+          {/* notranslate 적용하여 구글 자동번역기의 엉뚱한 텍스트 치환 방지 */}
+          <div className="relative overflow-hidden flex-1 notranslate" translate="no">
+            <p key={currentIndex} className="text-[13px] font-semibold text-slate-200 truncate group-hover:text-white transition-all duration-300 animate-in fade-in slide-in-from-bottom-1">
               {displayText}
             </p>
           </div>
@@ -149,7 +151,7 @@ export function BreakingNews() {
             isExpanded ? 'max-h-40 opacity-100 mt-3 pb-2' : 'max-h-0 opacity-0'
           }`}
         >
-          <div className="pl-[52px] pr-2">
+          <div className="pl-[52px] pr-2 notranslate" translate="no">
             <p className="text-[12.5px] text-slate-300 leading-relaxed mb-3 border-l-2 border-red-800/50 pl-3">
               {displayDetail}
             </p>
