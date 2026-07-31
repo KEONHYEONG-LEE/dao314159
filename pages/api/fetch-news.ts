@@ -89,9 +89,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const generatedId = `google-${currentCat.toLowerCase()}-${index}-${Date.now()}`;
       const imageId = (index % 30) + 10;
 
-      const formattedDate = pubDate
-        ? new Date(pubDate).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0];
+      // 💡 [수정 포인트 1] 날짜에서 T[0] 분할을 제거하고 원본 ISO 타임스탬프 전체 보존 (시/분/초 포함)
+      let formattedDate = new Date().toISOString();
+      if (pubDate) {
+        const parsedTime = new Date(pubDate);
+        if (!isNaN(parsedTime.getTime())) {
+          formattedDate = parsedTime.toISOString();
+        }
+      }
 
       const contentText = cleanDescStr || `${englishTitle}. Read the full article on ${sourceName}.`;
 
@@ -111,7 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         author: sourceName,
         sourceUrl: link,
-        publishedAt: formattedDate,
+        publishedAt: formattedDate, // ISO 8601 원본 유지 (예: 2026-07-31T08:30:00.000Z)
         imageUrl: `https://picsum.photos/id/${imageId}/600/400`,
         tags: ['Web2News', currentCat, 'Crypto'],
         readCount: Math.floor(Math.random() * 100) + 10,
@@ -119,6 +124,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         likeCount: 0
       };
     });
+
+    // 💡 [수정 포인트 2] 서버에서 클라이언트로 넘겨주기 전, 정확한 타임스탬프 기준 최신순(내림차순) 정렬 수행
+    newsList.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
     // Vercel Edge/Serverless 캐싱 (60초간 캐시, 120초간 백그라운드 갱신)
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
@@ -144,7 +152,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         author: 'GPNR Global',
         sourceUrl: 'https://minepi.com',
-        publishedAt: new Date().toISOString().split('T')[0],
+        publishedAt: new Date().toISOString(),
         imageUrl: 'https://picsum.photos/id/11/600/400',
         tags: ['PiNetwork', 'Web3'],
         readCount: 1,
