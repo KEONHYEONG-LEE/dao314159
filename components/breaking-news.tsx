@@ -130,13 +130,13 @@ export function BreakingNews() {
         >
           <div className="flex items-center gap-1.5 flex-shrink-0 bg-red-600 px-2 py-0.5 rounded shadow-sm shadow-red-900/50">
             <AlertCircle className="h-3 w-3 text-white animate-pulse" />
-            <span className="text-[10px] font-black text-white uppercase tracking-tighter notranslate" translate="no">
+            <span className="text-[10px] font-black text-white uppercase tracking-tighter notranslate skiptranslate" translate="no">
               {currentLang === "ko" ? "실시간 핫이슈" : "LIVE"}
             </span>
           </div>
           
-          {/* notranslate 적용하여 구글 자동번역기의 엉뚱한 텍스트 치환 방지 */}
-          <div className="relative overflow-hidden flex-1 notranslate" translate="no">
+          {/* 구글 번역 엔진 오역을 방지하기 위한 속성 적용 */}
+          <div className="relative overflow-hidden flex-1 notranslate skiptranslate" translate="no">
             <p key={currentIndex} className="text-[13px] font-semibold text-slate-200 truncate group-hover:text-white transition-all duration-300 animate-in fade-in slide-in-from-bottom-1">
               {displayText}
             </p>
@@ -151,7 +151,7 @@ export function BreakingNews() {
             isExpanded ? 'max-h-40 opacity-100 mt-3 pb-2' : 'max-h-0 opacity-0'
           }`}
         >
-          <div className="pl-[52px] pr-2 notranslate" translate="no">
+          <div className="pl-[52px] pr-2 notranslate skiptranslate" translate="no">
             <p className="text-[12.5px] text-slate-300 leading-relaxed mb-3 border-l-2 border-red-800/50 pl-3">
               {displayDetail}
             </p>
