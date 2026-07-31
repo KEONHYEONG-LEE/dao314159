@@ -22,7 +22,7 @@ export function FloatingLanguageSwitcher() {
     const savedLang = localStorage.getItem("gpnr_lang") || "en";
     setCurrentLang(savedLang);
 
-    // 구글 번역 위젯의 잔상 및 자동 생성 래퍼 완벽 숨김 처리
+    // 구글 번역 위젯 및 외부 스위처 아이콘 완벽 숨김 처리
     const style = document.createElement("style");
     style.innerHTML = `
       .goog-te-banner-frame, 
@@ -30,15 +30,19 @@ export function FloatingLanguageSwitcher() {
       .goog-te-balloon-frame,
       .VIpgJd-yD22b-y03Lfd,
       .VIpgJd-yD22b-y03Lfd-v922d,
-      .goog-te-gadget-icon { 
+      .goog-te-gadget-icon,
+      .goog-te-gadget,
+      #google_translate_element,
+      .skiptranslate,
+      iframe.goog-te-banner-frame { 
         display: none !important; 
         visibility: hidden !important;
         opacity: 0 !important;
         pointer-events: none !important;
-      }
-      .goog-te-gadget {
-        font-size: 0 !important;
-        color: transparent !important;
+        width: 0 !important;
+        height: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
       }
       body { top: 0 !important; position: static !important; }
     `;
