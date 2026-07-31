@@ -92,7 +92,8 @@ export function FloatingLanguageSwitcher() {
   const currentLabel = LANGUAGES.find(l => l.code === currentLang)?.label || "English";
 
   return (
-    <div className="fixed bottom-6 right-5 z-[99999] flex flex-col items-end isolate select-none">
+    // 브라우저 기본 번역 버튼과 겹치지 않도록 bottom-20으로 위치 조정
+    <div className="fixed bottom-20 right-5 z-[99999] flex flex-col items-end isolate select-none">
       {isOpen && (
         <div className="mb-2 max-h-60 w-36 overflow-y-auto rounded-2xl border border-slate-700/80 bg-[#1e293b]/95 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95">
           {LANGUAGES.map((lang) => (
