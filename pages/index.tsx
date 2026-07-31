@@ -55,7 +55,22 @@ export default function Home() {
               .trim();
           };
 
-          const hotHeadlines = allNews
+          // 💡 핵심 수정: 불러온 기사들을 publishedAt / date 기준 최신순(내림차순)으로 먼저 정렬
+          const sortedNews = [...allNews].sort((a, b) => {
+            const dateARaw = a.publishedAt || a.date || "";
+            const dateBRaw = b.publishedAt || b.date || "";
+
+            const timeA = dateARaw ? new Date(dateARaw).getTime() : 0;
+            const timeB = dateBRaw ? new Date(dateBRaw).getTime() : 0;
+
+            const validA = isNaN(timeA) ? 0 : timeA;
+            const validB = isNaN(timeB) ? 0 : timeB;
+
+            return validB - validA; // 최신순 정렬
+          });
+
+          // 정렬된 최신 기사 중 상위 5개 추출
+          const hotHeadlines = sortedNews
             .slice(0, 5)
             .map((item: any, idx: number) => {
               const rawTitle = item.title || item.snippet || "";
