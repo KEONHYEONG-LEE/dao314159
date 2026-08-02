@@ -6,16 +6,14 @@ import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { translations } from "../lib/translations";
+import { NEWS_CATEGORIES } from "../lib/categories"; // [수정] 단일 출처 카테고리 로드
 
-const CATEGORIES = [
-  "all", "poll", "mainnet", "node", "mining", "wallet", "browser", 
-  "roadmap", "whitepaper", "community", "commerce", "kyc", 
-  "developer", "ecosystem", "outlook", "price", "security", 
-  "legal"
-];
+// [수정] NEWS_CATEGORIES 정의에서 ID 목록만 자동으로 추출 ('poll' 및 'all' 완전 제거)
+const CATEGORIES = NEWS_CATEGORIES.map(c => c.id);
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState('all');
+  // [수정] 초기 기본 카테고리를 'top-news'로 변경
+  const [activeCategory, setActiveCategory] = useState('top-news');
   const [currentLang, setCurrentLang] = useState('en'); // 기본 언어 설정 (en, ko, ja, zh, es, vi)
   
   const { user, isAuthenticated, isLoading, loginWithKycId, logout } = usePiNetworkAuthentication();
@@ -34,18 +32,17 @@ export default function Home() {
   useEffect(() => {
     const loadHotNewsForTicker = async () => {
       try {
-        // 상단 전광판은 카테고리 이동과 관계없이 항상 전체(all) 최신 핫이슈를 불러옵니다.
-        const response = await fetch(`/api/fetch-news?category=all&t=${Date.now()}`);
+        // [수정] 주요뉴스(top-news) 최신 핫이슈 호출
+        const response = await fetch(`/api/fetch-news?category=top-news&t=${Date.now()}`);
         if (!response.ok) throw new Error("Network response was not ok");
 
         const allNews = await response.json();
         
         if (Array.isArray(allNews) && allNews.length > 0) {
-          // HTML 태그 및 엔티티 정제 함수
           const cleanText = (text: string) => {
             if (!text) return "";
             return text
-              .replace(/<\/?[^>]+(>|$)/g, "") // HTML 태그 제거
+              .replace(/<\/?[^>]+(>|$)/g, "")
               .replace(/&quot;/g, '"')
               .replace(/&amp;/g, '&')
               .replace(/&lt;/g, '<')
@@ -55,7 +52,6 @@ export default function Home() {
               .trim();
           };
 
-          // 💡 핵심 수정: 불러온 기사들을 publishedAt / date 기준 최신순(내림차순)으로 먼저 정렬
           const sortedNews = [...allNews].sort((a, b) => {
             const dateARaw = a.publishedAt || a.date || "";
             const dateBRaw = b.publishedAt || b.date || "";
@@ -66,10 +62,9 @@ export default function Home() {
             const validA = isNaN(timeA) ? 0 : timeA;
             const validB = isNaN(timeB) ? 0 : timeB;
 
-            return validB - validA; // 최신순 정렬
+            return validB - validA;
           });
 
-          // 정렬된 최신 기사 중 상위 5개 추출
           const hotHeadlines = sortedNews
             .slice(0, 5)
             .map((item: any, idx: number) => {
@@ -77,7 +72,7 @@ export default function Home() {
               const cleanedTitle = cleanText(rawTitle);
               return `🔥 [실시간 핫이슈 ${idx + 1}] ${cleanedTitle}`;
             })
-            .filter((headline: string) => headline.length > 15); // 제목이 정상 추출된 경우만 사용
+            .filter((headline: string) => headline.length > 15);
 
           if (hotHeadlines.length > 0) {
             setTickerStats(hotHeadlines);
@@ -89,7 +84,7 @@ export default function Home() {
     };
 
     loadHotNewsForTicker();
-    const interval = setInterval(loadHotNewsForTicker, 5 * 60 * 1000); // 5분마다 자동 갱신
+    const interval = setInterval(loadHotNewsForTicker, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -134,7 +129,6 @@ export default function Home() {
     }
   };
 
-  // 1. 인증 정보 로딩 중일 때
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center text-slate-100">
@@ -144,7 +138,6 @@ export default function Home() {
     );
   }
 
-  // 2. 미인증 상태일 때: KYC 인증 모달 단독 리턴
   if (!isAuthenticated || !user || !user.username) {
     return (
       <div className="fixed inset-0 z-[99999] bg-[#0f172a] flex items-center justify-center p-4">
@@ -201,7 +194,6 @@ export default function Home() {
       : user.username
     : "";
 
-  // 3. 인증 완료 시 메인 화면
   return (
     <main 
       className="min-h-screen bg-[#0f172a] text-slate-100 touch-pan-y relative pb-12"
@@ -209,7 +201,6 @@ export default function Home() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* 1. 글로벌 상단 헤더 */}
       <Header 
         currentCategory={activeCategory} 
         onCategoryChange={setActiveCategory}
@@ -217,7 +208,6 @@ export default function Home() {
         onLanguageChange={setCurrentLang}
       />
 
-      {/* 2. 전광판 (화이트 바) */}
       <div className="w-full bg-gradient-to-r from-slate-100 via-white to-slate-100 border-b border-slate-300 py-2.5 overflow-hidden sticky top-[60px] z-[55] shadow-md shadow-black/20">
         <div className="flex whitespace-nowrap gap-16 text-[12px] font-bold text-slate-900 tracking-wide compliance-marquee">
           <div className="flex gap-16 shrink-0 justify-around min-w-full">
@@ -233,16 +223,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 3. 카테고리 탭 바 */}
       <div className="sticky top-[93px] z-50 bg-[#0f172a]/95 backdrop-blur-sm">
         <CategoryTabs 
           selectedCategory={activeCategory} 
           onCategoryChange={setActiveCategory} 
-          currentLang={currentLang}
+          language={currentLang}
         />
       </div>
 
-      {/* 4. 연동 정보 배너 */}
       {isAuthenticated && user && (
         <div className="max-w-3xl mx-auto px-4 mt-3">
           <div className="bg-[#1e293b] border border-slate-700/60 rounded-xl p-3 flex items-center justify-between shadow-inner">
@@ -265,12 +253,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* 5. 메인 콘텐츠 피드 영역 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
         <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
       </div>
 
-      {/* 하단 6개 언어 선택 플로팅 버튼 */}
       <div className="fixed bottom-4 right-4 z-[99]">
         <select
           value={currentLang}
@@ -286,7 +272,6 @@ export default function Home() {
         </select>
       </div>
 
-      {/* 전광판 애니메이션 */}
       <span dangerouslySetInnerHTML={{ __html: `
         <style>
           @keyframes gpnrMarquee {
