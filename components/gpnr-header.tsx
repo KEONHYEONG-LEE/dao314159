@@ -2,8 +2,8 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-// [핵심] 공통 파이 인증 훅 연결 (undefined 알림 유발하는 PiLogin 제거)
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
+import { NEWS_CATEGORIES } from "../lib/categories"; // [수정] 단일 출처 카테고리 로드
 
 interface GpnrHeaderProps {
   currentCategory?: string;                     
@@ -19,7 +19,7 @@ interface LauncherItem {
 }
 
 export function GpnrHeader({ 
-  currentCategory = "all", 
+  currentCategory = "top-news", // [수정] 기본 카테고리를 top-news로 변경
   onCategoryChange,
   currentLanguage
 }: GpnrHeaderProps) {
@@ -28,7 +28,6 @@ export function GpnrHeader({
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false); 
   const [currentLang, setCurrentLang] = useState<string>("en");
 
-  // 공통 Pi 인증 상태 및 로그아웃/ID 재설정 함수
   const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
 
   const localToday = useMemo(() => new Date(), []);
@@ -73,16 +72,16 @@ export function GpnrHeader({
     }
   };
 
+  // [수정] 다음 달 이동 로직 오류 수정 (+1)
   const handleNextMonth = (): void => {
     if (calendarMonth === 11) {
       setCalendarYear(calendarYear + 1);
       setCalendarMonth(0);
     } else {
-      setCalendarMonth(calendarMonth - 1);
+      setCalendarMonth(calendarMonth + 1);
     }
   };
 
-  // ✅ [수정 완료] 절대 경로(window.location.origin) 적용 및 예외 처리 강화
   const handleDonation = useCallback(async () => {
     if (typeof window !== "undefined" && (window as any).Pi) {
       try {
@@ -96,7 +95,6 @@ export function GpnrHeader({
           onReadyForServerApproval: async (paymentId: string) => {
             console.log("[Pi Payment] 서버 승인 요청 시작 paymentId:", paymentId);
             
-            // 💡 window.location.origin을 추가하여 절대 경로로 호스트 전달 보장
             const res = await fetch(`${origin}/api/payments/approve`, { 
               method: 'POST', 
               headers: { 'Content-Type': 'application/json' }, 
@@ -113,7 +111,6 @@ export function GpnrHeader({
           onReadyForServerCompletion: async (paymentId: string, txid: string) => {
             console.log("[Pi Payment] 서버 완료 처리 시작 txid:", txid);
             
-            // 💡 window.location.origin을 추가하여 절대 경로로 호스트 전달 보장
             const res = await fetch(`${origin}/api/payments/complete`, { 
               method: 'POST', 
               headers: { 'Content-Type': 'application/json' }, 
@@ -138,31 +135,28 @@ export function GpnrHeader({
     }
   }, [currentLang]);
 
-  const FIXED_LAUNCHER_ITEMS: LauncherItem[] = [
-    { id: "all", icon: "📱", label: "전체", enLabel: "Top News" },
-    { id: "mainnet", icon: "⚡", label: "메인넷", enLabel: "Mainnet" },
-    { id: "node", icon: "💻", label: "노드", enLabel: "Node" },
-    { id: "mining", icon: "⛏️", label: "마이닝", enLabel: "Mining" },
-    { id: "wallet", icon: "👛", label: "지갑", enLabel: "Wallet" },
-    { id: "browser", icon: "🌐", label: "브라우저", enLabel: "Browser" },
-    { id: "roadmap", icon: "🗺️", label: "로드맵", enLabel: "Roadmap" },
-    { id: "whitepaper", icon: "📄", label: "백서", enLabel: "Whitepaper" },
-    { id: "community", icon: "👥", label: "커뮤니티", enLabel: "Community" },
-    { id: "commerce", icon: "🛒", label: "커머스", enLabel: "Commerce" },
-    { id: "kyc", icon: "🆔", label: "KYC", enLabel: "KYC" },
-    { id: "developer", icon: "🛠️", label: "개발자", enLabel: "Developers" },
-    { id: "ecosystem", icon: "🌱", label: "생태계", enLabel: "Real Estate" },
-    { id: "outlook", icon: "🔮", label: "전망", enLabel: "Price Outlook" },
-    { id: "price", icon: "📈", label: "가격", enLabel: "Price" },
-    { id: "security", icon: "🛡️", label: "보안", enLabel: "Security" },
-    { id: "events", icon: "🎁", label: "이벤트", enLabel: "Events" },
-    { id: "legal", icon: "⚖️", label: "법률", enLabel: "Regulations" },
-    { id: "calendar", icon: "📅", label: "달력", enLabel: "Calendar" }
-  ];
+  // [수정] NEWS_CATEGORIES 데이터 기반으로 그리드 런처 아이템 자동 구성 + '달력' 추가
+  const FIXED_LAUNCHER_ITEMS: LauncherItem[] = useMemo(() => {
+    const items: LauncherItem[] = NEWS_CATEGORIES.map(cat => ({
+      id: cat.id,
+      icon: cat.icon || "📰",
+      label: cat.label || cat.name || cat.id,
+      enLabel: cat.enLabel || cat.enName || cat.id
+    }));
+
+    // 마지막에 '달력' 모달 아이템 추가
+    items.push({
+      id: "calendar",
+      icon: "📅",
+      label: "달력",
+      enLabel: "Calendar"
+    });
+
+    return items;
+  }, []);
 
   if (!mounted) return null;
 
-  // 유저 지갑/KYC ID 축약 표시 (예: GAC7XH...ZXXPBB)
   const displayId = user?.username
     ? user.username.length > 12
       ? `${user.username.substring(0, 5)}...${user.username.substring(user.username.length - 4)}`
@@ -197,7 +191,6 @@ export function GpnrHeader({
             
             {/* 우측 아이콘 및 지갑 인증 배너 */}
             <div className="flex items-center gap-2">
-              {/* 후원 버튼 */}
               <button 
                 onClick={handleDonation} 
                 className="flex items-center gap-0.5 bg-[#f7a145]/20 text-[#f7a145] px-2 py-0.5 rounded-full border border-[#f7a145]/30 hover:bg-[#f7a145]/30 transition-colors text-[10px] font-bold"
@@ -206,7 +199,6 @@ export function GpnrHeader({
                 <span>0.001</span>
               </button>
 
-              {/* 9개 점 / 카테고리 메뉴 토글 버튼 */}
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 className={`px-2 py-1 rounded-lg text-lg font-bold transition-all ${isLauncherOpen ? 'bg-slate-800 text-[#deff9a]' : 'text-slate-300 hover:bg-slate-800/60'}`}
@@ -214,7 +206,6 @@ export function GpnrHeader({
                 ☰
               </button>
 
-              {/* 기존 PiLogin을 대체하여 안전하게 지갑 상태 표출 */}
               {isAuthenticated && user ? (
                 <div className="flex items-center gap-1.5 bg-purple-950/40 border border-purple-800/40 px-2 py-0.5 rounded-lg text-[10px] font-mono text-purple-300 font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -230,7 +221,7 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 2. 9개 점 드롭다운 메뉴 */}
+      {/* 2. 카테고리 그리드 런처 메뉴 */}
       {isLauncherOpen && (
         <div className="fixed top-[49px] right-4 z-[70] w-[320px] max-h-[80vh] overflow-y-auto bg-slate-900/95 border border-slate-800 rounded-2xl p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
           <div className="grid gap-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
@@ -240,8 +231,11 @@ export function GpnrHeader({
                 <button
                   key={item.id}
                   onClick={() => {
-                    if (item.id === "calendar") { setIsCalendarOpen(true); } 
-                    else { if (onCategoryChange) onCategoryChange(item.id); }
+                    if (item.id === "calendar") { 
+                      setIsCalendarOpen(true); 
+                    } else { 
+                      if (onCategoryChange) onCategoryChange(item.id); 
+                    }
                     setIsLauncherOpen(false);
                   }}
                   className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all group ${isSelected ? 'bg-slate-800 border-slate-600 font-bold' : 'bg-slate-800/40 border-transparent hover:bg-slate-800 hover:border-slate-700'}`}
@@ -255,7 +249,6 @@ export function GpnrHeader({
             })}
           </div>
 
-          {/* 인증 상태일 때 ID 변경 / 해제 버튼 추가 */}
           {isAuthenticated && (
             <div className="mt-4 pt-3 border-t border-slate-800">
               <button
