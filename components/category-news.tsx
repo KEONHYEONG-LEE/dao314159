@@ -7,7 +7,7 @@ import {
   Users, ShoppingCart, ShieldCheck, Code, Home, TrendingUp, 
   DollarSign, Shield, Gavel, Check, Star, Heart 
 } from "lucide-react";
-import { NEWS_CATEGORIES } from "@/lib/categories"; // [수정] 중앙 카테고리 정의 로드
+import { NEWS_CATEGORIES } from "@/lib/categories";
 
 interface NewsItem {
   id: string;
@@ -24,7 +24,7 @@ interface NewsItem {
   image?: string;
 }
 
-// [수정] Lucide 아이콘 단일 매핑 (불꽃 아이콘 Flame 추가)
+// Lucide 아이콘 매핑
 const CATEGORY_ICONS: { [key: string]: React.ReactNode } = {
   "top-news": <Flame className="w-4 h-4 text-rose-500" />,
   mainnet: <Globe className="w-4 h-4 text-blue-500" />,
@@ -94,7 +94,8 @@ export function CategoryNews({
     async function fetchRealNews() {
       setLoading(true);
       try {
-        const response = await fetch(`/api/fetch-news?category=${selectedCategory}&t=${Date.now()}`);
+        const targetCategory = selectedCategory === "all" ? "top-news" : selectedCategory;
+        const response = await fetch(`/api/fetch-news?category=${targetCategory}&t=${Date.now()}`);
         const data = await response.json();
         
         if (Array.isArray(data)) {
@@ -112,9 +113,12 @@ export function CategoryNews({
           });
 
           setNewsList(sorted);
+        } else {
+          setNewsList([]);
         }
       } catch (error) {
         console.error("뉴스 데이터 수집 실패:", error);
+        setNewsList([]);
       } finally {
         setLoading(false);
       }
@@ -159,21 +163,14 @@ export function CategoryNews({
     return field[currentLang] || field.en || field.ko || "";
   };
 
-  // [수정] 뉴스를 허용된 공식 카테고리로만 안전하게 그룹화 ('투표/모두' 등 미인증 카테고리 배제)
-  const groupedNews = newsList.reduce((acc, news) => {
-    let rawCat = (news.category || "top-news").toLowerCase();
-    if (rawCat === "all" || rawCat === "vote" || rawCat === "poll") {
-      rawCat = "top-news"; // 잘못 유입된 id는 '주요뉴스'로 자동 통합
-    }
-    
-    // 공식 정의 카테고리에 속하지 않으면 top-news로 매핑
-    const exists = NEWS_CATEGORIES.some(c => c.id === rawCat);
-    const catKey = exists ? rawCat : "top-news";
-
-    if (!acc[catKey]) acc[catKey] = [];
-    acc[catKey].push(news);
-    return acc;
-  }, {} as { [key: string]: NewsItem[] });
+  // 현재 사용자가 선택한 카테고리 ID 및 메타 정보 추출
+  const activeCategoryId = (selectedCategory === "all" || !selectedCategory) ? "top-news" : selectedCategory;
+  const matchedCategory = NEWS_CATEGORIES.find(c => c.id === activeCategoryId);
+  
+  // 선택된 카테고리의 언어별 타이틀 (한국어/영어 대응)
+  const categoryTitle = currentLang === "ko" 
+    ? (matchedCategory?.name || "주요뉴스") 
+    : (matchedCategory?.enName || "Top News");
 
   if (loading) {
     return (
@@ -186,125 +183,113 @@ export function CategoryNews({
 
   return (
     <section className="py-2 px-1 bg-[#0f172a]">
-      <div className="grid grid-cols-1 gap-6">
-        {Object.keys(groupedNews).length === 0 ? (
+      <div className="flex flex-col">
+        {/* 선택한 카테고리 타이틀 및 아이콘 (Mainnet 선택 시 Mainnet, Top News 선택 시 Top News로 정확히 일치) */}
+        <div className="flex items-center justify-between mb-3 border-b border-white/[0.08] pb-2">
+          <div className="flex items-center gap-2">
+            {CATEGORY_ICONS[activeCategoryId] || <Flame className="w-4 h-4 text-rose-500" />}
+            <h2 className="text-xs font-black text-slate-100 tracking-widest uppercase">
+              {categoryTitle}
+            </h2>
+          </div>
+        </div>
+
+        {/* 뉴스 리스트 */}
+        {newsList.length === 0 ? (
           <div className="text-center py-12 text-slate-400 text-xs">
             현재 카테고리에 뉴스가 없습니다.
           </div>
         ) : (
-          Object.entries(groupedNews).map(([categoryId, articles]) => {
-            // [수정] ID에 대응하는 공식 카테고리 메타 정보 조회 (이름, 아이콘 매핑)
-            const matchedCategory = NEWS_CATEGORIES.find(c => c.id === categoryId);
-            const categoryTitle = currentLang === "ko" 
-              ? (matchedCategory?.name || "주요뉴스") 
-              : (matchedCategory?.enName || "Top News");
+          <div className="flex flex-col">
+            {newsList.map((article) => {
+              const titleStr = getParsedText(article.title);
+              const sourceStr = article.author || article.source || "GPNR News";
+              const rawDateStr = article.publishedAt || article.date || "";
+              const dateStr = formatDateOnly(rawDateStr);
+              const imageSrc = article.imageUrl || article.image || "https://picsum.photos/id/10/200/200";
+              const targetUrl = article.sourceUrl || article.url || "#";
 
-            return (
-              <div key={categoryId} className="flex flex-col">
-                {/* [수정] 섹션 헤더: 불꽃 아이콘 + "주요뉴스" 정식 라벨 출력 */}
-                <div className="flex items-center justify-between mb-3 border-b border-white/[0.08] pb-2">
-                  <div className="flex items-center gap-2">
-                    {CATEGORY_ICONS[categoryId] || <Flame className="w-4 h-4 text-rose-500" />}
-                    <h2 className="text-xs font-black text-slate-100 tracking-widest uppercase">
-                      {categoryTitle}
-                    </h2>
-                  </div>
-                </div>
+              const isChecked = !!checkedIds[article.id];
+              const isStarred = !!starredIds[article.id];
+              const isLiked = !!likedIds[article.id];
 
-                {/* 뉴스 리스트 */}
-                <div className="flex flex-col">
-                  {articles.map((article) => {
-                    const titleStr = getParsedText(article.title);
-                    const sourceStr = article.author || article.source || "GPNR News";
-                    const rawDateStr = article.publishedAt || article.date || "";
-                    const dateStr = formatDateOnly(rawDateStr);
-                    const imageSrc = article.imageUrl || article.image || "https://picsum.photos/id/10/200/200";
-                    const targetUrl = article.sourceUrl || article.url || "#";
+              return (
+                <a
+                  key={article.id}
+                  href={targetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block border-b border-white/[0.05] last:border-0"
+                >
+                  <article className="flex gap-4 py-4 items-center">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[14px] font-semibold text-slate-200 leading-snug line-clamp-2 group-hover:text-blue-400 transition-colors mb-2">
+                        {titleStr}
+                      </h3>
+                      
+                      <div className="flex items-center justify-between gap-2 mt-3">
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 whitespace-nowrap">
+                          <span className="text-blue-500 font-bold">{sourceStr}</span>
+                          <span>•</span>
+                          <span>{dateStr}</span>
+                        </div>
 
-                    const isChecked = !!checkedIds[article.id];
-                    const isStarred = !!starredIds[article.id];
-                    const isLiked = !!likedIds[article.id];
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={(e) => toggleCheck(e, article.id)}
+                            title="체크 표시"
+                            className="p-0.5 transition-transform active:scale-125"
+                          >
+                            {isChecked ? (
+                              <Check className="w-4 h-4 text-amber-700 stroke-[3]" />
+                            ) : (
+                              <div className="w-3.5 h-3.5 rounded-full border border-slate-600 hover:border-slate-400" />
+                            )}
+                          </button>
 
-                    return (
-                      <a
-                        key={article.id}
-                        href={targetUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group block border-b border-white/[0.05] last:border-0"
-                      >
-                        <article className="flex gap-4 py-4 items-center">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-[14px] font-semibold text-slate-200 leading-snug line-clamp-2 group-hover:text-blue-400 transition-colors mb-2">
-                              {titleStr}
-                            </h3>
-                            
-                            <div className="flex items-center justify-between gap-2 mt-3">
-                              <div className="flex items-center gap-2 text-[10px] text-slate-500 whitespace-nowrap">
-                                <span className="text-blue-500 font-bold">{sourceStr}</span>
-                                <span>•</span>
-                                <span>{dateStr}</span>
-                              </div>
-
-                              <div className="flex items-center gap-3">
-                                <button
-                                  onClick={(e) => toggleCheck(e, article.id)}
-                                  title="체크 표시"
-                                  className="p-0.5 transition-transform active:scale-125"
-                                >
-                                  {isChecked ? (
-                                    <Check className="w-4 h-4 text-amber-700 stroke-[3]" />
-                                  ) : (
-                                    <div className="w-3.5 h-3.5 rounded-full border border-slate-600 hover:border-slate-400" />
-                                  )}
-                                </button>
-
-                                <button
-                                  onClick={(e) => toggleStar(e, article.id)}
-                                  title="즐겨찾기"
-                                  className="p-0.5 transition-transform active:scale-125"
-                                >
-                                  <Star
-                                    className={`w-4 h-4 ${
-                                      isStarred
-                                        ? "text-yellow-400 fill-yellow-400"
-                                        : "text-slate-600 hover:text-slate-400"
-                                    }`}
-                                  />
-                                </button>
-
-                                <button
-                                  onClick={(e) => toggleLike(e, article.id)}
-                                  title="좋아요"
-                                  className="p-0.5 transition-transform active:scale-125"
-                                >
-                                  <Heart
-                                    className={`w-4 h-4 ${
-                                      isLiked
-                                        ? "text-rose-500 fill-rose-500"
-                                        : "text-slate-600 hover:text-slate-400"
-                                    }`}
-                                  />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-slate-800">
-                            <img
-                              src={imageSrc}
-                              alt={titleStr}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          <button
+                            onClick={(e) => toggleStar(e, article.id)}
+                            title="즐겨찾기"
+                            className="p-0.5 transition-transform active:scale-125"
+                          >
+                            <Star
+                              className={`w-4 h-4 ${
+                                isStarred
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-slate-600 hover:text-slate-400"
+                              }`}
                             />
-                          </div>
-                        </article>
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })
+                          </button>
+
+                          <button
+                            onClick={(e) => toggleLike(e, article.id)}
+                            title="좋아요"
+                            className="p-0.5 transition-transform active:scale-125"
+                          >
+                            <Heart
+                              className={`w-4 h-4 ${
+                                isLiked
+                                  ? "text-rose-500 fill-rose-500"
+                                  : "text-slate-600 hover:text-slate-400"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-slate-800">
+                      <img
+                        src={imageSrc}
+                        alt={titleStr}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  </article>
+                </a>
+              );
+            })}
+          </div>
         )}
       </div>
     </section>
