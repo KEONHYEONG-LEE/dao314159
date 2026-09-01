@@ -1,5 +1,16 @@
 import { NewsItem } from './types';
 
+export interface PiNewsV2Item {
+  id: string;
+  title: string | { ko?: string; en?: string };
+  content: string | { ko?: string; en?: string };
+  category: string;
+  author: string;
+  publishedAt: string;
+  imageUrl?: string;
+  sourceUrl: string;
+}
+
 export const FALLBACK_NEWS_DATA: Record<string, NewsItem[]> = {
   'top-news': [
     {
@@ -56,8 +67,9 @@ export const FALLBACK_NEWS_DATA: Record<string, NewsItem[]> = {
 };
 
 // ---------------------------------------------------------------------------
-// 🚨 핵심 수정 로직
+// 🚨 핵심 수정 및 정렬 로직
 // ---------------------------------------------------------------------------
+
 // 카테고리별 뉴스를 불러온 후 최신순(내림차순)으로 정렬하여 반환하는 함수
 export function getFallbackNews(category: string): NewsItem[] {
   const news = FALLBACK_NEWS_DATA[category] || FALLBACK_NEWS_DATA['top-news'] || [];
@@ -69,3 +81,20 @@ export function getFallbackNews(category: string): NewsItem[] {
     return timeB - timeA; // 최신 날짜가 위로 오도록 정렬
   });
 }
+
+// LatestNews 컴포넌트(`components/latest-news.tsx`)에서 참조하는 NEWS_DATA 동적 변환 함수
+export const NEWS_DATA: PiNewsV2Item[] = getFallbackNews('top-news').map((item) => {
+  // imageUrl이 유효한 HTTP/HTTPS URL인지 검증 (텍스트 찌꺼기 방지)
+  const isValidImg = item.imageUrl && (item.imageUrl.startsWith('http://') || item.imageUrl.startsWith('https://'));
+
+  return {
+    id: item.id,
+    title: item.title,
+    content: item.description || '',
+    category: item.category || 'NEWS',
+    author: item.source || 'GPNR',
+    publishedAt: item.publishedAt,
+    imageUrl: isValidImg ? item.imageUrl : undefined,
+    sourceUrl: item.url || '#'
+  };
+});
