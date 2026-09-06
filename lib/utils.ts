@@ -64,3 +64,57 @@ export function stripHtml(html: string) {
     .replace(/&amp;/g, "&")
     .trim();
 }
+
+/**
+ * 5. [신규 추가] Pi Network 최신 SDK 대응 뉴스 공유 유틸리티 함수
+ * - Pi Browser 환경일 경우: Pi.shareFile API 우선 사용 (이미지/파일 지원)
+ * - 일반 모바일/웹 환경일 경우: navigator.share 또는 클립보드 복사(Fallback) 사용
+ */
+export interface ShareNewsOptions {
+  title: string;
+  text?: string;
+  url: string;
+  file?: File;
+}
+
+export async function shareNews(options: ShareNewsOptions): Promise<boolean> {
+  const { title, text, url, file } = options;
+  const shareText = text ? `${text}\n${url}` : url;
+
+  try {
+    // 1. Pi Browser 환경 및 Pi.shareFile API 지원 확인
+    if (typeof window !== 'undefined' && (window as any).Pi && typeof (window as any).Pi.shareFile === 'function' && file) {
+      await (window as any).Pi.shareFile({
+        file: file,
+        title: title,
+        text: shareText,
+      });
+      return true;
+    }
+
+    // 2. 일반 모바일 브라우저 Web Share API 사용
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      const shareData: ShareData = {
+        title: title,
+        text: text,
+        url: url,
+      };
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        shareData.files = [file];
+      }
+      await navigator.share(shareData);
+      return true;
+    }
+
+    // 3. 대체(Fallback): URL 클립보드 복사
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(`${title}\n${url}`);
+      alert("링크가 클립보드에 복사되었습니다.");
+      return true;
+    }
+  } catch (error) {
+    console.error("공유 중 오류가 발생했습니다:", error);
+  }
+
+  return false;
+}
