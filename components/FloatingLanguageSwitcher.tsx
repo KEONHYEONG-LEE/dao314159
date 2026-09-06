@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Globe, ChevronUp } from "lucide-react";
+import { usePiStorage } from "@/hooks/usePiStorage";
 
 // 지원할 다국어 리스트 정의
 const LANGUAGES = [
@@ -15,12 +16,11 @@ const LANGUAGES = [
 
 export function FloatingLanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState("en");
+  // 파이 브라우저 최적화 로컬 스토리지 Hook 사용
+  const [currentLang, setCurrentLang, isLoaded] = usePiStorage<string>("gpnr_lang", "en");
 
   useEffect(() => {
-    // 초기 저장된 언어 로드
-    const savedLang = localStorage.getItem("gpnr_lang") || "en";
-    setCurrentLang(savedLang);
+    if (!isLoaded) return;
 
     // 구글 번역 위젯 및 외부 스위처 아이콘 완벽 숨김 처리
     const style = document.createElement("style");
@@ -49,20 +49,21 @@ export function FloatingLanguageSwitcher() {
     document.head.appendChild(style);
 
     // 영어가 아닐 때 구글 번역 셀렉터 제어
-    if (savedLang !== "en") {
+    if (currentLang !== "en") {
       const timer = setTimeout(() => {
         const combo = document.querySelector(".goog-te-combo") as HTMLSelectElement;
         if (combo) {
-          combo.value = savedLang;
+          combo.value = currentLang;
           combo.dispatchEvent(new Event("change"));
         }
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [currentLang, isLoaded]);
 
   const handleLanguageChange = (langCode: string) => {
-    localStorage.setItem("gpnr_lang", langCode);
+    // 파이 스토리지 및 일반 LocalStorage 동시 업데이트
+    setCurrentLang(langCode);
     
     // 쿠키 제거
     const domains = [window.location.hostname, "." + window.location.hostname, ""];
@@ -81,7 +82,6 @@ export function FloatingLanguageSwitcher() {
       if (combo) {
         combo.value = langCode;
         combo.dispatchEvent(new Event("change"));
-        setCurrentLang(langCode);
       }
       
       window.location.reload();
