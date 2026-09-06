@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ExternalLink, ChevronDown, ChevronUp, Lock } from "lucide-react";
+import { ExternalLink, ChevronDown, ChevronUp, Lock, Share2 } from "lucide-react";
 import { NEWS_DATA } from "@/lib/pi-news-v2";
+import { shareNews, stripHtml } from "@/lib/utils";
 
 export function LatestNews() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -66,6 +67,25 @@ export function LatestNews() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  // 공유 버튼 클릭 로직
+  const handleShareClick = async (e: React.MouseEvent, news: any) => {
+    e.stopPropagation();
+    if (!isLoggedIn) {
+      alert("로그인 후 이용해 주세요.");
+      return;
+    }
+
+    const title = getText(news.title);
+    const rawContent = getText(news.content);
+    const cleanContent = stripHtml(rawContent);
+
+    await shareNews({
+      title: title,
+      text: cleanContent.slice(0, 100) + "...",
+      url: news.sourceUrl,
+    });
+  };
+
   return (
     <section className="py-6 px-1 bg-[#0a0a0a]">
       <div className="flex flex-col">
@@ -105,7 +125,7 @@ export function LatestNews() {
                   </div>
                 </div>
 
-                {/* 썸네일 영역 (유효한 이미지 URL이 있고 엑박이 나지 않은 경우에만 표시) */}
+                {/* 썸네일 영역 */}
                 {hasValidImage && expandedId !== news.id && (
                   <div className="w-[70px] h-[70px] rounded-lg overflow-hidden bg-slate-800 flex-shrink-0 relative">
                     <img
@@ -143,13 +163,24 @@ export function LatestNews() {
                   </div>
 
                   <div className="mt-8 pt-4 border-t border-white/[0.05] flex justify-between items-center">
-                    <button
-                      onClick={(e) => handleExternalClick(e, news.sourceUrl)}
-                      className="text-[13px] text-blue-400 flex items-center gap-1.5 hover:text-blue-300 transition-colors"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>원문 출처 이동</span>
-                    </button>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={(e) => handleExternalClick(e, news.sourceUrl)}
+                        className="text-[13px] text-blue-400 flex items-center gap-1.5 hover:text-blue-300 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>원문 출처 이동</span>
+                      </button>
+
+                      {/* 공유 버튼 추가 */}
+                      <button
+                        onClick={(e) => handleShareClick(e, news)}
+                        className="text-[13px] text-slate-400 flex items-center gap-1.5 hover:text-blue-400 transition-colors"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>공유하기</span>
+                      </button>
+                    </div>
 
                     <button
                       onClick={(e) => {
