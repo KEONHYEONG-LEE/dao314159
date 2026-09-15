@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Header } from "../components/Header"; 
 import { CategoryTabs } from "../components/category-tabs";
-import NewsFeed from "../components/news-feed"; // 👈 NewsFeed 컴포넌트 호출로 변경
+import { CategoryNews } from "../components/category-news";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { translations } from "../lib/translations";
 import { NEWS_CATEGORIES } from "../lib/categories";
@@ -249,9 +249,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* 👈 요약본, 공유, 카운팅 기능이 적용된 NewsFeed 로드 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
-        <NewsFeed selectedCategory={activeCategory} />
+        <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
       </div>
 
       <div className="fixed bottom-4 right-4 z-[99]">
