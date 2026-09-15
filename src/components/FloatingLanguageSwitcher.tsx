@@ -16,13 +16,24 @@ const LANGUAGES = [
 export function FloatingLanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentLang, setCurrentLang, isLoaded] = usePiStorage<string>("gpnr_lang", "en");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    setMounted(true);
+  }, []);
 
-    const style = document.createElement("style");
-    style.innerHTML = `.goog-te-banner-frame, #goog-gt-tt, .goog-te-balloon-frame, .VIpgJd-yD22b-y03Lfd, .VIpgJd-yD22b-y03Lfd-v922d, .goog-te-gadget-icon, .goog-te-gadget, #google_translate_element, .skiptranslate, iframe.goog-te-banner-frame { display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; width: 0 !important; height: 0 !important; position: absolute !important; left: -9999px !important; } body { top: 0 !important; position: static !important; }`;
-    document.head.appendChild(style);
+  useEffect(() => {
+    if (!isLoaded || !mounted) return;
+
+    // style 태그 중복 생성 방지 및 clean-up 처리
+    const styleId = "gpnr-google-translate-style";
+    let style = document.getElementById(styleId) as HTMLStyleElement;
+    if (!style) {
+      style = document.createElement("style");
+      style.id = styleId;
+      style.innerHTML = `.goog-te-banner-frame, #goog-gt-tt, .goog-te-balloon-frame, .VIpgJd-yD22b-y03Lfd, .VIpgJd-yD22b-y03Lfd-v922d, .goog-te-gadget-icon, .goog-te-gadget, #google_translate_element, .skiptranslate, iframe.goog-te-banner-frame { display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; width: 0 !important; height: 0 !important; position: absolute !important; left: -9999px !important; } body { top: 0 !important; position: static !important; }`;
+      document.head.appendChild(style);
+    }
 
     if (currentLang !== "en") {
       const timer = setTimeout(() => {
@@ -34,35 +45,47 @@ export function FloatingLanguageSwitcher() {
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [currentLang, isLoaded]);
+  }, [currentLang, isLoaded, mounted]);
 
   const handleLanguageChange = (langCode: string) => {
     setCurrentLang(langCode);
-    localStorage.setItem("gpnr_lang", langCode);
-    window.dispatchEvent(new Event("languageChange"));
+    try {
+      localStorage.setItem("gpnr_lang", langCode);
+    } catch (e) {
+      console.error(e);
+    }
+    
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("languageChange"));
 
-    const domains = [window.location.hostname, "." + window.location.hostname, ""];
-    domains.forEach(domain => {
-      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${domain ? ` domain=${domain};` : ""}`;
-      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/html;${domain ? ` domain=${domain};` : ""}`;
-    });
+      const domains = [window.location.hostname, "." + window.location.hostname, ""];
+      domains.forEach(domain => {
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${domain ? ` domain=${domain};` : ""}`;
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/html;${domain ? ` domain=${domain};` : ""}`;
+      });
 
-    if (langCode === 'en') {
-      window.location.href = window.location.origin;
-    } else {
-      document.cookie = `googtrans=/en/${langCode}; path=/;`;
-      document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname};`;
+      if (langCode === 'en') {
+        window.location.href = window.location.origin;
+      } else {
+        document.cookie = `googtrans=/en/${langCode}; path=/;`;
+        document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname};`;
 
-      const combo = document.querySelector(".goog-te-combo") as HTMLSelectElement;
-      if (combo) {
-        combo.value = langCode;
-        combo.dispatchEvent(new Event("change"));
+        const combo = document.querySelector(".goog-te-combo") as HTMLSelectElement;
+        if (combo) {
+          combo.value = langCode;
+          combo.dispatchEvent(new Event("change"));
+        }
+
+        window.location.reload();
       }
-
-      window.location.reload();
     }
     setIsOpen(false);
   };
+
+  // 마운트 전이나 storage 로드 전 하이드레이션 에러 방지
+  if (!mounted || !isLoaded) {
+    return null;
+  }
 
   const currentLabel = LANGUAGES.find(l => l.code === currentLang)?.label || "English";
 
