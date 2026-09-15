@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { shareNews, stripHtml } from "@/lib/utils";
 
 export interface NewsItem {
   id: string;
@@ -32,6 +31,20 @@ const EN_CATEGORY_MAP: Record<string, string> = {
   WHITEPAPER: "Whitepaper", LEGAL: "Regulations"
 };
 
+// 안전한 HTML 태그 제거 함수
+function safeStripHtml(text: string | undefined | null): string {
+  if (!text) return "";
+  return String(text)
+    .replace(/<[^>]*>?/gm, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .trim();
+}
+
 export default function NewsFeed({ selectedCategory }: { selectedCategory: string }) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +56,6 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
   useEffect(() => {
     setMounted(true);
     
-    // localStorage 안전 접근
     try {
       const saved = localStorage.getItem('gpnr_status');
       if (saved) setStatus(JSON.parse(saved));
@@ -58,8 +70,9 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
       setLoading(true);
       try {
         const response = await fetch(`/api/fetch-news?category=${selectedCategory}`);
+        if (!response.ok) throw new Error("Network response was not ok");
         const allData = await response.json();
-        // 배열 여부 검사 추가
+        
         if (Array.isArray(allData)) {
           setNews(allData);
         } else {
@@ -75,9 +88,14 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     fetchLatestNews();
 
     const handleLangChange = () => {
-      const updatedLang = localStorage.getItem("gpnr_lang") || localStorage.getItem("language") || "en";
-      setCurrentLang(updatedLang);
+      try {
+        const updatedLang = localStorage.getItem("gpnr_lang") || localStorage.getItem("language") || "en";
+        setCurrentLang(updatedLang);
+      } catch (e) {
+        console.error("Lang change error:", e);
+      }
     };
+
     window.addEventListener("storage", handleLangChange);
     window.addEventListener("languageChange", handleLangChange);
 
@@ -88,6 +106,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
   }, [selectedCategory]);
 
   const updateStatus = (id: string, key: 'read' | 'star' | 'heart') => {
+    if (!id) return;
     const newStatus = {
       ...status,
       [id]: {
@@ -107,62 +126,76 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
 
   const handleShare = async (item: NewsItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    const cleanContent = stripHtml(item.content || item.title);
-    await shareNews({
-      title: item.title,
+    const cleanContent = safeStripHtml(item.content || item.title);
+    const shareData = {
+      title: item.title || "GPNR News",
       text: cleanContent.slice(0, 100) + '...',
-      url: item.url
-    });
+      url: item.url || typeof window !== 'undefined' ? window.location.href : ''
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${shareData.title}\n${shareData.url}`);
+        alert(currentLang === 'ko' ? "링크가 클립보드에 복사되었습니다." : "Link copied to clipboard.");
+      }
+    } catch (err) {
+      console.error("Share error:", err);
+    }
   };
 
   if (!mounted) {
-    return <div className="py-12 text-center text-gray-500">Loading...</div>;
+    return <div className="py-12 text-center text-slate-500 text-xs">Loading feed...</div>;
   }
 
   return (
     <div className="w-full space-y-4">
       {loading ? (
-        <div className="py-12 text-center text-gray-500">
+        <div className="py-12 text-center text-slate-400 text-xs">
           {currentLang === 'ko' ? "뉴스를 불러오는 중입니다..." : "Loading news..."}
         </div>
       ) : !Array.isArray(news) || news.length === 0 ? (
-        <div className="py-12 text-center text-gray-500">
+        <div className="py-12 text-center text-slate-400 text-xs">
           {currentLang === 'ko' ? "등록된 뉴스가 없습니다." : "No news available."}
         </div>
       ) : (
-        news.map((item) => {
-          const itemStatus = status[item.id] || { read: false, star: false, heart: false };
-          const isExpanded = expandedId === item.id;
+        news.map((item, index) => {
+          const itemId = item.id || `news-item-${index}`;
+          const itemStatus = status[itemId] || { read: false, star: false, heart: false };
+          const isExpanded = expandedId === itemId;
+          
+          const rawCat = (item.category || "ALL").toUpperCase();
           const displayCategory = currentLang === 'ko'
-            ? (CATEGORY_MAP[item.category] || item.category)
-            : (EN_CATEGORY_MAP[item.category] || item.category);
+            ? (CATEGORY_MAP[rawCat] || item.category || "뉴스")
+            : (EN_CATEGORY_MAP[rawCat] || item.category || "News");
 
           const imgUrl = item.imageUrl || item.image || item.urlToImage;
 
           return (
             <div
-              key={item.id}
-              className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer bg-white dark:bg-gray-800 ${
-                itemStatus.read ? "opacity-75 bg-gray-50 dark:bg-gray-900" : "border-gray-200 dark:border-gray-700"
+              key={itemId}
+              className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer bg-slate-800/80 hover:bg-slate-800 ${
+                itemStatus.read ? "opacity-75 border-slate-700/50" : "border-slate-700"
               }`}
               onClick={() => {
-                updateStatus(item.id, 'read');
-                setExpandedId(isExpanded ? null : item.id);
+                updateStatus(itemId, 'read');
+                setExpandedId(isExpanded ? null : itemId);
               }}
             >
               <div className="flex justify-between items-start gap-4">
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
+                    <span className="px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-purple-900/40 text-purple-300 border border-purple-700/30">
                       {displayCategory}
                     </span>
-                    <span className="text-xs text-gray-400">{item.source}</span>
-                    <span className="text-xs text-gray-400">•</span>
-                    <span className="text-xs text-gray-400">{item.date}</span>
+                    <span className="text-[11px] text-slate-400">{item.source || "GPNR"}</span>
+                    <span className="text-[11px] text-slate-500">•</span>
+                    <span className="text-[11px] text-slate-400">{item.date || ""}</span>
                   </div>
 
-                  <h3 className={`font-semibold text-base leading-snug ${
-                    itemStatus.read ? "text-gray-600 dark:text-gray-400" : "text-gray-900 dark:text-white"
+                  <h3 className={`font-semibold text-sm leading-snug ${
+                    itemStatus.read ? "text-slate-400" : "text-slate-100"
                   }`}>
                     {item.title}
                   </h3>
@@ -171,8 +204,8 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                 {imgUrl && (
                   <img
                     src={imgUrl}
-                    alt={item.title}
-                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                    alt={item.title || "News Image"}
+                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0 bg-slate-900"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = 'none';
                     }}
@@ -181,31 +214,33 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
               </div>
 
               {isExpanded && (
-                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-3">
-                  <p>{stripHtml(item.content || item.title)}</p>
+                <div className="mt-4 pt-4 border-t border-slate-700/60 text-xs text-slate-300 leading-relaxed space-y-3">
+                  <p>{safeStripHtml(item.content || item.title)}</p>
                   <div>
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-purple-600 dark:text-purple-400 font-medium hover:underline text-xs"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {currentLang === 'ko' ? "원문 기사 읽기 →" : "Read Full Article →"}
-                    </a>
+                    {item.url && (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-purple-400 font-medium hover:underline text-xs"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {currentLang === 'ko' ? "원문 기사 읽기 →" : "Read Full Article →"}
+                      </a>
+                    )}
                   </div>
                 </div>
               )}
 
-              <div className="mt-3 pt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+              <div className="mt-3 pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/60">
                 <div className="flex items-center gap-4">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      updateStatus(item.id, 'heart');
+                      updateStatus(itemId, 'heart');
                     }}
-                    className={`flex items-center gap-1 hover:text-red-500 transition-colors ${
-                      itemStatus.heart ? "text-red-500" : ""
+                    className={`flex items-center gap-1 hover:text-rose-400 transition-colors ${
+                      itemStatus.heart ? "text-rose-500" : ""
                     }`}
                   >
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -216,10 +251,10 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      updateStatus(item.id, 'star');
+                      updateStatus(itemId, 'star');
                     }}
-                    className={`flex items-center gap-1 hover:text-yellow-500 transition-colors ${ 
-                      itemStatus.star ? "text-yellow-500" : "" 
+                    className={`flex items-center gap-1 hover:text-amber-400 transition-colors ${ 
+                      itemStatus.star ? "text-amber-400" : "" 
                     }`}
                   >
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -230,7 +265,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
 
                 <button
                   onClick={(e) => handleShare(item, e)}
-                  className="flex items-center gap-1 hover:text-purple-600 dark:hover:text-purple-400 transition-colors p-1"
+                  className="flex items-center gap-1 hover:text-purple-400 transition-colors p-1"
                   title={currentLang === 'ko' ? "공유하기" : "Share"}
                 >
                   <svg className="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
