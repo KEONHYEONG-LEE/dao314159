@@ -2,7 +2,9 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { NEWS_CATEGORIES } from "@/lib/categories";
+
+// 외부 파일 불러오기 시도 (오류 방어)
+import * as CategoriesModule from "@/lib/categories";
 
 interface CategoryTabsProps {
   selectedCategory: string;
@@ -10,30 +12,60 @@ interface CategoryTabsProps {
   language?: string;
 }
 
+// 기본 카테고리 빽업 (NEWS_CATEGORIES 로드 실패 대비)
+const FALLBACK_CATEGORIES = [
+  { id: "top-news", name: "주요뉴스", enName: "Top News" },
+  { id: "mainnet", name: "메인넷", enName: "Mainnet" },
+  { id: "node", name: "노드", enName: "Node" },
+  { id: "mining", name: "채굴", enName: "Mining" },
+  { id: "wallet", name: "지갑", enName: "Wallet" },
+  { id: "browser", name: "브라우저", enName: "Browser" },
+  { id: "roadmap", name: "로드맵", enName: "Roadmap" },
+  { id: "whitepaper", name: "백서", enName: "Whitepaper" },
+  { id: "community", name: "커뮤니티", enName: "Community" },
+  { id: "commerce", name: "커머스", enName: "Commerce" },
+  { id: "kyc", name: "KYC", enName: "KYC" },
+  { id: "developer", name: "개발자", enName: "Developer" },
+  { id: "ecosystem", name: "부동산", enName: "Real Estate" },
+  { id: "outlook", name: "전망시세", enName: "Outlook" },
+  { id: "price", name: "가격", enName: "Price" },
+  { id: "security", name: "보안", enName: "Security" },
+  { id: "legal", name: "관련법규", enName: "Legal" },
+];
+
 export function CategoryTabs({ selectedCategory, onCategoryChange, language }: CategoryTabsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [currentLang, setCurrentLang] = useState(language || "en");
+  const [mounted, setMounted] = useState(false);
 
-  // 외부 language prop 또는 localStorage 다국어 상태 감지
+  // 안전하게 카테고리 목록 확보
+  const categoriesList = Array.isArray((CategoriesModule as any)?.NEWS_CATEGORIES)
+    ? (CategoriesModule as any).NEWS_CATEGORIES
+    : FALLBACK_CATEGORIES;
+
   useEffect(() => {
+    setMounted(true);
     if (language) {
       setCurrentLang(language);
     } else {
-      const savedLang = localStorage.getItem("language") || "en";
-      setCurrentLang(savedLang);
+      try {
+        const savedLang = localStorage.getItem("language") || localStorage.getItem("gpnr_lang") || "en";
+        setCurrentLang(savedLang);
 
-      const handleStorageChange = () => {
-        const updatedLang = localStorage.getItem("language") || "en";
-        setCurrentLang(updatedLang);
-      };
-      window.addEventListener("storage", handleStorageChange);
-      return () => window.removeEventListener("storage", handleStorageChange);
+        const handleStorageChange = () => {
+          const updatedLang = localStorage.getItem("language") || localStorage.getItem("gpnr_lang") || "en";
+          setCurrentLang(updatedLang);
+        };
+        window.addEventListener("storage", handleStorageChange);
+        return () => window.removeEventListener("storage", handleStorageChange);
+      } catch (e) {
+        console.error("Storage read error:", e);
+      }
     }
   }, [language]);
 
-  // 스크롤 위치 감지하여 좌우 화살표 노출 여부 제어
   const handleScroll = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -42,11 +74,11 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
     }
   };
 
-  // 활성화된 탭으로 스무스 스크롤 이동
   useEffect(() => {
+    if (!mounted) return;
+    
     if (scrollRef.current) {
-      // 'all' 카테고리가 들어오면 기본값인 'top-news' 탭으로 맞춤
-      const targetId = selectedCategory === "all" ? "top-news" : selectedCategory;
+      const targetId = selectedCategory === "all" || !selectedCategory ? "top-news" : selectedCategory;
       const activeTab = scrollRef.current.querySelector(`[data-id="${targetId}"]`) as HTMLElement;
       
       if (activeTab) {
@@ -56,9 +88,8 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
       }
     }
     handleScroll();
-  }, [selectedCategory]);
+  }, [selectedCategory, mounted]);
 
-  // 좌우 화살표 클릭 시 스크롤
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
       const scrollAmount = 240;
@@ -78,8 +109,6 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
   return (
     <div className="w-full bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/[0.05] shadow-2xl">
       <div className="mx-auto max-w-7xl relative px-2">
-        
-        {/* 왼쪽 화살표 */}
         {showLeftArrow && (
           <div className="absolute left-0 top-0 bottom-0 w-14 z-10 flex items-center justify-start bg-gradient-to-r from-[#0f172a] via-[#0f172a]/80 to-transparent pointer-events-none">
             <button
@@ -92,14 +121,12 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
           </div>
         )}
 
-        {/* 카테고리 탭 리스트 */}
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex gap-1.5 py-3.5 px-1 overflow-x-auto no-scrollbar scroll-smooth notranslate"
+          className="flex gap-1.5 py-3.5 px-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth"
         >
-          {NEWS_CATEGORIES.map((category) => {
-            // selectedCategory가 'all'이거나 빈값일 경우 'top-news'를 active 처리
+          {categoriesList.map((category: any) => {
             const isSelected = 
               selectedCategory === category.id || 
               ((selectedCategory === "all" || !selectedCategory) && category.id === "top-news");
@@ -110,20 +137,18 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
                 data-id={category.id}
                 type="button"
                 onClick={() => onCategoryChange(category.id)}
-                translate="no"
                 className={`px-4 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all duration-300 border ${
                   isSelected
-                    ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.4)] scale-105"
+                    ? "bg-purple-600 text-white border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.4)] scale-105"
                     : "bg-slate-800/40 text-slate-400 border-white/[0.05] hover:border-slate-600 hover:text-slate-200"
                 }`}
               >
-                {currentLang === "ko" ? category.name : category.enName}
+                {currentLang === "ko" ? (category.name || category.label) : (category.enName || category.enLabel || category.name)}
               </button>
             );
           })}
         </div>
 
-        {/* 오른쪽 화살표 */}
         {showRightArrow && (
           <div className="absolute right-0 top-0 bottom-0 w-14 z-10 flex items-center justify-end bg-gradient-to-l from-[#0f172a] via-[#0f172a]/80 to-transparent pointer-events-none">
             <button
@@ -136,11 +161,6 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
           </div>
         )}
       </div>
-
-      <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </div>
   );
 }
