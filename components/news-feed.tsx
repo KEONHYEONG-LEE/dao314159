@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 
 import { useState, useEffect } from "react";
 import { shareNews, stripHtml } from "@/lib/utils";
@@ -6,17 +6,16 @@ import { shareNews, stripHtml } from "@/lib/utils";
 export interface NewsItem {
   id: string;
   category: string;
-  title: string;      
-  imageUrl?: string;  
-  image?: string;       
-  urlToImage?: string;  
+  title: string;
+  imageUrl?: string;
+  image?: string;
+  urlToImage?: string;
   url: string;
   source: string;
   date: string;
-  content?: string; 
+  content?: string;
 }
 
-// 한국어 카테고리 매핑
 const CATEGORY_MAP: Record<string, string> = {
   ALL: "주요뉴스", MAINNET: "메인넷", COMMUNITY: "커뮤니티", COMMERCE: "커머스",
   NODE: "노드", MINING: "채굴", WALLET: "지갑", BROWSER: "브라우저",
@@ -25,7 +24,6 @@ const CATEGORY_MAP: Record<string, string> = {
   WHITEPAPER: "백서", LEGAL: "관련법규"
 };
 
-// 기본 영어 모드용 카테고리 매핑
 const EN_CATEGORY_MAP: Record<string, string> = {
   ALL: "Top News", MAINNET: "Mainnet", COMMUNITY: "Community", COMMERCE: "Commerce",
   NODE: "Node", MINING: "Mining", WALLET: "Wallet", BROWSER: "Browser",
@@ -35,24 +33,23 @@ const EN_CATEGORY_MAP: Record<string, string> = {
 };
 
 export default function NewsFeed({ selectedCategory }: { selectedCategory: string }) {
-  const [news, setNews] = useState<NewsItem[]>([]); 
+  const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<Record<string, { read: boolean; star: boolean; heart: boolean }>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [currentLang, setCurrentLang] = useState("en"); // 기본 영어 모드 세팅
+  const [currentLang, setCurrentLang] = useState("en");
 
   useEffect(() => {
     const saved = localStorage.getItem('gpnr_status');
     if (saved) setStatus(JSON.parse(saved));
 
-    // 현재 앱 언어 감지
-    const targetLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en";
+    const targetLang = localStorage.getItem("gpnr_lang") || localStorage.getItem("language") || "en";
     setCurrentLang(targetLang);
 
     const fetchLatestNews = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/fetch-news?category=${selectedCategory}`); 
+        const response = await fetch(`/api/fetch-news?category=${selectedCategory}`);
         const allData = await response.json();
         setNews(allData || []);
       } catch (error) {
@@ -63,9 +60,8 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     };
     fetchLatestNews();
 
-    // 언어 실시간 변경 감지 이벤트 바인딩
     const handleLangChange = () => {
-      const updatedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en";
+      const updatedLang = localStorage.getItem("gpnr_lang") || localStorage.getItem("language") || "en";
       setCurrentLang(updatedLang);
     };
     window.addEventListener("storage", handleLangChange);
@@ -77,7 +73,6 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     };
   }, [selectedCategory]);
 
-  // 상태 변경 저장 함수 (읽음, 별표, 하트)
   const updateStatus = (id: string, key: 'read' | 'star' | 'heart') => {
     const newStatus = {
       ...status,
@@ -92,14 +87,12 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     localStorage.setItem('gpnr_status', JSON.stringify(newStatus));
   };
 
-  // 뉴스 공유 핸들러 함수 (Pi.shareFile 및 fallback 연동)
   const handleShare = async (item: NewsItem, e: React.MouseEvent) => {
-    e.stopPropagation(); // 기사 클릭 이벤트 전파 방지
-    
+    e.stopPropagation();
     const cleanContent = stripHtml(item.content || item.title);
     await shareNews({
       title: item.title,
-      text: cleanContent.slice(0, 100) + '...', // 공유 내용 요약
+      text: cleanContent.slice(0, 100) + '...',
       url: item.url
     });
   };
@@ -118,15 +111,15 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
         news.map((item) => {
           const itemStatus = status[item.id] || { read: false, star: false, heart: false };
           const isExpanded = expandedId === item.id;
-          const displayCategory = currentLang === 'ko' 
+          const displayCategory = currentLang === 'ko'
             ? (CATEGORY_MAP[item.category] || item.category)
             : (EN_CATEGORY_MAP[item.category] || item.category);
 
           const imgUrl = item.imageUrl || item.image || item.urlToImage;
 
           return (
-            <div 
-              key={item.id} 
+            <div
+              key={item.id}
               className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer bg-white dark:bg-gray-800 ${
                 itemStatus.read ? "opacity-75 bg-gray-50 dark:bg-gray-900" : "border-gray-200 dark:border-gray-700"
               }`}
@@ -145,7 +138,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                     <span className="text-xs text-gray-400">•</span>
                     <span className="text-xs text-gray-400">{item.date}</span>
                   </div>
-                  
+
                   <h3 className={`font-semibold text-base leading-snug ${
                     itemStatus.read ? "text-gray-600 dark:text-gray-400" : "text-gray-900 dark:text-white"
                   }`}>
@@ -154,9 +147,9 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                 </div>
 
                 {imgUrl && (
-                  <img 
-                    src={imgUrl} 
-                    alt={item.title} 
+                  <img
+                    src={imgUrl}
+                    alt={item.title}
                     className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = 'none';
@@ -165,14 +158,13 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                 )}
               </div>
 
-              {/* 기사 확장 및 본문 표시 */}
               {isExpanded && (
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-3">
                   <p>{stripHtml(item.content || item.title)}</p>
                   <div>
-                    <a 
-                      href={item.url} 
-                      target="_blank" 
+                    <a
+                      href={item.url}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center text-purple-600 dark:text-purple-400 font-medium hover:underline text-xs"
                       onClick={(e) => e.stopPropagation()}
@@ -183,10 +175,9 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                 </div>
               )}
 
-              {/* 하단 아이콘 (하트, 별표, 공유) */}
               <div className="mt-3 pt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-4">
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       updateStatus(item.id, 'heart');
@@ -200,7 +191,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                     </svg>
                   </button>
 
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       updateStatus(item.id, 'star');
@@ -215,8 +206,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                   </button>
                 </div>
 
-                {/* 공유 버튼 */}
-                <button 
+                <button
                   onClick={(e) => handleShare(item, e)}
                   className="flex items-center gap-1 hover:text-purple-600 dark:hover:text-purple-400 transition-colors p-1"
                   title={currentLang === 'ko' ? "공유하기" : "Share"}
