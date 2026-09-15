@@ -1,297 +1,247 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { 
-  Flame, Globe, Tv, Zap, Wallet, Compass, Map, FileText, 
-  Users, ShoppingCart, ShieldCheck, Code, Home, TrendingUp, 
-  DollarSign, Shield, Gavel, Check, Star, Heart 
-} from "lucide-react";
-import { NEWS_CATEGORIES } from "@/lib/categories";
+import { useState, useEffect } from "react";
 
-interface NewsItem {
+export interface NewsItem {
   id: string;
   category: string;
-  title: { ko: string; en: string } | string;
-  content?: { ko: string; en: string } | string;
-  author?: string;
-  source?: string;
-  sourceUrl?: string;
-  url?: string;
-  publishedAt?: string;
-  date?: string;
+  title: string;
   imageUrl?: string;
   image?: string;
+  urlToImage?: string;
+  url: string;
+  source: string;
+  date: string;
+  content?: string;
+  summary?: string;
+  views?: number;
 }
 
-// Lucide 아이콘 매핑
-const CATEGORY_ICONS: { [key: string]: React.ReactNode } = {
-  "top-news": <Flame className="w-4 h-4 text-rose-500" />,
-  mainnet: <Globe className="w-4 h-4 text-blue-500" />,
-  node: <Tv className="w-4 h-4 text-indigo-400" />,
-  mining: <Zap className="w-4 h-4 text-yellow-500" />,
-  wallet: <Wallet className="w-4 h-4 text-purple-500" />,
-  browser: <Compass className="w-4 h-4 text-cyan-500" />,
-  roadmap: <Map className="w-4 h-4 text-orange-500" />,
-  whitepaper: <FileText className="w-4 h-4 text-gray-400" />,
-  community: <Users className="w-4 h-4 text-teal-400" />,
-  commerce: <ShoppingCart className="w-4 h-4 text-pink-500" />,
-  kyc: <ShieldCheck className="w-4 h-4 text-emerald-500" />,
-  developer: <Code className="w-4 h-4 text-blue-400" />,
-  realestate: <Home className="w-4 h-4 text-lime-500" />,
-  outlook: <TrendingUp className="w-4 h-4 text-violet-500" />,
-  price: <DollarSign className="w-4 h-4 text-amber-500" />,
-  security: <Shield className="w-4 h-4 text-red-500" />,
-  legal: <Gavel className="w-4 h-4 text-slate-400" />
+const CATEGORY_MAP: Record<string, string> = {
+  ALL: "주요뉴스", MAINNET: "메인넷", COMMUNITY: "커뮤니티", COMMERCE: "커머스",
+  NODE: "노드", MINING: "채굴", WALLET: "지갑", BROWSER: "브라우저",
+  KYC: "KYC", DEVELOPER: "개발자", ECOSYSTEM: "부동산", LISTING: "전망시세",
+  OUTLOOK: "전망시세", PRICE: "가격", SECURITY: "보안", EVENT: "주요행사", ROADMAP: "로드맵",
+  WHITEPAPER: "백서", LEGAL: "관련법규"
 };
 
-export function CategoryNews({ 
-  selectedCategory = "top-news", 
-  currentLang = "ko" 
-}: { 
-  selectedCategory?: string; 
-  currentLang?: string;
-}) {
-  const [newsList, setNewsList] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+const EN_CATEGORY_MAP: Record<string, string> = {
+  ALL: "Top News", MAINNET: "Mainnet", COMMUNITY: "Community", COMMERCE: "Commerce",
+  NODE: "Node", MINING: "Mining", WALLET: "Wallet", BROWSER: "Browser",
+  KYC: "KYC", DEVELOPER: "Developers", ECOSYSTEM: "Real Estate", LISTING: "Price Outlook",
+  OUTLOOK: "Price Outlook", PRICE: "Price", SECURITY: "Security", EVENT: "Events", ROADMAP: "Roadmap",
+  WHITEPAPER: "Whitepaper", LEGAL: "Regulations"
+};
 
-  // 반응 상태 관리
-  const [checkedIds, setCheckedIds] = useState<{ [id: string]: boolean }>({});
-  const [starredIds, setStarredIds] = useState<{ [id: string]: boolean }>({});
-  const [likedIds, setLikedIds] = useState<{ [id: string]: boolean }>({});
-
-  const formatDateOnly = (rawDate: string) => {
-    if (!rawDate) return "";
-    if (rawDate.includes("년")) {
-      const match = rawDate.match(/\d{4}년\s*\d{1,2}월\s*\d{1,2}일/);
-      if (match) return match[0];
-    }
-    const dateObj = new Date(rawDate);
-    if (!isNaN(dateObj.getTime())) {
-      const year = dateObj.getFullYear();
-      const month = dateObj.getMonth() + 1;
-      const day = dateObj.getDate();
-      return `${year}년 ${month}월 ${day}일`;
-    }
-    return rawDate.split("T")[0].split(" ")[0];
-  };
+export function CategoryNews({ selectedCategory, currentLang = "en" }: { selectedCategory: string; currentLang?: string }) {
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<Record<string, { read: boolean; star: boolean; heart: boolean; views: number }>>({});
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const savedChecked = localStorage.getItem("gpnr_news_checked");
-      const savedStarred = localStorage.getItem("gpnr_news_starred");
-      const savedLiked = localStorage.getItem("gpnr_news_liked");
-
-      if (savedChecked) setCheckedIds(JSON.parse(savedChecked));
-      if (savedStarred) setStarredIds(JSON.parse(savedStarred));
-      if (savedLiked) setLikedIds(JSON.parse(savedLiked));
-    } catch (error) {
-      console.error("저장된 반응 상태 로드 실패:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    async function fetchRealNews() {
-      setLoading(true);
+    const saved = localStorage.getItem('gpnr_status');
+    if (saved) {
       try {
-        const targetCategory = selectedCategory === "all" ? "top-news" : selectedCategory;
-        const response = await fetch(`/api/fetch-news?category=${targetCategory}&t=${Date.now()}`);
-        const data = await response.json();
-        
-        if (Array.isArray(data)) {
-          const sorted = [...data].sort((a, b) => {
-            const dateARaw = a.publishedAt || a.date || "";
-            const dateBRaw = b.publishedAt || b.date || "";
-
-            const timeA = dateARaw ? new Date(dateARaw).getTime() : 0;
-            const timeB = dateBRaw ? new Date(dateBRaw).getTime() : 0;
-
-            const validA = isNaN(timeA) ? 0 : timeA;
-            const validB = isNaN(timeB) ? 0 : timeB;
-
-            return validB - validA;
-          });
-
-          setNewsList(sorted);
-        } else {
-          setNewsList([]);
-        }
-      } catch (error) {
-        console.error("뉴스 데이터 수집 실패:", error);
-        setNewsList([]);
-      } finally {
-        setLoading(false);
+        setStatus(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
       }
     }
 
-    fetchRealNews();
+    const fetchLatestNews = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/fetch-news?category=${selectedCategory}`);
+        const allData = await response.json();
+        setNews(allData || []);
+      } catch (error) {
+        console.error("데이터 로드 실패:", error);
+      } fontally {
+        setLoading(false);
+      }
+    };
+    fetchLatestNews();
   }, [selectedCategory]);
 
-  const toggleCheck = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
+  const stripHtml = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<\/?[^>]+(>|$)/g, "").trim();
+  };
+
+  const updateStatus = (id: string, key: 'read' | 'star' | 'heart' | 'views') => {
+    const current = status[id] || { read: false, star: false, heart: false, views: 0 };
+    const newStatus = {
+      ...status,
+      [id]: {
+        ...current,
+        read: key === 'read' ? true : current.read,
+        star: key === 'star' ? !current.star : current.star,
+        heart: key === 'heart' ? !current.heart : current.heart,
+        views: key === 'views' ? (current.views || 0) + 1 : current.views
+      }
+    };
+    setStatus(newStatus);
+    localStorage.setItem('gpnr_status', JSON.stringify(newStatus));
+  };
+
+  const handleNewsClick = (id: string) => {
+    updateStatus(id, 'read');
+    updateStatus(id, 'views');
+    setExpandedId(expandedId === id ? null : id);
+  };
+
+  const handleShare = async (item: NewsItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    setCheckedIds((prev) => {
-      const updated = { ...prev, [id]: !prev[id] };
-      localStorage.setItem("gpnr_news_checked", JSON.stringify(updated));
-      return updated;
-    });
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(item.url);
+      setCopiedId(item.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
   };
-
-  const toggleStar = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setStarredIds((prev) => {
-      const updated = { ...prev, [id]: !prev[id] };
-      localStorage.setItem("gpnr_news_starred", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const toggleLike = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setLikedIds((prev) => {
-      const updated = { ...prev, [id]: !prev[id] };
-      localStorage.setItem("gpnr_news_liked", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const getParsedText = (field: any) => {
-    if (!field) return "";
-    if (typeof field === "string") return field;
-    return field[currentLang] || field.en || field.ko || "";
-  };
-
-  // 현재 사용자가 선택한 카테고리 ID 및 메타 정보 추출
-  const activeCategoryId = (selectedCategory === "all" || !selectedCategory) ? "top-news" : selectedCategory;
-  const matchedCategory = NEWS_CATEGORIES.find(c => c.id === activeCategoryId);
-  
-  // 선택된 카테고리의 언어별 타이틀 (한국어/영어 대응)
-  const categoryTitle = currentLang === "ko" 
-    ? (matchedCategory?.name || "주요뉴스") 
-    : (matchedCategory?.enName || "Top News");
-
-  if (loading) {
-    return (
-      <section className="py-8 px-1 bg-[#0f172a] text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500 mb-2"></div>
-        <p className="text-xs text-slate-400 font-medium">최신 실시간 Web2/Web3 뉴스를 불러오는 중입니다...</p>
-      </section>
-    );
-  }
 
   return (
-    <section className="py-2 px-1 bg-[#0f172a]">
-      <div className="flex flex-col">
-        {/* 선택한 카테고리 타이틀 및 아이콘 (Mainnet 선택 시 Mainnet, Top News 선택 시 Top News로 정확히 일치) */}
-        <div className="flex items-center justify-between mb-3 border-b border-white/[0.08] pb-2">
-          <div className="flex items-center gap-2">
-            {CATEGORY_ICONS[activeCategoryId] || <Flame className="w-4 h-4 text-rose-500" />}
-            <h2 className="text-xs font-black text-slate-100 tracking-widest uppercase">
-              {categoryTitle}
-            </h2>
-          </div>
+    <div className="w-full space-y-4">
+      {loading ? (
+        <div className="py-12 text-center text-gray-400 text-sm">
+          {currentLang === 'ko' ? "뉴스를 불러오는 중입니다..." : "Loading news..."}
         </div>
+      ) : news.length === 0 ? (
+        <div className="py-12 text-center text-gray-400 text-sm">
+          {currentLang === 'ko' ? "등록된 뉴스가 없습니다." : "No news available."}
+        </div>
+      ) : (
+        news.map((item) => {
+          const itemStatus = status[item.id] || { read: false, star: false, heart: false, views: 0 };
+          const isExpanded = expandedId === item.id;
+          const displayCategory = currentLang === 'ko'
+            ? (CATEGORY_MAP[item.category] || item.category)
+            : (EN_CATEGORY_MAP[item.category] || item.category);
 
-        {/* 뉴스 리스트 */}
-        {newsList.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 text-xs">
-            현재 카테고리에 뉴스가 없습니다.
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            {newsList.map((article) => {
-              const titleStr = getParsedText(article.title);
-              const sourceStr = article.author || article.source || "GPNR News";
-              const rawDateStr = article.publishedAt || article.date || "";
-              const dateStr = formatDateOnly(rawDateStr);
-              const imageSrc = article.imageUrl || article.image || "https://picsum.photos/id/10/200/200";
-              const targetUrl = article.sourceUrl || article.url || "#";
+          const imgUrl = item.imageUrl || item.image || item.urlToImage;
+          const viewCount = (item.views || 0) + (itemStatus.views || 0);
 
-              const isChecked = !!checkedIds[article.id];
-              const isStarred = !!starredIds[article.id];
-              const isLiked = !!likedIds[article.id];
+          return (
+            <div
+              key={item.id}
+              className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer bg-[#1e293b] border-slate-700/80 hover:border-purple-500/50 ${
+                itemStatus.read ? "opacity-85" : ""
+              }`}
+              onClick={() => handleNewsClick(item.id)}
+            >
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-purple-900/50 text-purple-300 border border-purple-700/30">
+                      {displayCategory}
+                    </span>
+                    <span className="text-xs text-slate-400">{item.source}</span>
+                    <span className="text-xs text-slate-500">•</span>
+                    <span className="text-xs text-slate-400">{item.date}</span>
+                  </div>
 
-              return (
-                <a
-                  key={article.id}
-                  href={targetUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block border-b border-white/[0.05] last:border-0"
+                  <h3 className={`font-semibold text-base leading-snug ${
+                    itemStatus.read ? "text-slate-300" : "text-white"
+                  }`}>
+                    {item.title}
+                  </h3>
+                </div>
+
+                {imgUrl && (
+                  <img
+                    src={imgUrl}
+                    alt={item.title}
+                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-slate-700"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* 1. 클릭 시 펼쳐지는 AI 요약본 영역 */}
+              {isExpanded && (
+                <div className="mt-4 pt-4 border-t border-slate-700/80 text-sm text-slate-300 leading-relaxed space-y-3 bg-slate-900/60 p-3 rounded-lg border">
+                  <p className="font-semibold text-purple-400 text-xs">📌 AI 핵심 요약본</p>
+                  <p className="text-xs text-slate-200">{stripHtml(item.summary || item.content || item.title)}</p>
+                  <div>
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-purple-400 hover:text-purple-300 font-semibold text-xs underline mt-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {currentLang === 'ko' ? "원문 기사 보러가기 →" : "Read Full Article →"}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. 카운팅 및 복사/전달 기능 바 */}
+              <div className="mt-3 pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800">
+                <div className="flex items-center gap-4">
+                  {/* 좋아요 카운팅 */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateStatus(item.id, 'heart');
+                    }}
+                    className={`flex items-center gap-1 hover:text-rose-400 transition-colors ${
+                      itemStatus.heart ? "text-rose-500 font-bold" : ""
+                    }`}
+                  >
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    <span>{itemStatus.heart ? 1 : 0}</span>
+                  </button>
+
+                  {/* 즐겨찾기 */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateStatus(item.id, 'star');
+                    }}
+                    className={`flex items-center gap-1 hover:text-amber-400 transition-colors ${
+                      itemStatus.star ? "text-amber-400 font-bold" : ""
+                    }`}
+                  >
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                    </svg>
+                  </button>
+
+                  {/* 조회수 카운팅 */}
+                  <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                    👁️ {viewCount}
+                  </span>
+                </div>
+
+                {/* 3. 주소 링크 복사/전달 */}
+                <button
+                  onClick={(e) => handleShare(item, e)}
+                  className="flex items-center gap-1 hover:text-purple-300 transition-colors p-1"
+                  title={currentLang === 'ko' ? "링크 복사" : "Copy Link"}
                 >
-                  <article className="flex gap-4 py-4 items-center">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-[14px] font-semibold text-slate-200 leading-snug line-clamp-2 group-hover:text-blue-400 transition-colors mb-2">
-                        {titleStr}
-                      </h3>
-                      
-                      <div className="flex items-center justify-between gap-2 mt-3">
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 whitespace-nowrap">
-                          <span className="text-blue-500 font-bold">{sourceStr}</span>
-                          <span>•</span>
-                          <span>{dateStr}</span>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={(e) => toggleCheck(e, article.id)}
-                            title="체크 표시"
-                            className="p-0.5 transition-transform active:scale-125"
-                          >
-                            {isChecked ? (
-                              <Check className="w-4 h-4 text-amber-700 stroke-[3]" />
-                            ) : (
-                              <div className="w-3.5 h-3.5 rounded-full border border-slate-600 hover:border-slate-400" />
-                            )}
-                          </button>
-
-                          <button
-                            onClick={(e) => toggleStar(e, article.id)}
-                            title="즐겨찾기"
-                            className="p-0.5 transition-transform active:scale-125"
-                          >
-                            <Star
-                              className={`w-4 h-4 ${
-                                isStarred
-                                  ? "text-yellow-400 fill-yellow-400"
-                                  : "text-slate-600 hover:text-slate-400"
-                              }`}
-                            />
-                          </button>
-
-                          <button
-                            onClick={(e) => toggleLike(e, article.id)}
-                            title="좋아요"
-                            className="p-0.5 transition-transform active:scale-125"
-                          >
-                            <Heart
-                              className={`w-4 h-4 ${
-                                isLiked
-                                  ? "text-rose-500 fill-rose-500"
-                                  : "text-slate-600 hover:text-slate-400"
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-slate-800">
-                      <img
-                        src={imageSrc}
-                        alt={titleStr}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  </article>
-                </a>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </section>
+                  {copiedId === item.id ? (
+                    <span className="text-emerald-400 text-[11px] font-bold">복사완료!</span>
+                  ) : (
+                    <svg className="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="18" cy="5" r="3"></circle>
+                      <circle cx="6" cy="12" r="3"></circle>
+                      <circle cx="18" cy="19" r="3"></circle>
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
   );
 }
