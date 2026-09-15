@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 declare global {
   interface Window {
@@ -19,6 +19,9 @@ export function usePiNetworkAuthentication() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isMounted, setIsMounted] = useState<boolean>(false);
+  
+  // SDK 인증 중복 실행 방지 Flag
+  const isAuthenticatingRef = useRef<boolean>(false);
 
   const handleIncompletePayment = useCallback(async (payment: any) => {
     console.log("미완료 결제 건 발견 및 처리 시도:", payment);
@@ -54,29 +57,42 @@ export function usePiNetworkAuthentication() {
 
     let isSubscribed = true;
 
-    const savedId = localStorage.getItem('gpnr_kyc_id');
-    const savedVip = localStorage.getItem('gpnr_is_vip') === 'true';
-    const savedStake = Number(localStorage.getItem('gpnr_effective_stake') || 0);
+    // 로컬 스토리지에 캐시된 유저 정보 복원
+    try {
+      const savedId = localStorage.getItem('gpnr_kyc_id');
+      const savedVip = localStorage.getItem('gpnr_is_vip') === 'true';
+      const savedStake = Number(localStorage.getItem('gpnr_effective_stake') || 0);
 
-    if (savedId && savedId !== 'undefined' && savedId !== 'null' && savedId.trim() !== '') {
-      setUser({
-        username: savedId,
-        uid: savedId,
-        effectiveStake: savedStake,
-        isVip: savedVip,
-      });
-      setIsAuthenticated(true);
-      setIsLoading(false);
-    } else {
-      localStorage.removeItem('gpnr_kyc_id');
-      localStorage.removeItem('gpnr_is_vip');
-      localStorage.removeItem('gpnr_effective_stake');
-      setUser(null);
-      setIsAuthenticated(false);
+      if (savedId && savedId !== 'undefined' && savedId !== 'null' && savedId.trim() !== '') {
+        setUser({
+          username: savedId,
+          uid: savedId,
+          effectiveStake: savedStake,
+          isVip: savedVip,
+        });
+        setIsAuthenticated(true);
+        setIsLoading(false);
+      } else {
+        localStorage.removeItem('gpnr_kyc_id');
+        localStorage.removeItem('gpnr_is_vip');
+        localStorage.removeItem('gpnr_effective_stake');
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    } catch (e) {
+      console.error("로컬 스토리지 데이터 읽기 실패:", e);
     }
 
     const initializePiAuth = async () => {
+      if (isAuthenticatingRef.current) return;
+      isAuthenticatingRef.current = true;
+
       try {
+        // SDK 로딩 지연 방어 (최대 1초 대기)
+        if (!window.Pi) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+
         if (!window.Pi) {
           console.warn("Pi SDK 미발견 - 수동 ID 입력 팝업 모드로 대기합니다.");
           if (isSubscribed) setIsLoading(false);
@@ -123,6 +139,7 @@ export function usePiNetworkAuthentication() {
         if (isSubscribed) {
           setIsLoading(false);
         }
+        isAuthenticatingRef.current = false;
       }
     };
 
@@ -140,7 +157,11 @@ export function usePiNetworkAuthentication() {
     }
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem('gpnr_kyc_id', cleanId);
+      try {
+        localStorage.setItem('gpnr_kyc_id', cleanId);
+      } catch (e) {
+        console.error("로컬 스토리지 저장 실패:", e);
+      }
     }
     setUser({ username: cleanId, uid: cleanId, effectiveStake: 0, isVip: false });
     setIsAuthenticated(true);
@@ -149,9 +170,13 @@ export function usePiNetworkAuthentication() {
 
   const logout = () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('gpnr_kyc_id');
-      localStorage.removeItem('gpnr_is_vip');
-      localStorage.removeItem('gpnr_effective_stake');
+      try {
+        localStorage.removeItem('gpnr_kyc_id');
+        localStorage.removeItem('gpnr_is_vip');
+        localStorage.removeItem('gpnr_effective_stake');
+      } catch (e) {
+        console.error("로컬 스토리지 삭제 실패:", e);
+      }
     }
     setUser(null);
     setIsAuthenticated(false);
