@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 
 interface GpnrHeaderProps {
@@ -10,7 +10,6 @@ interface GpnrHeaderProps {
   currentLanguage?: string;                     
 }
 
-// 첫 번째 스크린샷(20633.jpg)과 정확히 일치하는 17개 카테고리 구성
 const GRID_CATEGORIES = [
   { id: "top-news", label: "주요뉴스", enLabel: "Top News", icon: "🔥" },
   { id: "mainnet", label: "메인넷", enLabel: "Mainnet", icon: "🌐" },
@@ -45,8 +44,12 @@ export function GpnrHeader({
   useEffect(() => {
     setMounted(true);
     const syncLanguage = () => {
-      const targetLang = currentLanguage || localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
-      setCurrentLang(targetLang);
+      try {
+        const targetLang = currentLanguage || localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
+        setCurrentLang(targetLang);
+      } catch (e) {
+        console.error("Storage error:", e);
+      }
     };
 
     syncLanguage();
@@ -68,19 +71,27 @@ export function GpnrHeader({
           metadata: { type: "one-time-donation", app: "GPNR" }
         }, {
           onReadyForServerApproval: async (paymentId: string) => {
-            await fetch(`${origin}/api/payments/approve`, { 
-              method: 'POST', 
-              headers: { 'Content-Type': 'application/json' }, 
-              body: JSON.stringify({ paymentId }) 
-            });
+            try {
+              await fetch(`${origin}/api/payments/approve`, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ paymentId }) 
+              });
+            } catch (err) {
+              console.error("Approval error:", err);
+            }
           },
           onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-            await fetch(`${origin}/api/payments/complete`, { 
-              method: 'POST', 
-              headers: { 'Content-Type': 'application/json' }, 
-              body: JSON.stringify({ paymentId, txid }) 
-            });
-            alert(currentLang === "ko" ? "0.001 Pi 후원이 완료되었습니다. 감사합니다!" : "0.001 Pi donation completed. Thank you!");
+            try {
+              await fetch(`${origin}/api/payments/complete`, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ paymentId, txid }) 
+              });
+              alert(currentLang === "ko" ? "0.001 Pi 후원이 완료되었습니다. 감사합니다!" : "0.001 Pi donation completed. Thank you!");
+            } catch (err) {
+              console.error("Completion error:", err);
+            }
           },
           onCancel: (paymentId: string) => console.log("취소됨", paymentId),
           onError: (error: Error) => console.error("에러", error),
@@ -93,8 +104,6 @@ export function GpnrHeader({
     }
   }, [currentLang]);
 
-  if (!mounted) return null;
-
   const displayId = user?.username
     ? user.username.length > 12
       ? `${user.username.substring(0, 5)}...${user.username.substring(user.username.length - 4)}`
@@ -103,7 +112,6 @@ export function GpnrHeader({
 
   return (
     <>
-      {/* 상단 GPNR 헤더 바 */}
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-3">
           <div className="flex h-[48px] items-center justify-between">
@@ -114,13 +122,12 @@ export function GpnrHeader({
             <div className="flex items-center gap-2">
               <button 
                 onClick={handleDonation} 
-                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold"
+                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold transition-all"
               >
                 <span>🪙</span>
-                <span>0.01 Pi 후원</span>
+                <span>0.001 Pi 후원</span>
               </button>
 
-              {/* 9개 점 그리드 모달 오픈 버튼 */}
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 transition-all border border-slate-700/50"
@@ -136,14 +143,15 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 20633.jpg 스크린샷과 100% 동일한 그리드 레이어 모달 */}
-      {isLauncherOpen && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      {mounted && isLauncherOpen && (
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsLauncherOpen(false)}
+        >
           <div 
             className="w-full max-w-md bg-[#131528] border border-purple-500/30 rounded-3xl p-5 shadow-2xl relative"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 닫기 버튼 */}
             <button 
               onClick={() => setIsLauncherOpen(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold p-1"
@@ -151,7 +159,6 @@ export function GpnrHeader({
               ✕
             </button>
 
-            {/* 3x6 그리드 아이콘 영역 (첫 번째 사진과 동일한 디자인) */}
             <div className="grid grid-cols-3 gap-3 mt-2">
               {GRID_CATEGORIES.map((item) => {
                 const isSelected = currentCategory === item.id;
@@ -177,7 +184,6 @@ export function GpnrHeader({
               })}
             </div>
 
-            {/* 계정 정보 / ID 해제 영역 */}
             {isAuthenticated && (
               <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
                 <span>연결된 ID: <strong className="text-purple-300 font-mono">{displayId}</strong></span>
