@@ -3,18 +3,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Header } from "../components/Header"; 
 import { CategoryTabs } from "../components/category-tabs";
-import { CategoryNews } from "../components/category-news";
+import NewsFeed from "../components/news-feed"; // 👈 NewsFeed 컴포넌트 호출로 변경
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { translations } from "../lib/translations";
-import { NEWS_CATEGORIES } from "../lib/categories"; // [수정] 단일 출처 카테고리 로드
+import { NEWS_CATEGORIES } from "../lib/categories";
 
-// [수정] NEWS_CATEGORIES 정의에서 ID 목록만 자동으로 추출 ('poll' 및 'all' 완전 제거)
 const CATEGORIES = NEWS_CATEGORIES.map(c => c.id);
 
 export default function Home() {
-  // [수정] 초기 기본 카테고리를 'top-news'로 변경
   const [activeCategory, setActiveCategory] = useState('top-news');
-  const [currentLang, setCurrentLang] = useState('en'); // 기본 언어 설정 (en, ko, ja, zh, es, vi)
+  const [currentLang, setCurrentLang] = useState('en');
   
   const { user, isAuthenticated, isLoading, loginWithKycId, logout } = usePiNetworkAuthentication();
 
@@ -28,11 +26,9 @@ export default function Home() {
     "📢 최신 생태계 핵심 소식 및 마이그레이션 모니터링 가동 중"
   ]);
 
-  // 실시간 전광판(화이트 바) 뉴스 패치 로직
   useEffect(() => {
     const loadHotNewsForTicker = async () => {
       try {
-        // [수정] 주요뉴스(top-news) 최신 핫이슈 호출
         const response = await fetch(`/api/fetch-news?category=top-news&t=${Date.now()}`);
         if (!response.ok) throw new Error("Network response was not ok");
 
@@ -253,8 +249,9 @@ export default function Home() {
         </div>
       )}
 
+      {/* 👈 요약본, 공유, 카운팅 기능이 적용된 NewsFeed 로드 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
-        <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
+        <NewsFeed selectedCategory={activeCategory} />
       </div>
 
       <div className="fixed bottom-4 right-4 z-[99]">
