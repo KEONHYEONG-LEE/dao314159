@@ -2,12 +2,16 @@ import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import Script from 'next/script';
 import { ThemeProvider } from 'next-themes';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import '../globals.css';
 import { FloatingLanguageSwitcher } from '../components/FloatingLanguageSwitcher';
 
 export default function MyApp({ Component, pageProps }: AppProps) {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
+
     // 구글 번역 기본 상단 바 및 팝업 프레임 제거
     const removeGoogleBar = () => {
       const selectors = [
@@ -23,7 +27,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       });
 
       if (document.body.style.top !== '0px') {
-        document.body.style.top = '0px !important';
+        document.body.style.setProperty('top', '0px', 'important');
       }
     };
 
@@ -72,16 +76,18 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       <Script id="google-translate-config" strategy="afterInteractive">
         {`
           function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-              pageLanguage: 'en',
-              includedLanguages: 'en,ko,ja,zh-CN,es,vi',
-              autoDisplay: false
-            }, 'google_translate_element');
+            if (window.google && window.google.translate) {
+              new window.google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,ko,ja,zh-CN,es,vi',
+                autoDisplay: false
+              }, 'google_translate_element');
+            }
           }
         `}
       </Script>
       <Script 
-        src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+        src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
         strategy="afterInteractive"
       />
 
@@ -93,8 +99,8 @@ export default function MyApp({ Component, pageProps }: AppProps) {
         {/* 백그라운드용 번역 엔진 영역 (숨김) */}
         <div id="google_translate_element" style={{ display: 'none', width: 0, height: 0, overflow: 'hidden' }}></div>
         
-        {/* 직접 제작한 커스텀 스위처만 노출 */}
-        <FloatingLanguageSwitcher />
+        {/* 클라이언트 마운트 완료 후에만 스위처 노출 (하이드레이션 에러 방지) */}
+        {mounted && <FloatingLanguageSwitcher />}
       </div>
     </ThemeProvider>
   );
