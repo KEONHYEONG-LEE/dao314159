@@ -1,25 +1,42 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Header } from "../components/Header";
+import { GpnrHeader } from "../components/Header";
 import { CategoryTabs } from "../components/category-tabs";
 import NewsFeed from "../components/news-feed";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
-import { translations } from "../lib/translations";
-import { NEWS_CATEGORIES } from "../lib/categories";
+import * as TranslationsModule from "../lib/translations";
+import * as CategoriesModule from "../lib/categories";
 
-const CATEGORIES = NEWS_CATEGORIES.map(c => c.id);
+// 안전한 fallback 카테고리 정의
+const DEFAULT_CATEGORIES = [
+  "top-news", "mainnet", "node", "mining", "wallet", 
+  "browser", "roadmap", "whitepaper", "community", "commerce", 
+  "kyc", "developer", "ecosystem", "outlook", "price", "security", "legal"
+];
+
+const categoriesList = Array.isArray((CategoriesModule as any)?.NEWS_CATEGORIES)
+  ? (CategoriesModule as any).NEWS_CATEGORIES.map((c: any) => c.id)
+  : DEFAULT_CATEGORIES;
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState('top-news');
   const [currentLang, setCurrentLang] = useState('en');
+  const [mounted, setMounted] = useState(false);
 
   const { user, isAuthenticated, isLoading, loginWithKycId, logout } = usePiNetworkAuthentication();
 
   const [inputKycId, setInputKycId] = useState("");
   const [inputError, setInputError] = useState("");
 
-  const t = translations[currentLang] || translations['en'];
+  // 다국어 번역 방어 로직
+  const translations = (TranslationsModule as any)?.translations || {};
+  const t = translations[currentLang] || translations['en'] || {
+    loading: "Loading GPNR App...",
+    login_msg: "Please enter your Pi KYC ID or Wallet Address to proceed.",
+    wallet_connected: "Pi Wallet Connected",
+    change_id: "Change ID"
+  };
 
   const [tickerStats, setTickerStats] = useState<string[]>([
     "📢 실시간 글로벌 파이 뉴스룸 핫이슈 동기화 중입니다...",
@@ -27,6 +44,8 @@ export default function Home() {
   ]);
 
   useEffect(() => {
+    setMounted(true);
+
     const loadHotNewsForTicker = async () => {
       try {
         const response = await fetch(`/api/fetch-news?category=top-news&t=${Date.now()}`);
@@ -37,14 +56,14 @@ export default function Home() {
         if (Array.isArray(allNews) && allNews.length > 0) {
           const cleanText = (text: string) => {
             if (!text) return "";
-            return text
+            return String(text)
               .replace(/<[^>]*>?/gm, "")
-              .replace(/"/g, '"')
-              .replace(/&/g, '&')
-              .replace(/</g, '<')
-              .replace(/>/g, '>')
-              .replace(/'/g, "'")
-              .replace(/ /g, ' ')
+              .replace(/&quot;/g, '"')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&#39;/g, "'")
+              .replace(/&nbsp;/g, ' ')
               .trim();
           };
 
@@ -68,7 +87,7 @@ export default function Home() {
               const cleanedTitle = cleanText(rawTitle);
               return `🔥 [실시간 핫이슈 ${idx + 1}] ${cleanedTitle}`;
             })
-            .filter((headline: string) => headline.length > 15);
+            .filter((headline: string) => headline.length > 10);
 
           if (hotHeadlines.length > 0) {
             setTickerStats(hotHeadlines);
@@ -98,14 +117,14 @@ export default function Home() {
   const handleTouchEnd = () => {
     if (sXRef.current === null || eXRef.current === null) return;
     const distance = sXRef.current - eXRef.current;
-    const currentIndex = CATEGORIES.indexOf(activeCategory);
+    const currentIndex = categoriesList.indexOf(activeCategory);
 
     if (currentIndex === -1) return;
 
-    if (distance > 75 && currentIndex < CATEGORIES.length - 1) {
-      setActiveCategory(CATEGORIES[currentIndex + 1]);
+    if (distance > 75 && currentIndex < categoriesList.length - 1) {
+      setActiveCategory(categoriesList[currentIndex + 1]);
     } else if (distance < -75 && currentIndex > 0) {
-      setActiveCategory(CATEGORIES[currentIndex - 1]);
+      setActiveCategory(categoriesList[currentIndex - 1]);
     }
 
     sXRef.current = null;
@@ -125,11 +144,11 @@ export default function Home() {
     }
   };
 
-  if (isLoading) {
+  if (!mounted || isLoading) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center text-slate-100">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-        <p className="text-sm font-medium tracking-wide">{t.loading}</p>
+        <p className="text-sm font-medium tracking-wide">{t.loading || "Loading..."}</p>
       </div>
     );
   }
@@ -197,14 +216,13 @@ export default function Home() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <Header
+      <GpnrHeader
         currentCategory={activeCategory}
         onCategoryChange={setActiveCategory}
-        currentLang={currentLang}
-        onLanguageChange={setCurrentLang}
+        currentLanguage={currentLang}
       />
 
-      <div className="w-full bg-gradient-to-r from-slate-100 via-white to-slate-100 border-b border-slate-300 py-2.5 overflow-hidden sticky top-[60px] z-[55] shadow-md shadow-black/20">
+      <div className="w-full bg-gradient-to-r from-slate-100 via-white to-slate-100 border-b border-slate-300 py-2.5 overflow-hidden sticky top-[48px] z-[55] shadow-md shadow-black/20">
         <div className="flex whitespace-nowrap gap-16 text-[12px] font-bold text-slate-900 tracking-wide compliance-marquee">
           <div className="flex gap-16 shrink-0 justify-around min-w-full">
             {tickerStats.map((stat, idx) => (
@@ -223,7 +241,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="sticky top-[93px] z-50 bg-[#0f172a]/95 backdrop-blur-sm">
+      <div className="sticky top-[81px] z-50 bg-[#0f172a]/95 backdrop-blur-sm">
         <CategoryTabs
           selectedCategory={activeCategory}
           onCategoryChange={setActiveCategory}
@@ -236,7 +254,7 @@ export default function Home() {
           <div className="bg-[#1e293b] border border-slate-700/60 rounded-xl p-3 flex items-center justify-between shadow-inner">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-xs text-slate-300 font-medium">{t.wallet_connected}</span>
+              <span className="text-xs text-slate-300 font-medium">{t.wallet_connected || "Pi Wallet Connected"}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-purple-400 bg-purple-950/40 px-2.5 py-1 rounded border border-purple-800/30">
@@ -246,7 +264,7 @@ export default function Home() {
                 onClick={logout}
                 className="text-[10px] text-slate-400 hover:text-rose-400 underline ml-1"
               >
-                {t.change_id}
+                {t.change_id || "Change ID"}
               </button>
             </div>
           </div>
