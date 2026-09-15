@@ -3,28 +3,30 @@
 import { useState, useRef, useEffect } from "react";
 import { Header } from "../components/Header";
 import { CategoryTabs } from "../components/category-tabs";
-import { CategoryNews } from "../components/category-news";
+import NewsFeed from "../components/news-feed";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { translations } from "../lib/translations";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
-const CATEGORIES = NEWS_CATEGORIES ? NEWS_CATEGORIES.map(c => c.id) : [];
+const CATEGORIES = NEWS_CATEGORIES ? NEWS_CATEGORIES.map((c) => c.id) : [];
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("top-news");
   const [currentLang, setCurrentLang] = useState("en");
   const [isMounted, setIsMounted] = useState(false);
 
-  const { user, isAuthenticated, isLoading, loginWithKycId, logout } = usePiNetworkAuthentication();
+  const { user, isAuthenticated, isLoading, loginWithKycId, logout } =
+    usePiNetworkAuthentication();
 
   const [inputKycId, setInputKycId] = useState("");
   const [inputError, setInputError] = useState("");
 
-  const t = (translations && translations[currentLang]) || translations?.["en"] || {};
+  const t =
+    (translations && translations[currentLang]) || translations?.["en"] || {};
 
   const [tickerStats, setTickerStats] = useState<string[]>([
     "📢 실시간 글로벌 파이 뉴스룸 핫이슈 동기화 중입니다...",
-    "📢 최신 생태계 핵심 소식 및 마이그레이션 모니터링 가동 중"
+    "📢 최신 생태계 핵심 소식 및 마이그레이션 모니터링 가동 중",
   ]);
 
   useEffect(() => {
@@ -35,8 +37,10 @@ export default function Home() {
     let isSubscribed = true;
     const loadHotNewsForTicker = async () => {
       try {
-        const response = await fetch(`/api/fetch-news?category=top-news&t=${Date.now()}`);
-        if (!response.ok) return;
+        const response = await fetch(
+          `/api/fetch-news?category=top-news&t=${Date.now()}`
+        );
+        if (!response.ok) throw new Error("Network response was not ok");
 
         const allNews = await response.json();
 
@@ -57,9 +61,14 @@ export default function Home() {
           const sortedNews = [...allNews].sort((a, b) => {
             const dateARaw = a.publishedAt || a.date || "";
             const dateBRaw = b.publishedAt || b.date || "";
+
             const timeA = dateARaw ? new Date(dateARaw).getTime() : 0;
             const timeB = dateBRaw ? new Date(dateBRaw).getTime() : 0;
-            return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
+
+            const validA = isNaN(timeA) ? 0 : timeA;
+            const validB = isNaN(timeB) ? 0 : timeB;
+
+            return validB - validA;
           });
 
           const hotHeadlines = sortedNews
@@ -76,7 +85,7 @@ export default function Home() {
           }
         }
       } catch (error) {
-        console.error("전광판 뉴스 연동 실패:", error);
+        console.error("전광판 실시간 뉴스 연동 실패:", error);
       }
     };
 
@@ -100,7 +109,12 @@ export default function Home() {
   };
 
   const handleTouchEnd = () => {
-    if (sXRef.current === null || eXRef.current === null || CATEGORIES.length === 0) return;
+    if (
+      sXRef.current === null ||
+      eXRef.current === null ||
+      CATEGORIES.length === 0
+    )
+      return;
     const distance = sXRef.current - eXRef.current;
     const currentIndex = CATEGORIES.indexOf(activeCategory);
 
@@ -133,7 +147,9 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center text-slate-100">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-        <p className="text-sm font-medium tracking-wide">{t?.loading || "Loading..."}</p>
+        <p className="text-sm font-medium tracking-wide">
+          {t?.loading || "Loading..."}
+        </p>
       </div>
     );
   }
@@ -147,13 +163,18 @@ export default function Home() {
               <span className="text-xl">🔐</span>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">KYC 인증 ID 로그인</h2>
-              <p className="text-xs text-slate-400">GPNR 글로벌 앱 진입 단계</p>
+              <h2 className="text-lg font-bold text-white">
+                KYC 인증 ID 로그인
+              </h2>
+              <p className="text-xs text-slate-400">
+                GPNR 글로벌 앱 진입 단계
+              </p>
             </div>
           </div>
 
           <p className="text-xs text-slate-300 leading-relaxed mb-4 bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-            {t?.login_msg || "서비스 이용을 위해 KYC 인증 ID를 입력해 주세요."}
+            {t?.login_msg ||
+              "서비스 이용을 위해 KYC 인증 ID를 입력해 주세요."}
           </p>
 
           <form onSubmit={handleManualLogin} className="space-y-4">
@@ -172,7 +193,9 @@ export default function Home() {
                 className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-xs text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all resize-none"
               />
               {inputError && (
-                <p className="text-xs text-rose-400 mt-1 font-medium">{inputError}</p>
+                <p className="text-xs text-rose-400 mt-1 font-medium">
+                  {inputError}
+                </p>
               )}
             </div>
 
@@ -190,7 +213,9 @@ export default function Home() {
 
   const displayId = user?.username
     ? user.username.length > 15
-      ? `${user.username.substring(0, 6)}...${user.username.substring(user.username.length - 6)}`
+      ? `${user.username.substring(0, 6)}...${user.username.substring(
+          user.username.length - 6
+        )}`
       : user.username
     : "";
 
@@ -212,12 +237,22 @@ export default function Home() {
         <div className="flex whitespace-nowrap gap-16 text-[12px] font-bold text-slate-900 tracking-wide compliance-marquee">
           <div className="flex gap-16 shrink-0 justify-around min-w-full">
             {tickerStats.map((stat, idx) => (
-              <span key={`stat-1-${idx}`} className="hover:text-blue-600 transition-colors">{stat}</span>
+              <span
+                key={`stat-1-${idx}`}
+                className="hover:text-blue-600 transition-colors"
+              >
+                {stat}
+              </span>
             ))}
           </div>
           <div className="flex gap-16 shrink-0 justify-around min-w-full">
             {tickerStats.map((stat, idx) => (
-              <span key={`stat-2-${idx}`} className="hover:text-blue-600 transition-colors">{stat}</span>
+              <span
+                key={`stat-2-${idx}`}
+                className="hover:text-blue-600 transition-colors"
+              >
+                {stat}
+              </span>
             ))}
           </div>
         </div>
@@ -236,7 +271,9 @@ export default function Home() {
           <div className="bg-[#1e293b] border border-slate-700/60 rounded-xl p-3 flex items-center justify-between shadow-inner">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-xs text-slate-300 font-medium">{t?.wallet_connected || "Connected"}</span>
+              <span className="text-xs text-slate-300 font-medium">
+                {t?.wallet_connected || "Connected"}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-purple-400 bg-purple-950/40 px-2.5 py-1 rounded border border-purple-800/30">
@@ -253,8 +290,9 @@ export default function Home() {
         </div>
       )}
 
+      {/* NewsFeed 컴포넌트 호출 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
-        <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
+        <NewsFeed selectedCategory={activeCategory} />
       </div>
 
       <div className="fixed bottom-4 right-4 z-[99]">
@@ -272,7 +310,9 @@ export default function Home() {
         </select>
       </div>
 
-      <span dangerouslySetInnerHTML={{ __html: `
+      <span
+        dangerouslySetInnerHTML={{
+          __html: `
         <style>
           @keyframes gpnrMarquee {
             0% { transform: translateX(0%); }
@@ -285,7 +325,9 @@ export default function Home() {
             animation-play-state: paused !important;
           }
         </style>
-      `}} />
+      `,
+        }}
+      />
     </main>
   );
 }
