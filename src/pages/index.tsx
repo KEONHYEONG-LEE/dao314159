@@ -1,25 +1,26 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Header } from "../components/Header"; 
+import { Header } from "../components/Header";
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { translations } from "../lib/translations";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
-const CATEGORIES = NEWS_CATEGORIES.map(c => c.id);
+const CATEGORIES = NEWS_CATEGORIES ? NEWS_CATEGORIES.map(c => c.id) : [];
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState('top-news');
-  const [currentLang, setCurrentLang] = useState('en');
-  
+  const [activeCategory, setActiveCategory] = useState("top-news");
+  const [currentLang, setCurrentLang] = useState("en");
+  const [isMounted, setIsMounted] = useState(false);
+
   const { user, isAuthenticated, isLoading, loginWithKycId, logout } = usePiNetworkAuthentication();
 
   const [inputKycId, setInputKycId] = useState("");
   const [inputError, setInputError] = useState("");
 
-  const t = translations[currentLang] || translations['en'];
+  const t = (translations && translations[currentLang]) || translations?.["en"] || {};
 
   const [tickerStats, setTickerStats] = useState<string[]>([
     "📢 실시간 글로벌 파이 뉴스룸 핫이슈 동기화 중입니다...",
@@ -27,38 +28,38 @@ export default function Home() {
   ]);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    let isSubscribed = true;
     const loadHotNewsForTicker = async () => {
       try {
         const response = await fetch(`/api/fetch-news?category=top-news&t=${Date.now()}`);
-        if (!response.ok) throw new Error("Network response was not ok");
+        if (!response.ok) return;
 
         const allNews = await response.json();
-        
-        if (Array.isArray(allNews) && allNews.length > 0) {
+
+        if (isSubscribed && Array.isArray(allNews) && allNews.length > 0) {
           const cleanText = (text: string) => {
             if (!text) return "";
             return text
               .replace(/<\/?[^>]+(>|$)/g, "")
               .replace(/&quot;/g, '"')
-              .replace(/&amp;/g, '&')
-              .replace(/&lt;/g, '<')
-              .replace(/&gt;/g, '>')
+              .replace(/&amp;/g, "&")
+              .replace(/&lt;/g, "<")
+              .replace(/&gt;/g, ">")
               .replace(/&#39;/g, "'")
-              .replace(/&nbsp;/g, ' ')
+              .replace(/&nbsp;/g, " ")
               .trim();
           };
 
           const sortedNews = [...allNews].sort((a, b) => {
             const dateARaw = a.publishedAt || a.date || "";
             const dateBRaw = b.publishedAt || b.date || "";
-
             const timeA = dateARaw ? new Date(dateARaw).getTime() : 0;
             const timeB = dateBRaw ? new Date(dateBRaw).getTime() : 0;
-
-            const validA = isNaN(timeA) ? 0 : timeA;
-            const validB = isNaN(timeB) ? 0 : timeB;
-
-            return validB - validA;
+            return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
           });
 
           const hotHeadlines = sortedNews
@@ -75,13 +76,16 @@ export default function Home() {
           }
         }
       } catch (error) {
-        console.error("전광판 실시간 뉴스 연동 실패:", error);
+        console.error("전광판 뉴스 연동 실패:", error);
       }
     };
 
     loadHotNewsForTicker();
     const interval = setInterval(loadHotNewsForTicker, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const sXRef = useRef<number | null>(null);
@@ -96,7 +100,7 @@ export default function Home() {
   };
 
   const handleTouchEnd = () => {
-    if (sXRef.current === null || eXRef.current === null) return;
+    if (sXRef.current === null || eXRef.current === null || CATEGORIES.length === 0) return;
     const distance = sXRef.current - eXRef.current;
     const currentIndex = CATEGORIES.indexOf(activeCategory);
 
@@ -118,18 +122,18 @@ export default function Home() {
       setInputError("KYC 인증 ID 또는 지갑 주소를 입력해 주세요.");
       return;
     }
-    
+
     const success = loginWithKycId(inputKycId);
     if (success) {
       setInputError("");
     }
   };
 
-  if (isLoading) {
+  if (!isMounted || isLoading) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center text-slate-100">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-        <p className="text-sm font-medium tracking-wide">{t.loading}</p>
+        <p className="text-sm font-medium tracking-wide">{t?.loading || "Loading..."}</p>
       </div>
     );
   }
@@ -149,7 +153,7 @@ export default function Home() {
           </div>
 
           <p className="text-xs text-slate-300 leading-relaxed mb-4 bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-            {t.login_msg}
+            {t?.login_msg || "서비스 이용을 위해 KYC 인증 ID를 입력해 주세요."}
           </p>
 
           <form onSubmit={handleManualLogin} className="space-y-4">
@@ -191,14 +195,14 @@ export default function Home() {
     : "";
 
   return (
-    <main 
+    <main
       className="min-h-screen bg-[#0f172a] text-slate-100 touch-pan-y relative pb-12"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <Header 
-        currentCategory={activeCategory} 
+      <Header
+        currentCategory={activeCategory}
         onCategoryChange={setActiveCategory}
         currentLang={currentLang}
         onLanguageChange={setCurrentLang}
@@ -220,9 +224,9 @@ export default function Home() {
       </div>
 
       <div className="sticky top-[93px] z-50 bg-[#0f172a]/95 backdrop-blur-sm">
-        <CategoryTabs 
-          selectedCategory={activeCategory} 
-          onCategoryChange={setActiveCategory} 
+        <CategoryTabs
+          selectedCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
           language={currentLang}
         />
       </div>
@@ -232,17 +236,17 @@ export default function Home() {
           <div className="bg-[#1e293b] border border-slate-700/60 rounded-xl p-3 flex items-center justify-between shadow-inner">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-xs text-slate-300 font-medium">{t.wallet_connected}</span>
+              <span className="text-xs text-slate-300 font-medium">{t?.wallet_connected || "Connected"}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-purple-400 bg-purple-950/40 px-2.5 py-1 rounded border border-purple-800/30">
                 {displayId}
               </span>
-              <button 
-                onClick={logout} 
+              <button
+                onClick={logout}
                 className="text-[10px] text-slate-400 hover:text-rose-400 underline ml-1"
               >
-                {t.change_id}
+                {t?.change_id || "Change"}
               </button>
             </div>
           </div>
