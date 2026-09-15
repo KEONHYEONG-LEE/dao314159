@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 declare global {
   interface Window {
     Pi?: any;
+    __PI_INITIALIZED__?: boolean;
   }
 }
 
@@ -17,6 +18,7 @@ export function usePiNetworkAuthentication() {
   const [user, setUser] = useState<PiUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
 
   const handleIncompletePayment = useCallback(async (payment: any) => {
     console.log("미완료 결제 건 발견 및 처리 시도:", payment);
@@ -44,7 +46,13 @@ export function usePiNetworkAuthentication() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted || typeof window === 'undefined') return;
+
+    let isSubscribed = true;
 
     const savedId = localStorage.getItem('gpnr_kyc_id');
     const savedVip = localStorage.getItem('gpnr_is_vip') === 'true';
@@ -71,16 +79,19 @@ export function usePiNetworkAuthentication() {
       try {
         if (!window.Pi) {
           console.warn("Pi SDK 미발견 - 수동 ID 입력 팝업 모드로 대기합니다.");
-          setIsLoading(false);
+          if (isSubscribed) setIsLoading(false);
           return;
         }
 
-        window.Pi.init({ version: "2.0", sandbox: false });
+        if (!window.__PI_INITIALIZED__) {
+          window.Pi.init({ version: "2.0", sandbox: false });
+          window.__PI_INITIALIZED__ = true;
+        }
 
         const scopes = ['username', 'payments', 'wallet_address'];
         const authResult = await window.Pi.authenticate(scopes, handleIncompletePayment);
 
-        if (authResult && authResult.user) {
+        if (authResult && authResult.user && isSubscribed) {
           const rawId = authResult.user.uid || authResult.user.username || '';
 
           if (rawId && rawId !== 'undefined' && rawId !== 'null' && rawId.trim() !== '') {
@@ -109,12 +120,18 @@ export function usePiNetworkAuthentication() {
       } catch (error) {
         console.error("Pi SDK 자동 인증 스킵/오류:", error);
       } finally {
-        setIsLoading(false);
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
       }
     };
 
     initializePiAuth();
-  }, [handleIncompletePayment, fetchStakingInfo]);
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [isMounted, handleIncompletePayment, fetchStakingInfo]);
 
   const loginWithKycId = (kycId: string) => {
     const cleanId = kycId.trim();
@@ -122,19 +139,29 @@ export function usePiNetworkAuthentication() {
       return false;
     }
 
-    localStorage.setItem('gpnr_kyc_id', cleanId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gpnr_kyc_id', cleanId);
+    }
     setUser({ username: cleanId, uid: cleanId, effectiveStake: 0, isVip: false });
     setIsAuthenticated(true);
     return true;
   };
 
   const logout = () => {
-    localStorage.removeItem('gpnr_kyc_id');
-    localStorage.removeItem('gpnr_is_vip');
-    localStorage.removeItem('gpnr_effective_stake');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('gpnr_kyc_id');
+      localStorage.removeItem('gpnr_is_vip');
+      localStorage.removeItem('gpnr_effective_stake');
+    }
     setUser(null);
     setIsAuthenticated(false);
   };
 
-  return { user, isAuthenticated, isLoading, loginWithKycId, logout };
+  return { 
+    user, 
+    isAuthenticated: isMounted ? isAuthenticated : false, 
+    isLoading: isMounted ? isLoading : true, 
+    loginWithKycId, 
+    logout 
+  };
 }
