@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Script from 'next/script';
 import { ThemeProvider } from 'next-themes';
 import { useEffect, useState } from 'react';
-import '../globals.css';
+import '@/styles/globals.css';
 import { FloatingLanguageSwitcher } from '../components/FloatingLanguageSwitcher';
 
 export default function MyApp({ Component, pageProps }: AppProps) {
