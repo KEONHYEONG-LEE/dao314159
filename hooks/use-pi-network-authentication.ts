@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// window.Pi 객체 타입 정의 (TypeScript 지원)
 declare global {
   interface Window {
     Pi?: any;
   }
 }
 
-// 파이 네트워크 유저 객체 타입 정의 (스테이킹 정보 추가)
 export interface PiUser {
-  username: string; // 56자리 지갑 주소 또는 KYC ID / Username
+  username: string;
   uid?: string;
   effectiveStake?: number;
   isVip?: boolean;
@@ -20,17 +18,15 @@ export function usePiNetworkAuthentication() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // 미완료 결제 건 처리 함수
   const handleIncompletePayment = useCallback(async (payment: any) => {
     console.log("미완료 결제 건 발견 및 처리 시도:", payment);
     try {
-      // 필요 시 백엔드 API 호출하여 미완료 결제 완료 처리
+      // 미완료 결제 처리 로직
     } catch (err) {
       console.error("미완료 결제 처리 중 오류 발생:", err);
     }
   }, []);
 
-  // 스테이킹 정보 조회 함수
   const fetchStakingInfo = useCallback(async (accessToken: string) => {
     try {
       const res = await fetch(`/api/pi/staking?accessToken=${accessToken}`);
@@ -50,19 +46,13 @@ export function usePiNetworkAuthentication() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // 1. 저장된 KYC ID/지갑주소 및 VIP 상태 확인
     const savedId = localStorage.getItem('gpnr_kyc_id');
     const savedVip = localStorage.getItem('gpnr_is_vip') === 'true';
     const savedStake = Number(localStorage.getItem('gpnr_effective_stake') || 0);
 
-    if (
-      savedId && 
-      savedId !== 'undefined' && 
-      savedId !== 'null' && 
-      savedId.trim() !== ''
-    ) {
-      setUser({ 
-        username: savedId, 
+    if (savedId && savedId !== 'undefined' && savedId !== 'null' && savedId.trim() !== '') {
+      setUser({
+        username: savedId,
         uid: savedId,
         effectiveStake: savedStake,
         isVip: savedVip,
@@ -77,7 +67,6 @@ export function usePiNetworkAuthentication() {
       setIsAuthenticated(false);
     }
 
-    // 2. Pi SDK 자동 인증 및 Staking API 조회
     const initializePiAuth = async () => {
       try {
         if (!window.Pi) {
@@ -86,27 +75,22 @@ export function usePiNetworkAuthentication() {
           return;
         }
 
-        // Pi SDK 초기화
         window.Pi.init({ version: "2.0", sandbox: false });
 
         const scopes = ['username', 'payments', 'wallet_address'];
-        const authResult = await window.Pi.authenticate(
-          scopes, 
-          handleIncompletePayment
-        );
+        const authResult = await window.Pi.authenticate(scopes, handleIncompletePayment);
 
         if (authResult && authResult.user) {
           const rawId = authResult.user.uid || authResult.user.username || '';
-          
+
           if (rawId && rawId !== 'undefined' && rawId !== 'null' && rawId.trim() !== '') {
-            // Staking Data API 연동 조회
             let stakingData = { effectiveStake: 0, isVip: false };
             if (authResult.accessToken) {
               stakingData = await fetchStakingInfo(authResult.accessToken);
             }
 
-            const userData: PiUser = { 
-              username: rawId, 
+            const userData: PiUser = {
+              username: rawId,
               uid: authResult.user.uid,
               effectiveStake: stakingData.effectiveStake,
               isVip: stakingData.isVip,
@@ -114,8 +98,7 @@ export function usePiNetworkAuthentication() {
 
             setUser(userData);
             setIsAuthenticated(true);
-            
-            // 로컬 스토리지 동기화
+
             localStorage.setItem('gpnr_kyc_id', rawId);
             localStorage.setItem('gpnr_is_vip', String(stakingData.isVip));
             localStorage.setItem('gpnr_effective_stake', String(stakingData.effectiveStake));
@@ -133,10 +116,8 @@ export function usePiNetworkAuthentication() {
     initializePiAuth();
   }, [handleIncompletePayment, fetchStakingInfo]);
 
-  // 팝업 수동 로그인
   const loginWithKycId = (kycId: string) => {
     const cleanId = kycId.trim();
-    
     if (!cleanId || cleanId === 'undefined' || cleanId === 'null') {
       return false;
     }
@@ -147,7 +128,6 @@ export function usePiNetworkAuthentication() {
     return true;
   };
 
-  // 로그아웃 / ID 재설정
   const logout = () => {
     localStorage.removeItem('gpnr_kyc_id');
     localStorage.removeItem('gpnr_is_vip');
