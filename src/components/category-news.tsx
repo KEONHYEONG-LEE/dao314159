@@ -58,7 +58,7 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
         setNews(allData || []);
       } catch (error) {
         console.error("데이터 로드 실패:", error);
-      } fontally {
+      } finally {
         setLoading(false);
       }
     };
@@ -160,9 +160,9 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
                 )}
               </div>
 
-              {/* 1. 클릭 시 펼쳐지는 AI 요약본 영역 */}
+              {/* 1. 클릭 시 펼쳐지는 AI 요약본 */}
               {isExpanded && (
-                <div className="mt-4 pt-4 border-t border-slate-700/80 text-sm text-slate-300 leading-relaxed space-y-3 bg-slate-900/60 p-3 rounded-lg border">
+                <div className="mt-4 pt-4 border-t border-slate-700/80 text-sm text-slate-300 leading-relaxed space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800">
                   <p className="font-semibold text-purple-400 text-xs">📌 AI 핵심 요약본</p>
                   <p className="text-xs text-slate-200">{stripHtml(item.summary || item.content || item.title)}</p>
                   <div>
@@ -179,7 +179,7 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
                 </div>
               )}
 
-              {/* 2. 카운팅 및 복사/전달 기능 바 */}
+              {/* 2. 카운터 및 링크 복사 바 */}
               <div className="mt-3 pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800">
                 <div className="flex items-center gap-4">
                   {/* 좋아요 카운팅 */}
@@ -219,7 +219,7 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
                   </span>
                 </div>
 
-                {/* 3. 주소 링크 복사/전달 */}
+                {/* 3. 링크 복사 */}
                 <button
                   onClick={(e) => handleShare(item, e)}
                   className="flex items-center gap-1 hover:text-purple-300 transition-colors p-1"
