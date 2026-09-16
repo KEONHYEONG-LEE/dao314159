@@ -5,9 +5,9 @@ import { useEffect, useState, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 
 interface GpnrHeaderProps {
-  currentCategory?: string;                     
-  onCategoryChange?: (categoryId: string) => void; 
-  currentLanguage?: string;                     
+  currentCategory?: string;
+  onCategoryChange?: (categoryId: string) => void;
+  currentLanguage?: string;
 }
 
 const GRID_CATEGORIES = [
@@ -30,13 +30,13 @@ const GRID_CATEGORIES = [
   { id: "legal", label: "관련법규", enLabel: "Legal", icon: "🔨" },
 ];
 
-export function GpnrHeader({ 
-  currentCategory = "top-news", 
+export function GpnrHeader({
+  currentCategory = "top-news",
   onCategoryChange,
   currentLanguage
 }: GpnrHeaderProps) {
   const [mounted, setMounted] = useState<boolean>(false);
-  const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false); 
+  const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false);
   const [currentLang, setCurrentLang] = useState<string>("ko");
 
   const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
@@ -72,10 +72,10 @@ export function GpnrHeader({
         }, {
           onReadyForServerApproval: async (paymentId: string) => {
             try {
-              await fetch(`${origin}/api/payments/approve`, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ paymentId }) 
+              await fetch(`${origin}/api/payments/approve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId })
               });
             } catch (err) {
               console.error("Approval error:", err);
@@ -83,10 +83,10 @@ export function GpnrHeader({
           },
           onReadyForServerCompletion: async (paymentId: string, txid: string) => {
             try {
-              await fetch(`${origin}/api/payments/complete`, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ paymentId, txid }) 
+              await fetch(`${origin}/api/payments/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId, txid })
               });
               alert(currentLang === "ko" ? "0.001 Pi 후원이 완료되었습니다. 감사합니다!" : "0.001 Pi donation completed. Thank you!");
             } catch (err) {
@@ -118,10 +118,10 @@ export function GpnrHeader({
             <div className="flex items-center gap-2">
               <span className="font-black text-xl tracking-wider text-purple-400">GPNR</span>
             </div>
-            
+
             <div className="flex items-center gap-2">
-              <button 
-                onClick={handleDonation} 
+              <button
+                onClick={handleDonation}
                 className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold transition-all"
               >
                 <span>🪙</span>
@@ -144,15 +144,15 @@ export function GpnrHeader({
       </header>
 
       {mounted && isLauncherOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setIsLauncherOpen(false)}
         >
-          <div 
+          <div
             className="w-full max-w-md bg-[#131528] border border-purple-500/30 rounded-3xl p-5 shadow-2xl relative"
             onClick={(e) => e.stopPropagation()}
           >
-            <button 
+            <button
               onClick={() => setIsLauncherOpen(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold p-1"
             >
