@@ -31,7 +31,6 @@ const EN_CATEGORY_MAP: Record<string, string> = {
   WHITEPAPER: "Whitepaper", LEGAL: "Regulations"
 };
 
-// 안전한 HTML 태그 제거 함수
 function safeStripHtml(text: string | undefined | null): string {
   if (!text) return "";
   return String(text)
@@ -55,7 +54,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
 
   useEffect(() => {
     setMounted(true);
-    
+
     try {
       const saved = localStorage.getItem('gpnr_status');
       if (saved) setStatus(JSON.parse(saved));
@@ -72,7 +71,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
         const response = await fetch(`/api/fetch-news?category=${selectedCategory}`);
         if (!response.ok) throw new Error("Network response was not ok");
         const allData = await response.json();
-        
+
         if (Array.isArray(allData)) {
           setNews(allData);
         } else {
@@ -130,7 +129,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     const shareData = {
       title: item.title || "GPNR News",
       text: cleanContent.slice(0, 100) + '...',
-      url: item.url || typeof window !== 'undefined' ? window.location.href : ''
+      url: item.url || (typeof window !== 'undefined' ? window.location.href : '')
     };
 
     try {
@@ -164,7 +163,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
           const itemId = item.id || `news-item-${index}`;
           const itemStatus = status[itemId] || { read: false, star: false, heart: false };
           const isExpanded = expandedId === itemId;
-          
+
           const rawCat = (item.category || "ALL").toUpperCase();
           const displayCategory = currentLang === 'ko'
             ? (CATEGORY_MAP[rawCat] || item.category || "뉴스")
@@ -253,8 +252,8 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                       e.stopPropagation();
                       updateStatus(itemId, 'star');
                     }}
-                    className={`flex items-center gap-1 hover:text-amber-400 transition-colors ${ 
-                      itemStatus.star ? "text-amber-400" : "" 
+                    className={`flex items-center gap-1 hover:text-amber-400 transition-colors ${
+                      itemStatus.star ? "text-amber-400" : ""
                     }`}
                   >
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
