@@ -1,14 +1,32 @@
-import { useState, useRef, useEffect } from "react";
-// Header 컴포넌트의 Named/Default Export 차이로 인한 Crash 방지 처리
-import HeaderModule, { GpnrHeader as GpnrHeaderNamed } from "../components/Header";
-import { CategoryTabs } from "../components/category-tabs";
-import NewsFeed from "../components/news-feed";
+import { useState, useRef, useEffect, Component, ReactNode } from "react";
+import * as HeaderModule from "../components/Header";
+import * as CategoryTabsModule from "../components/category-tabs";
+import * as NewsFeedModule from "../components/news-feed";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import * as TranslationsModule from "../lib/translations";
 import * as CategoriesModule from "../lib/categories";
 
-// Header 컴포넌트 세이프 가드 (어떤 방식으로 export 되었든 안전하게 로드)
-const HeaderComponent = GpnrHeaderNamed || HeaderModule || (HeaderModule as any)?.GpnrHeader || (() => null);
+// 하위 컴포넌트 렌더링 에러가 발생해도 화면 전체가 튕기지 않도록 방어하는 Error Boundary
+class SafeComponentWrapper extends Component<{ children: ReactNode; fallback?: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("컴포넌트 렌더링 중 오류 발생:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || null;
+    }
+    return this.props.children;
+  }
+}
+
+// 안전한 모듈 추출 (Named/Default Export 모두 수용)
+const HeaderComp = (HeaderModule as any)?.GpnrHeader || (HeaderModule as any)?.Header || (HeaderModule as any)?.default;
+const CategoryTabsComp = (CategoryTabsModule as any)?.CategoryTabs || (CategoryTabsModule as any)?.default;
+const NewsFeedComp = (NewsFeedModule as any)?.NewsFeed || (NewsFeedModule as any)?.default;
 
 const DEFAULT_CATEGORIES = [
   "top-news", "mainnet", "node", "mining", "wallet",
@@ -25,7 +43,16 @@ export default function Home() {
   const [currentLang, setCurrentLang] = useState('en');
   const [mounted, setMounted] = useState(false);
 
-  const { user, isAuthenticated, isLoading, loginWithKycId, logout } = usePiNetworkAuthentication();
+  // 훅 실행 중 에러가 발생해도 전체 화면이 안 깨지도록 방어
+  let authResult: any = { user: null, isAuthenticated: false, isLoading: false };
+  try {
+    const auth = usePiNetworkAuthentication();
+    if (auth) authResult = auth;
+  } catch (e) {
+    console.error("인증 훅 오류:", e);
+  }
+
+  const { user, isAuthenticated, isLoading, loginWithKycId, logout } = authResult;
 
   const [inputKycId, setInputKycId] = useState("");
   const [inputError, setInputError] = useState("");
@@ -138,9 +165,9 @@ export default function Home() {
       return;
     }
 
-    const success = loginWithKycId(inputKycId);
-    if (success) {
-      setInputError("");
+    if (loginWithKycId) {
+      const success = loginWithKycId(inputKycId);
+      if (success) setInputError("");
     }
   };
 
@@ -216,12 +243,18 @@ export default function Home() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <HeaderComponent
-        currentCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
-        currentLanguage={currentLang}
-      />
+      {/* Header 영역 - 에러 방어 */}
+      <SafeComponentWrapper>
+        {HeaderComp && (
+          <HeaderComp
+            currentCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            currentLanguage={currentLang}
+          />
+        )}
+      </SafeComponentWrapper>
 
+      {/* 실시간 전광판 영역 */}
       <div className="w-full bg-gradient-to-r from-slate-100 via-white to-slate-100 border-b border-slate-300 py-2.5 overflow-hidden sticky top-[48px] z-[55] shadow-md shadow-black/20">
         <div className="flex whitespace-nowrap gap-16 text-[12px] font-bold text-slate-900 tracking-wide compliance-marquee">
           <div className="flex gap-16 shrink-0 justify-around min-w-full">
@@ -241,14 +274,20 @@ export default function Home() {
         </div>
       </div>
 
+      {/* CategoryTabs 영역 - 에러 방어 */}
       <div className="sticky top-[81px] z-50 bg-[#0f172a]/95 backdrop-blur-sm">
-        <CategoryTabs
-          selectedCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-          language={currentLang}
-        />
+        <SafeComponentWrapper>
+          {CategoryTabsComp && (
+            <CategoryTabsComp
+              selectedCategory={activeCategory}
+              onCategoryChange={setActiveCategory}
+              language={currentLang}
+            />
+          )}
+        </SafeComponentWrapper>
       </div>
 
+      {/* 지갑 연동 정보 */}
       {isAuthenticated && user && (
         <div className="max-w-3xl mx-auto px-4 mt-3">
           <div className="bg-[#1e293b] border border-slate-700/60 rounded-xl p-3 flex items-center justify-between shadow-inner">
@@ -271,10 +310,14 @@ export default function Home() {
         </div>
       )}
 
+      {/* NewsFeed 영역 - 에러 방어 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
-        <NewsFeed selectedCategory={activeCategory} />
+        <SafeComponentWrapper fallback={<div className="p-4 text-center text-xs text-slate-400">뉴스 피드를 불러오는 중 오류가 발생했습니다.</div>}>
+          {NewsFeedComp && <NewsFeedComp selectedCategory={activeCategory} />}
+        </SafeComponentWrapper>
       </div>
 
+      {/* 언어 선택 */}
       <div className="fixed bottom-4 right-4 z-[99]">
         <select
           value={currentLang}
