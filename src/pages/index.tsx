@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { GpnrHeader } from "../components/Header";
+// Header 컴포넌트의 Named/Default Export 차이로 인한 Crash 방지 처리
+import HeaderModule, { GpnrHeader as GpnrHeaderNamed } from "../components/Header";
 import { CategoryTabs } from "../components/category-tabs";
 import NewsFeed from "../components/news-feed";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import * as TranslationsModule from "../lib/translations";
 import * as CategoriesModule from "../lib/categories";
+
+// Header 컴포넌트 세이프 가드 (어떤 방식으로 export 되었든 안전하게 로드)
+const HeaderComponent = GpnrHeaderNamed || HeaderModule || (HeaderModule as any)?.GpnrHeader || (() => null);
 
 const DEFAULT_CATEGORIES = [
   "top-news", "mainnet", "node", "mining", "wallet",
@@ -212,7 +216,7 @@ export default function Home() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <GpnrHeader
+      <HeaderComponent
         currentCategory={activeCategory}
         onCategoryChange={setActiveCategory}
         currentLanguage={currentLang}
