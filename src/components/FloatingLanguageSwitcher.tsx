@@ -25,7 +25,6 @@ export function FloatingLanguageSwitcher() {
   useEffect(() => {
     if (!isLoaded || !mounted) return;
 
-    // style 태그 중복 생성 방지 및 clean-up 처리
     const styleId = "gpnr-google-translate-style";
     let style = document.getElementById(styleId) as HTMLStyleElement;
     if (!style) {
@@ -54,7 +53,7 @@ export function FloatingLanguageSwitcher() {
     } catch (e) {
       console.error(e);
     }
-    
+
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("languageChange"));
 
@@ -82,7 +81,6 @@ export function FloatingLanguageSwitcher() {
     setIsOpen(false);
   };
 
-  // 마운트 전이나 storage 로드 전 하이드레이션 에러 방지
   if (!mounted || !isLoaded) {
     return null;
   }
