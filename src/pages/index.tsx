@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useRef, useEffect } from "react";
 import { GpnrHeader } from "../components/Header";
 import { CategoryTabs } from "../components/category-tabs";
@@ -8,10 +6,9 @@ import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authenticati
 import * as TranslationsModule from "../lib/translations";
 import * as CategoriesModule from "../lib/categories";
 
-// 안전한 fallback 카테고리 정의
 const DEFAULT_CATEGORIES = [
-  "top-news", "mainnet", "node", "mining", "wallet", 
-  "browser", "roadmap", "whitepaper", "community", "commerce", 
+  "top-news", "mainnet", "node", "mining", "wallet",
+  "browser", "roadmap", "whitepaper", "community", "commerce",
   "kyc", "developer", "ecosystem", "outlook", "price", "security", "legal"
 ];
 
@@ -29,7 +26,6 @@ export default function Home() {
   const [inputKycId, setInputKycId] = useState("");
   const [inputError, setInputError] = useState("");
 
-  // 다국어 번역 방어 로직
   const translations = (TranslationsModule as any)?.translations || {};
   const t = translations[currentLang] || translations['en'] || {
     loading: "Loading GPNR App...",
@@ -85,7 +81,7 @@ export default function Home() {
             .map((item: any, idx: number) => {
               const rawTitle = item.title || item.snippet || "";
               const cleanedTitle = cleanText(rawTitle);
-              return `🔥 [실시간 핫이슈 ${idx + 1}] ${cleanedTitle}`;
+              return `🔥 [실시간 핫이슈${idx + 1}] ${cleanedTitle}`;
             })
             .filter((headline: string) => headline.length > 10);
 
