@@ -54,12 +54,12 @@ export default function Home() {
             if (!text) return "";
             return String(text)
               .replace(/<[^>]*>?/gm, "")
-              .replace(/&quot;/g, '"')
-              .replace(/&amp;/g, '&')
-              .replace(/&lt;/g, '<')
-              .replace(/&gt;/g, '>')
-              .replace(/&#39;/g, "'")
-              .replace(/&nbsp;/g, ' ')
+              .replace(/"/g, '"')
+              .replace(/&/g, '&')
+              .replace(/</g, '<')
+              .replace(/>/g, '>')
+              .replace(/'/g, "'")
+              .replace(/ /g, ' ')
               .trim();
           };
 
