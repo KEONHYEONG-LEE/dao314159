@@ -6,7 +6,7 @@ import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authenticati
 import * as TranslationsModule from "../lib/translations";
 import * as CategoriesModule from "../lib/categories";
 
-// Next.js Hydration & SSR Exception 방지를 위한 dynamic import
+// Client-side Exception을 방지하기 위한 Dynamic Import (SSR 비활성화)
 const CategoryNews = dynamic(
   () => import("../components/category-news").then((mod) => mod.CategoryNews || mod.default),
   {
@@ -19,24 +19,27 @@ const CategoryNews = dynamic(
   }
 );
 
-// 하위 컴포넌트 렌더링 에러가 발생해도 화면 전체가 튕기지 않도록 방어하는 Error Boundary
+// 화면 전체가 뻗는 것을 방지하는 Error Boundary 컴포넌트
 class SafeComponentWrapper extends Component<{ children: ReactNode; fallback?: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
   static getDerivedStateFromError() {
     return { hasError: true };
   }
   componentDidCatch(error: any, errorInfo: any) {
-    console.error("컴포넌트 렌더링 중 오류 발생:", error, errorInfo);
+    console.error("화면 렌더링 연동 예외 발생:", error, errorInfo);
   }
   render() {
     if (this.state.hasError) {
-      return this.props.fallback || null;
+      return this.props.fallback || (
+        <div className="p-4 text-center text-xs text-rose-400 bg-rose-950/20 rounded-lg border border-rose-900/40 my-2">
+          컴포넌트를 불러오는 중 일시적인 오류가 발생했습니다.
+        </div>
+      );
     }
     return this.props.children;
   }
 }
 
-// 안전한 모듈 추출 (Named/Default Export 모두 수용)
 const HeaderComp = (HeaderModule as any)?.GpnrHeader || (HeaderModule as any)?.Header || (HeaderModule as any)?.default;
 const CategoryTabsComp = (CategoryTabsModule as any)?.CategoryTabs || (CategoryTabsModule as any)?.default;
 
@@ -55,13 +58,13 @@ export default function Home() {
   const [currentLang, setCurrentLang] = useState('en');
   const [mounted, setMounted] = useState(false);
 
-  // 훅 실행 중 에러가 발생해도 전체 화면이 안 깨지도록 방어
+  // 인증 훅 예외 방어
   let authResult: any = { user: null, isAuthenticated: false, isLoading: false };
   try {
     const auth = usePiNetworkAuthentication();
     if (auth) authResult = auth;
   } catch (e) {
-    console.error("인증 훅 오류:", e);
+    console.error("파이 인증 훅 예외 발생:", e);
   }
 
   const { user, isAuthenticated, isLoading, loginWithKycId, logout } = authResult;
@@ -69,17 +72,18 @@ export default function Home() {
   const [inputKycId, setInputKycId] = useState("");
   const [inputError, setInputError] = useState("");
 
+  // 번역 언어 데이터 안전 참조
   const translations = (TranslationsModule as any)?.translations || {};
-  const t = translations[currentLang] || translations['en'] || {
-    loading: "Loading GPNR App...",
-    login_msg: "Please enter your Pi KYC ID or Wallet Address to proceed.",
-    wallet_connected: "Pi Wallet Connected",
+  const t = translations[currentLang] || translations['en'] || translations['ko'] || {
+    loading: "Loading GPNR Mainnet App...",
+    login_msg: "Please enter your Pi Mainnet Wallet / KYC ID to proceed.",
+    wallet_connected: "Pi Mainnet Connected",
     change_id: "Change ID"
   };
 
   const [tickerStats, setTickerStats] = useState<string[]>([
-    "📢 실시간 글로벌 파이 뉴스룸 핫이슈 동기화 중입니다...",
-    "📢 최신 생태계 핵심 소식 및 마이그레이션 모니터링 가동 중"
+    "📢 GPNR 파이 메인넷 글로벌 실시간 뉴스룸 동기화 중...",
+    "📢 메인넷 노드, 생태계 마이그레이션 모니터링 가동 중"
   ]);
 
   useEffect(() => {
@@ -88,7 +92,7 @@ export default function Home() {
     const loadHotNewsForTicker = async () => {
       try {
         const response = await fetch(`/api/fetch-news?category=top-news&t=${Date.now()}`);
-        if (!response.ok) throw new Error("Network response was not ok");
+        if (!response.ok) throw new Error("Network response error");
 
         const allNews = await response.json();
 
@@ -102,30 +106,18 @@ export default function Home() {
               .replace(/</g, '<')
               .replace(/>/g, '>')
               .replace(/'/g, "'")
-              .replace(/ /g, ' ')
               .trim();
           };
 
           const sortedNews = [...allNews].sort((a, b) => {
-            const dateARaw = a.publishedAt || a.date || "";
-            const dateBRaw = b.publishedAt || b.date || "";
-
-            const timeA = dateARaw ? new Date(dateARaw).getTime() : 0;
-            const timeB = dateBRaw ? new Date(dateBRaw).getTime() : 0;
-
-            const validA = isNaN(timeA) ? 0 : timeA;
-            const validB = isNaN(timeB) ? 0 : timeB;
-
-            return validB - validA;
+            const timeA = new Date(a.publishedAt || a.date || 0).getTime();
+            const timeB = new Date(b.publishedAt || b.date || 0).getTime();
+            return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
           });
 
           const hotHeadlines = sortedNews
             .slice(0, 5)
-            .map((item: any, idx: number) => {
-              const rawTitle = item.title || item.snippet || "";
-              const cleanedTitle = cleanText(rawTitle);
-              return `🔥 [실시간 핫이슈${idx + 1}] ${cleanedTitle}`;
-            })
+            .map((item: any, idx: number) => `🔥 [메인넷 핫이슈${idx + 1}] ${cleanText(item.title || item.snippet || "")}`)
             .filter((headline: string) => headline.length > 10);
 
           if (hotHeadlines.length > 0) {
@@ -133,7 +125,7 @@ export default function Home() {
           }
         }
       } catch (error) {
-        console.error("전광판 실시간 뉴스 연동 실패:", error);
+        console.error("전광판 뉴스 연동 실패:", error);
       }
     };
 
@@ -145,14 +137,8 @@ export default function Home() {
   const sXRef = useRef<number | null>(null);
   const eXRef = useRef<number | null>(null);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    sXRef.current = e.targetTouches[0].clientX;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    eXRef.current = e.targetTouches[0].clientX;
-  };
-
+  const handleTouchStart = (e: React.TouchEvent) => { sXRef.current = e.targetTouches[0].clientX; };
+  const handleTouchMove = (e: React.TouchEvent) => { eXRef.current = e.targetTouches[0].clientX; };
   const handleTouchEnd = () => {
     if (sXRef.current === null || eXRef.current === null) return;
     const distance = sXRef.current - eXRef.current;
@@ -173,7 +159,7 @@ export default function Home() {
   const handleManualLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputKycId.trim()) {
-      setInputError("KYC 인증 ID 또는 지갑 주소를 입력해 주세요.");
+      setInputError("메인넷 인증 ID 또는 지갑 주소를 입력해 주세요.");
       return;
     }
 
@@ -183,11 +169,12 @@ export default function Home() {
     }
   };
 
+  // 클라이언트 마운트 전에는 Exception을 피하기 위해 로딩 스피너만 안전하게 출력
   if (!mounted || isLoading) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center text-slate-100">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-        <p className="text-sm font-medium tracking-wide">{t.loading || "Loading..."}</p>
+        <p className="text-sm font-medium tracking-wide">GPNR 메인넷 로딩 중...</p>
       </div>
     );
   }
@@ -201,19 +188,19 @@ export default function Home() {
               <span className="text-xl">🔐</span>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">KYC 인증 ID 로그인</h2>
-              <p className="text-xs text-slate-400">GPNR 글로벌 앱 진입 단계</p>
+              <h2 className="text-lg font-bold text-white">GPNR 메인넷 로그인</h2>
+              <p className="text-xs text-slate-400">Pi Mainnet App Portal</p>
             </div>
           </div>
 
           <p className="text-xs text-slate-300 leading-relaxed mb-4 bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-            {t.login_msg}
+            {t.login_msg || "Pi KYC ID 또는 지갑 주소를 입력해 주세요."}
           </p>
 
           <form onSubmit={handleManualLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-purple-300 mb-1.5">
-                KYC 인증 ID / Wallet Address
+                Mainnet Wallet / KYC ID
               </label>
               <textarea
                 rows={3}
@@ -222,8 +209,8 @@ export default function Home() {
                   setInputKycId(e.target.value);
                   if (inputError) setInputError("");
                 }}
-                placeholder="예: GAC7XH... 또는 파이 KYC 식별자 입력"
-                className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-xs text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all resize-none"
+                placeholder="GAC7XH... 형태의 파이 메인넷 지갑 주소 입력"
+                className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-xs text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-purple-500 transition-all resize-none"
               />
               {inputError && (
                 <p className="text-xs text-rose-400 mt-1 font-medium">{inputError}</p>
@@ -232,9 +219,9 @@ export default function Home() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-purple-900/30 transition-all duration-200 active:scale-[0.98]"
+              className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl shadow-lg transition-all active:scale-[0.98]"
             >
-              인증 확인 및 앱 진입하기
+              메인넷 접속하기
             </button>
           </form>
         </div>
@@ -255,7 +242,6 @@ export default function Home() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Header 영역 - 에러 방어 */}
       <SafeComponentWrapper>
         {HeaderComp && (
           <HeaderComp
@@ -266,7 +252,6 @@ export default function Home() {
         )}
       </SafeComponentWrapper>
 
-      {/* 실시간 전광판 영역 */}
       <div className="w-full bg-gradient-to-r from-slate-100 via-white to-slate-100 border-b border-slate-300 py-2.5 overflow-hidden sticky top-[48px] z-[55] shadow-md shadow-black/20">
         <div className="flex whitespace-nowrap gap-16 text-[12px] font-bold text-slate-900 tracking-wide compliance-marquee">
           <div className="flex gap-16 shrink-0 justify-around min-w-full">
@@ -286,7 +271,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* CategoryTabs 영역 - 에러 방어 */}
       <div className="sticky top-[81px] z-50 bg-[#0f172a]/95 backdrop-blur-sm">
         <SafeComponentWrapper>
           {CategoryTabsComp && (
@@ -299,13 +283,12 @@ export default function Home() {
         </SafeComponentWrapper>
       </div>
 
-      {/* 지갑 연동 정보 */}
       {isAuthenticated && user && (
         <div className="max-w-3xl mx-auto px-4 mt-3">
           <div className="bg-[#1e293b] border border-slate-700/60 rounded-xl p-3 flex items-center justify-between shadow-inner">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-xs text-slate-300 font-medium">{t.wallet_connected || "Pi Wallet Connected"}</span>
+              <span className="text-xs text-slate-300 font-medium">{t.wallet_connected || "Pi Mainnet Connected"}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-purple-400 bg-purple-950/40 px-2.5 py-1 rounded border border-purple-800/30">
@@ -322,14 +305,13 @@ export default function Home() {
         </div>
       )}
 
-      {/* CategoryNews 영역 (서버 사이드 렌더링 충돌 제거 및 클라이언트 안전 호출) */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
-        <SafeComponentWrapper fallback={<div className="p-4 text-center text-xs text-slate-400">뉴스 피드를 불러오는 중 오류가 발생했습니다.</div>}>
+        <SafeComponentWrapper fallback={<div className="p-4 text-center text-xs text-slate-400">뉴스 피드를 불러오는 중입니다.</div>}>
           <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
         </SafeComponentWrapper>
       </div>
 
-      {/* 언어 선택 */}
+      {/* 5개 국어 글로벌 언어 선택 드롭다운 */}
       <div className="fixed bottom-4 right-4 z-[99]">
         <select
           value={currentLang}
