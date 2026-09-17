@@ -204,3 +204,7 @@ export function GpnrHeader({
     </>
   );
 }
+
+// 안전한 모듈 호환성을 위한 별칭 내보내기 (Export Aliases)
+export const Header = GpnrHeader;
+export default GpnrHeader;
