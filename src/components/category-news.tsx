@@ -44,19 +44,19 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
   useEffect(() => {
     setIsMounted(true);
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("gpnr_status");
-      if (saved) {
-        try {
-          setStatus(JSON.parse(saved));
-        } catch (e) {
-          console.error(e);
-        }
+      try {
+        const saved = localStorage.getItem("gpnr_status");
+        if (saved) setStatus(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
       }
     }
   }, []);
 
   useEffect(() => {
+    if (!isMounted) return;
     let isSubscribed = true;
+
     const fetchLatestNews = async () => {
       setLoading(true);
       try {
@@ -73,15 +73,16 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
         if (isSubscribed) setLoading(false);
       }
     };
+
     fetchLatestNews();
     return () => {
       isSubscribed = false;
     };
-  }, [selectedCategory]);
+  }, [selectedCategory, isMounted]);
 
   const stripHtml = (html?: string) => {
     if (!html) return "";
-    return html.replace(/<\/?[^>]+(>|$)/g, "").trim();
+    return String(html).replace(/<\/?[^>]+(>|$)/g, "").trim();
   };
 
   const updateStatus = (id: string, key: "read" | "star" | "heart" | "views") => {
@@ -98,7 +99,11 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
     };
     setStatus(newStatus);
     if (typeof window !== "undefined") {
-      localStorage.setItem("gpnr_status", JSON.stringify(newStatus));
+      try {
+        localStorage.setItem("gpnr_status", JSON.stringify(newStatus));
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 
@@ -121,16 +126,22 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
     }
   };
 
-  if (!isMounted) return null;
+  if (!isMounted) {
+    return (
+      <div className="w-full py-12 text-center text-slate-400 text-sm">
+        {currentLang === "ko" ? "로딩 중..." : "Loading..."}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-4">
       {loading ? (
-        <div className="py-12 text-center text-gray-400 text-sm">
+        <div className="py-12 text-center text-slate-400 text-sm">
           {currentLang === "ko" ? "뉴스를 불러오는 중입니다..." : "Loading news..."}
         </div>
       ) : news.length === 0 ? (
-        <div className="py-12 text-center text-gray-400 text-sm">
+        <div className="py-12 text-center text-slate-400 text-sm">
           {currentLang === "ko" ? "등록된 뉴스가 없습니다." : "No news available."}
         </div>
       ) : (
@@ -183,7 +194,6 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
                 )}
               </div>
 
-              {/* 1. 요약본 펼치기 */}
               {isExpanded && (
                 <div className="mt-4 pt-4 border-t border-slate-700/80 text-sm text-slate-300 leading-relaxed space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800">
                   <p className="font-semibold text-purple-400 text-xs">📌 AI 핵심 요약본</p>
@@ -202,7 +212,6 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
                 </div>
               )}
 
-              {/* 2. 하단 반응 및 링크 복사 바 */}
               <div className="mt-3 pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800">
                 <div className="flex items-center gap-4">
                   <button
@@ -263,3 +272,4 @@ export function CategoryNews({ selectedCategory, currentLang = "en" }: { selecte
     </div>
   );
 }
+export default CategoryNews;
