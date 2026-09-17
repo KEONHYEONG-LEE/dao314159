@@ -1,12 +1,20 @@
 import { useState, useRef, useEffect, Component, ReactNode } from "react";
 import dynamic from "next/dynamic";
-import * as HeaderModule from "../components/Header";
-import * as CategoryTabsModule from "../components/category-tabs";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import * as TranslationsModule from "../lib/translations";
 import * as CategoriesModule from "../lib/categories";
 
-// Client-side Exception을 방지하기 위한 Dynamic Import (SSR 비활성화)
+// Client-side Exception 및 Import Mismatch를 방지하기 위한 Dynamic Imports
+const HeaderComp = dynamic(
+  () => import("../components/Header").then((mod) => mod.GpnrHeader || mod.Header || mod.default),
+  { ssr: false, loading: () => <div className="h-[48px] bg-[#0f172a]" /> }
+);
+
+const CategoryTabsComp = dynamic(
+  () => import("../components/category-tabs").then((mod) => mod.CategoryTabs || mod.default),
+  { ssr: false, loading: () => <div className="h-[40px] bg-[#0f172a]" /> }
+);
+
 const CategoryNews = dynamic(
   () => import("../components/category-news").then((mod) => mod.CategoryNews || mod.default),
   {
@@ -39,9 +47,6 @@ class SafeComponentWrapper extends Component<{ children: ReactNode; fallback?: R
     return this.props.children;
   }
 }
-
-const HeaderComp = (HeaderModule as any)?.GpnrHeader || (HeaderModule as any)?.Header || (HeaderModule as any)?.default;
-const CategoryTabsComp = (CategoryTabsModule as any)?.CategoryTabs || (CategoryTabsModule as any)?.default;
 
 const DEFAULT_CATEGORIES = [
   "top-news", "mainnet", "node", "mining", "wallet",
@@ -169,7 +174,6 @@ export default function Home() {
     }
   };
 
-  // 클라이언트 마운트 전에는 Exception을 피하기 위해 로딩 스피너만 안전하게 출력
   if (!mounted || isLoading) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center text-slate-100">
@@ -243,13 +247,11 @@ export default function Home() {
       onTouchEnd={handleTouchEnd}
     >
       <SafeComponentWrapper>
-        {HeaderComp && (
-          <HeaderComp
-            currentCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-            currentLanguage={currentLang}
-          />
-        )}
+        <HeaderComp
+          currentCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
+          currentLanguage={currentLang}
+        />
       </SafeComponentWrapper>
 
       <div className="w-full bg-gradient-to-r from-slate-100 via-white to-slate-100 border-b border-slate-300 py-2.5 overflow-hidden sticky top-[48px] z-[55] shadow-md shadow-black/20">
@@ -273,13 +275,11 @@ export default function Home() {
 
       <div className="sticky top-[81px] z-50 bg-[#0f172a]/95 backdrop-blur-sm">
         <SafeComponentWrapper>
-          {CategoryTabsComp && (
-            <CategoryTabsComp
-              selectedCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-              language={currentLang}
-            />
-          )}
+          <CategoryTabsComp
+            selectedCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            language={currentLang}
+          />
         </SafeComponentWrapper>
       </div>
 
@@ -311,7 +311,6 @@ export default function Home() {
         </SafeComponentWrapper>
       </div>
 
-      {/* 5개 국어 글로벌 언어 선택 드롭다운 */}
       <div className="fixed bottom-4 right-4 z-[99]">
         <select
           value={currentLang}
