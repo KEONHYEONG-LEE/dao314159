@@ -1,10 +1,23 @@
 import { useState, useRef, useEffect, Component, ReactNode } from "react";
+import dynamic from "next/dynamic";
 import * as HeaderModule from "../components/Header";
 import * as CategoryTabsModule from "../components/category-tabs";
-import * as NewsFeedModule from "../components/news-feed";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import * as TranslationsModule from "../lib/translations";
 import * as CategoriesModule from "../lib/categories";
+
+// Next.js Hydration & SSR Exception 방지를 위한 dynamic import
+const CategoryNews = dynamic(
+  () => import("../components/category-news").then((mod) => mod.CategoryNews || mod.default),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="py-12 text-center text-slate-400 text-sm">
+        뉴스를 불러오는 중입니다...
+      </div>
+    ),
+  }
+);
 
 // 하위 컴포넌트 렌더링 에러가 발생해도 화면 전체가 튕기지 않도록 방어하는 Error Boundary
 class SafeComponentWrapper extends Component<{ children: ReactNode; fallback?: ReactNode }, { hasError: boolean }> {
@@ -26,7 +39,6 @@ class SafeComponentWrapper extends Component<{ children: ReactNode; fallback?: R
 // 안전한 모듈 추출 (Named/Default Export 모두 수용)
 const HeaderComp = (HeaderModule as any)?.GpnrHeader || (HeaderModule as any)?.Header || (HeaderModule as any)?.default;
 const CategoryTabsComp = (CategoryTabsModule as any)?.CategoryTabs || (CategoryTabsModule as any)?.default;
-const NewsFeedComp = (NewsFeedModule as any)?.NewsFeed || (NewsFeedModule as any)?.default;
 
 const DEFAULT_CATEGORIES = [
   "top-news", "mainnet", "node", "mining", "wallet",
@@ -310,10 +322,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* NewsFeed 영역 - 에러 방어 */}
+      {/* CategoryNews 영역 (서버 사이드 렌더링 충돌 제거 및 클라이언트 안전 호출) */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
         <SafeComponentWrapper fallback={<div className="p-4 text-center text-xs text-slate-400">뉴스 피드를 불러오는 중 오류가 발생했습니다.</div>}>
-          {NewsFeedComp && <NewsFeedComp selectedCategory={activeCategory} />}
+          <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
         </SafeComponentWrapper>
       </div>
 
