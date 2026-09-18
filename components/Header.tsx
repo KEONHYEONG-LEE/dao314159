@@ -10,7 +10,7 @@ interface GpnrHeaderProps {
   currentLanguage?: string;                     
 }
 
-// 첫 번째 스크린샷(20633.jpg)과 정확히 일치하는 17개 카테고리 구성
+// 17개 카테고리 구성
 const GRID_CATEGORIES = [
   { id: "top-news", label: "주요뉴스", enLabel: "Top News", icon: "🔥" },
   { id: "mainnet", label: "메인넷", enLabel: "Mainnet", icon: "🌐" },
@@ -63,7 +63,7 @@ export function GpnrHeader({
       try {
         const origin = window.location.origin;
         await (window as any).Pi.createPayment({
-          amount: 0.001,
+          amount: 0.01, // [수정] 버튼 표기(0.01 Pi)와 맞춰 상향
           memo: currentLang === "ko" ? "GPNR 서비스 후원" : "GPNR Service Donation",
           metadata: { type: "one-time-donation", app: "GPNR" }
         }, {
@@ -80,7 +80,7 @@ export function GpnrHeader({
               headers: { 'Content-Type': 'application/json' }, 
               body: JSON.stringify({ paymentId, txid }) 
             });
-            alert(currentLang === "ko" ? "0.001 Pi 후원이 완료되었습니다. 감사합니다!" : "0.001 Pi donation completed. Thank you!");
+            alert(currentLang === "ko" ? "0.01 Pi 후원이 완료되었습니다. 감사합니다!" : "0.01 Pi donation completed. Thank you!");
           },
           onCancel: (paymentId: string) => console.log("취소됨", paymentId),
           onError: (error: Error) => console.error("에러", error),
@@ -136,7 +136,7 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 20633.jpg 스크린샷과 100% 동일한 그리드 레이어 모달 */}
+      {/* 그리드 레이어 모달 */}
       {isLauncherOpen && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div 
@@ -151,7 +151,7 @@ export function GpnrHeader({
               ✕
             </button>
 
-            {/* 3x6 그리드 아이콘 영역 (첫 번째 사진과 동일한 디자인) */}
+            {/* 3x6 그리드 아이콘 영역 */}
             <div className="grid grid-cols-3 gap-3 mt-2">
               {GRID_CATEGORIES.map((item) => {
                 const isSelected = currentCategory === item.id;
@@ -198,3 +198,6 @@ export function GpnrHeader({
     </>
   );
 }
+
+// [핵심 수정] Header 가져오기 오류(default import) 방지를 위해 기본 내보내기 추가
+export default GpnrHeader;
