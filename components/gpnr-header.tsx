@@ -31,7 +31,7 @@ export function GpnrHeader({
   const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
 
   const [calendarYear, setCalendarYear] = useState<number>(2026);
-  const [calendarMonth, setCalendarMonth] = useState<number>(3); // 0-indexed (3 = 4월)
+  const [calendarMonth, setCalendarMonth] = useState<number>(2); // 0-indexed (2 = 3월, 3 = 4월)
 
   useEffect(() => {
     setMounted(true);
@@ -46,7 +46,7 @@ export function GpnrHeader({
           setCurrentLang(targetLang);
         }
       } catch (e) {
-        console.error(e);
+        console.error("Language sync error:", e);
       }
     };
 
@@ -93,7 +93,7 @@ export function GpnrHeader({
         const origin = window.location.origin;
 
         await (window as any).Pi.createPayment({
-          amount: 0.01,
+          amount: 0.001, // [수정] 상단 버튼 및 완료 메시지와 액수(0.001 Pi)를 통일
           memo: currentLang === "ko" ? "GPNR 서비스 후원" : "GPNR Service Donation",
           metadata: { type: "one-time-donation", app: "GPNR" }
         }, {
@@ -118,7 +118,7 @@ export function GpnrHeader({
             if (!res.ok) {
               throw new Error("Payment completion failed on server.");
             }
-            alert(currentLang === "ko" ? "0.001 Pi 후원이 완료되었습니다. 감사합니다!" : "0.01 Pi donation completed. Thank you!");
+            alert(currentLang === "ko" ? "0.001 Pi 후원이 완료되었습니다. 감사합니다!" : "0.001 Pi donation completed. Thank you!");
           },
           onCancel: (paymentId: string) => console.log("[Pi Payment] 취소:", paymentId),
           onError: (error: Error) => console.error("[Pi Payment] 에러:", error),
@@ -164,8 +164,9 @@ export function GpnrHeader({
             {/* 로고 영역 */}
             <div className="flex items-center gap-2">
               <span 
-                className="font-black text-lg tracking-tighter" 
+                className="font-black text-lg tracking-tighter cursor-pointer" 
                 style={{ animation: 'gpnr-lighting 14s steps(1) infinite' }}
+                onClick={() => onCategoryChange && onCategoryChange("top-news")}
               >
                 GPNR
                 <style>{`
