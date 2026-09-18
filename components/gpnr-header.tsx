@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
-import { NEWS_CATEGORIES } from "../lib/categories"; // [수정] 단일 출처 카테고리 로드
+import { NEWS_CATEGORIES } from "../lib/categories";
 
 interface GpnrHeaderProps {
   currentCategory?: string;                     
@@ -19,29 +19,35 @@ interface LauncherItem {
 }
 
 export function GpnrHeader({ 
-  currentCategory = "top-news", // [수정] 기본 카테고리를 top-news로 변경
+  currentCategory = "top-news",
   onCategoryChange,
   currentLanguage
 }: GpnrHeaderProps) {
   const [mounted, setMounted] = useState<boolean>(false);
   const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false); 
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false); 
-  const [currentLang, setCurrentLang] = useState<string>("en");
+  const [currentLang, setCurrentLang] = useState<string>("ko");
 
   const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
 
-  const localToday = useMemo(() => new Date(), []);
   const [calendarYear, setCalendarYear] = useState<number>(2026);
-  const [calendarMonth, setCalendarMonth] = useState<number>(4);
+  const [calendarMonth, setCalendarMonth] = useState<number>(3); // 0-indexed (3 = 4월)
 
   useEffect(() => {
     setMounted(true);
-    setCalendarYear(localToday.getFullYear());
-    setCalendarMonth(localToday.getMonth());
+    const now = new Date();
+    setCalendarYear(now.getFullYear());
+    setCalendarMonth(now.getMonth());
 
     const syncLanguage = () => {
-      const targetLang = currentLanguage || localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en";
-      setCurrentLang(targetLang);
+      try {
+        if (typeof window !== "undefined") {
+          const targetLang = currentLanguage || localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
+          setCurrentLang(targetLang);
+        }
+      } catch (e) {
+        console.error(e);
+      }
     };
 
     syncLanguage();
@@ -51,7 +57,7 @@ export function GpnrHeader({
       window.removeEventListener("storage", syncLanguage);
       window.removeEventListener("languageChange", syncLanguage);
     };
-  }, [localToday, currentLanguage]);
+  }, [currentLanguage]);
 
   const { daysArray, startBlankDays } = useMemo(() => {
     const firstDayInstance = new Date(calendarYear, calendarMonth, 1);
@@ -72,7 +78,6 @@ export function GpnrHeader({
     }
   };
 
-  // [수정] 다음 달 이동 로직 오류 수정 (+1)
   const handleNextMonth = (): void => {
     if (calendarMonth === 11) {
       setCalendarYear(calendarYear + 1);
@@ -93,8 +98,6 @@ export function GpnrHeader({
           metadata: { type: "one-time-donation", app: "GPNR" }
         }, {
           onReadyForServerApproval: async (paymentId: string) => {
-            console.log("[Pi Payment] 서버 승인 요청 시작 paymentId:", paymentId);
-            
             const res = await fetch(`${origin}/api/payments/approve`, { 
               method: 'POST', 
               headers: { 'Content-Type': 'application/json' }, 
@@ -102,15 +105,10 @@ export function GpnrHeader({
             });
 
             if (!res.ok) {
-              const errData = await res.json().catch(() => ({}));
-              console.error("[Pi Payment] 서버 승인 실패:", errData);
               throw new Error("Payment approval failed on server.");
             }
-            console.log("[Pi Payment] 서버 승인 성공!");
           },
           onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-            console.log("[Pi Payment] 서버 완료 처리 시작 txid:", txid);
-            
             const res = await fetch(`${origin}/api/payments/complete`, { 
               method: 'POST', 
               headers: { 'Content-Type': 'application/json' }, 
@@ -118,33 +116,30 @@ export function GpnrHeader({
             });
 
             if (!res.ok) {
-              const errData = await res.json().catch(() => ({}));
-              console.error("[Pi Payment] 서버 완료 처리 실패:", errData);
               throw new Error("Payment completion failed on server.");
             }
             alert(currentLang === "ko" ? "0.001 Pi 후원이 완료되었습니다. 감사합니다!" : "0.001 Pi donation completed. Thank you!");
           },
-          onCancel: (paymentId: string) => console.log("[Pi Payment] 후원 취소됨:", paymentId),
-          onError: (error: Error) => console.error("[Pi Payment] 결제 에러:", error),
+          onCancel: (paymentId: string) => console.log("[Pi Payment] 취소:", paymentId),
+          onError: (error: Error) => console.error("[Pi Payment] 에러:", error),
         });
       } catch (err) {
-        console.error("Pi SDK payment execution failed:", err);
+        console.error("Pi SDK payment failed:", err);
       }
     } else {
-      alert(currentLang === "ko" ? "Pi Browser에서 접속하거나 SDK 로딩을 확인해주세요." : "Please access through Pi Browser or check SDK loading.");
+      alert(currentLang === "ko" ? "Pi Browser에서 접속해 주세요." : "Please access through Pi Browser.");
     }
   }, [currentLang]);
 
-  // [수정] NEWS_CATEGORIES 데이터 기반으로 그리드 런처 아이템 자동 구성 + '달력' 추가
   const FIXED_LAUNCHER_ITEMS: LauncherItem[] = useMemo(() => {
-    const items: LauncherItem[] = NEWS_CATEGORIES.map(cat => ({
+    const rawCategories = Array.isArray(NEWS_CATEGORIES) ? NEWS_CATEGORIES : [];
+    const items: LauncherItem[] = rawCategories.map(cat => ({
       id: cat.id,
       icon: cat.icon || "📰",
       label: cat.label || cat.name || cat.id,
       enLabel: cat.enLabel || cat.enName || cat.id
     }));
 
-    // 마지막에 '달력' 모달 아이템 추가
     items.push({
       id: "calendar",
       icon: "📅",
@@ -154,8 +149,6 @@ export function GpnrHeader({
 
     return items;
   }, []);
-
-  if (!mounted) return null;
 
   const displayId = user?.username
     ? user.username.length > 12
@@ -206,7 +199,7 @@ export function GpnrHeader({
                 ☰
               </button>
 
-              {isAuthenticated && user ? (
+              {mounted && isAuthenticated && user ? (
                 <div className="flex items-center gap-1.5 bg-purple-950/40 border border-purple-800/40 px-2 py-0.5 rounded-lg text-[10px] font-mono text-purple-300 font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   <span>{displayId}</span>
@@ -221,7 +214,7 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 2. 카테고리 그리드 런처 메뉴 */}
+      {/* 카테고리 그리드 런처 메뉴 */}
       {isLauncherOpen && (
         <div className="fixed top-[49px] right-4 z-[70] w-[320px] max-h-[80vh] overflow-y-auto bg-slate-900/95 border border-slate-800 rounded-2xl p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
           <div className="grid gap-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
@@ -253,7 +246,7 @@ export function GpnrHeader({
             <div className="mt-4 pt-3 border-t border-slate-800">
               <button
                 onClick={() => {
-                  logout();
+                  if (logout) logout();
                   setIsLauncherOpen(false);
                 }}
                 className="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-semibold text-xs rounded-xl transition-colors"
@@ -265,7 +258,7 @@ export function GpnrHeader({
         </div>
       )}
 
-      {/* 3. 달력 모달 팝업 */}
+      {/* 달력 모달 팝업 */}
       {isCalendarOpen && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
@@ -299,7 +292,8 @@ export function GpnrHeader({
               <div className="grid grid-cols-7 text-center gap-y-2 text-xs text-slate-300">
                 {startBlankDays.map((_, index) => <div key={`blank-${index}`} className="text-slate-700"></div>)}
                 {daysArray.map((day) => {
-                  const isToday = localToday.getDate() === day && localToday.getMonth() === calendarMonth && localToday.getFullYear() === calendarYear;
+                  const today = new Date();
+                  const isToday = today.getDate() === day && today.getMonth() === calendarMonth && today.getFullYear() === calendarYear;
                   return (
                     <div key={`day-${day}`} className="flex items-center justify-center">
                       {isToday ? <div className="bg-[#f7a145] text-slate-950 font-black rounded-full w-6 h-6 flex items-center justify-center shadow-md">{day}</div> : <span className="w-6 h-6 flex items-center justify-center">{day}</span>}
