@@ -24,7 +24,7 @@ export const NEWS_CATEGORIES: Category[] = [
   { id: "commerce", name: "커머스", enName: "Commerce", icon: "ShoppingCart", group: "ecosystem" },
   { id: "kyc", name: "KYC", enName: "KYC", icon: "ShieldCheck", group: "ecosystem" },
   { id: "developer", name: "개발자", enName: "Developers", icon: "Code", group: "ecosystem" },
-  { id: "realestate", name: "부동산", enName: "Real Estate", icon: "Home", group: "ecosystem" },
+  { id: "ecosystem", name: "부동산", enName: "Real Estate", icon: "Home", group: "ecosystem" }, // [수정] GpnrHeader의 'ecosystem' ID와 동기화
 
   // 3. 마켓 및 보안 (Market & Legal)
   { id: "outlook", name: "전망시세", enName: "Price Outlook", icon: "TrendingUp", group: "market_legal" },
@@ -32,3 +32,5 @@ export const NEWS_CATEGORIES: Category[] = [
   { id: "security", name: "보안", enName: "Security", icon: "Shield", group: "market_legal" },
   { id: "legal", name: "관련법규", enName: "Regulations", icon: "Gavel", group: "market_legal" }
 ];
+
+export default NEWS_CATEGORIES;
