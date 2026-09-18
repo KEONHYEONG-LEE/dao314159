@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-// [중요] 중괄호 { GpnrHeader } 형태로 정확히 불러옵니다.
-import { GpnrHeader } from "../components/GpnrHeader";
+// [수정] 실제 파일명인 ../components/gpnr-header 에서 가져옵니다.
+import { GpnrHeader } from "../components/gpnr-header";
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
@@ -199,7 +199,6 @@ export default function Home() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* 올바른 props 전달 */}
       <GpnrHeader 
         currentCategory={activeCategory} 
         onCategoryChange={setActiveCategory}
