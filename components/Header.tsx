@@ -45,8 +45,14 @@ export function GpnrHeader({
   useEffect(() => {
     setMounted(true);
     const syncLanguage = () => {
-      const targetLang = currentLanguage || localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
-      setCurrentLang(targetLang);
+      try {
+        if (typeof window !== "undefined") {
+          const targetLang = currentLanguage || localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
+          setCurrentLang(targetLang);
+        }
+      } catch (e) {
+        console.error("Language sync error:", e);
+      }
     };
 
     syncLanguage();
@@ -63,7 +69,7 @@ export function GpnrHeader({
       try {
         const origin = window.location.origin;
         await (window as any).Pi.createPayment({
-          amount: 0.01, // [수정] 버튼 표기(0.01 Pi)와 맞춰 상향
+          amount: 0.01, // 0.01 Pi 후원 결제 요청
           memo: currentLang === "ko" ? "GPNR 서비스 후원" : "GPNR Service Donation",
           metadata: { type: "one-time-donation", app: "GPNR" }
         }, {
@@ -82,14 +88,14 @@ export function GpnrHeader({
             });
             alert(currentLang === "ko" ? "0.01 Pi 후원이 완료되었습니다. 감사합니다!" : "0.01 Pi donation completed. Thank you!");
           },
-          onCancel: (paymentId: string) => console.log("취소됨", paymentId),
-          onError: (error: Error) => console.error("에러", error),
+          onCancel: (paymentId: string) => console.log("[Pi Payment] 취소:", paymentId),
+          onError: (error: Error) => console.error("[Pi Payment] 에러:", error),
         });
       } catch (err) {
         console.error("Pi SDK payment failed:", err);
       }
     } else {
-      alert(currentLang === "ko" ? "Pi Browser에서 접속해주세요." : "Please access through Pi Browser.");
+      alert(currentLang === "ko" ? "Pi Browser에서 접속해 주세요." : "Please access through Pi Browser.");
     }
   }, [currentLang]);
 
@@ -108,13 +114,18 @@ export function GpnrHeader({
         <div className="mx-auto max-w-7xl px-3">
           <div className="flex h-[48px] items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="font-black text-xl tracking-wider text-purple-400">GPNR</span>
+              <span 
+                className="font-black text-xl tracking-wider text-purple-400 cursor-pointer"
+                onClick={() => onCategoryChange && onCategoryChange("top-news")}
+              >
+                GPNR
+              </span>
             </div>
             
             <div className="flex items-center gap-2">
               <button 
                 onClick={handleDonation} 
-                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold"
+                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold transition-colors"
               >
                 <span>🪙</span>
                 <span>0.01 Pi 후원</span>
@@ -138,9 +149,12 @@ export function GpnrHeader({
 
       {/* 그리드 레이어 모달 */}
       {isLauncherOpen && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsLauncherOpen(false)}
+        >
           <div 
-            className="w-full max-w-md bg-[#131528] border border-purple-500/30 rounded-3xl p-5 shadow-2xl relative"
+            className="w-full max-w-md bg-[#131528] border border-purple-500/30 rounded-3xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 닫기 버튼 */}
@@ -199,5 +213,4 @@ export function GpnrHeader({
   );
 }
 
-// [핵심 수정] Header 가져오기 오류(default import) 방지를 위해 기본 내보내기 추가
 export default GpnrHeader;
