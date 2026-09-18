@@ -1,21 +1,20 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { GpnrHeader } from "../components/GpnrHeader"; // [수정] GpnrHeader로 올바르게 임포트
+import { GpnrHeader } from "../components/GpnrHeader"; // [수정] Header 대신 GpnrHeader 임포트
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { translations } from "../lib/translations";
-import { NEWS_CATEGORIES } from "../lib/categories"; // [수정] 단일 출처 카테고리 로드
+import { NEWS_CATEGORIES } from "../lib/categories";
 
-// [수정] NEWS_CATEGORIES 정의에서 ID 목록만 자동으로 추출 ('poll' 및 'all' 완전 제거)
+// NEWS_CATEGORIES 정의에서 ID 목록 추출
 const CATEGORIES = NEWS_CATEGORIES.map(c => c.id);
 
 export default function Home() {
-  // [수정] 초기 기본 카테고리를 'top-news'로 변경
   const [activeCategory, setActiveCategory] = useState('top-news');
-  const [currentLang, setCurrentLang] = useState('en'); // 기본 언어 설정 (en, ko, ja, zh, es, vi)
-  
+  const [currentLang, setCurrentLang] = useState('en');
+
   const { user, isAuthenticated, isLoading, loginWithKycId, logout } = usePiNetworkAuthentication();
 
   const [inputKycId, setInputKycId] = useState("");
@@ -28,16 +27,14 @@ export default function Home() {
     "📢 최신 생태계 핵심 소식 및 마이그레이션 모니터링 가동 중"
   ]);
 
-  // 실시간 전광판(화이트 바) 뉴스 패치 로직
   useEffect(() => {
     const loadHotNewsForTicker = async () => {
       try {
-        // [수정] 주요뉴스(top-news) 최신 핫이슈 호출
         const response = await fetch(`/api/fetch-news?category=top-news&t=${Date.now()}`);
         if (!response.ok) throw new Error("Network response was not ok");
 
         const allNews = await response.json();
-        
+
         if (Array.isArray(allNews) && allNews.length > 0) {
           const cleanText = (text: string) => {
             if (!text) return "";
@@ -122,7 +119,7 @@ export default function Home() {
       setInputError("KYC 인증 ID 또는 지갑 주소를 입력해 주세요.");
       return;
     }
-    
+
     const success = loginWithKycId(inputKycId);
     if (success) {
       setInputError("");
@@ -201,7 +198,7 @@ export default function Home() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* [수정] Header -> GpnrHeader 교체 및 속성 전달 */}
+      {/* GpnrHeader 적용 */}
       <GpnrHeader 
         activeCategory={activeCategory} 
         onSelectCategory={setActiveCategory}
