@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Header from "../components/Header"; // [수정] default export 방식에 맞게 중괄호 제거
+import { GpnrHeader } from "../components/GpnrHeader"; // [수정] GpnrHeader로 올바르게 임포트
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
@@ -201,11 +201,10 @@ export default function Home() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <Header 
-        currentCategory={activeCategory} 
-        onCategoryChange={setActiveCategory}
-        currentLang={currentLang}
-        onLanguageChange={setCurrentLang}
+      {/* [수정] Header -> GpnrHeader 교체 및 속성 전달 */}
+      <GpnrHeader 
+        activeCategory={activeCategory} 
+        onSelectCategory={setActiveCategory}
       />
 
       <div className="w-full bg-gradient-to-r from-slate-100 via-white to-slate-100 border-b border-slate-300 py-2.5 overflow-hidden sticky top-[60px] z-[55] shadow-md shadow-black/20">
