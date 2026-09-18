@@ -1,7 +1,6 @@
-/* 문법 에러 방지를 위해 표준 방식으로 유지 */
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #0f172a;
