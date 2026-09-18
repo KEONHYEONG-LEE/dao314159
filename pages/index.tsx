@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Header } from "../components/Header"; 
+import Header from "../components/Header"; // [수정] default export 방식에 맞게 중괄호 제거
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
