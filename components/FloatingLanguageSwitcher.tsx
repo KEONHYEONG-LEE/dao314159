@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Globe, ChevronUp } from "lucide-react";
-import { usePiStorage } from "@/hooks/usePiStorage";
+import { usePiStorage } from "../hooks/usePiStorage"; // [수정] @/ 대신 ../ 상대경로 사용
 
 // 지원할 다국어 리스트 정의
 const LANGUAGES = [
@@ -121,4 +121,3 @@ export function FloatingLanguageSwitcher() {
     </div>
   );
 }
-.
