@@ -93,7 +93,7 @@ export function GpnrHeader({
         const origin = window.location.origin;
 
         await (window as any).Pi.createPayment({
-          amount: 0.001,
+          amount: 0.01,
           memo: currentLang === "ko" ? "GPNR 서비스 후원" : "GPNR Service Donation",
           metadata: { type: "one-time-donation", app: "GPNR" }
         }, {
@@ -118,7 +118,7 @@ export function GpnrHeader({
             if (!res.ok) {
               throw new Error("Payment completion failed on server.");
             }
-            alert(currentLang === "ko" ? "0.001 Pi 후원이 완료되었습니다. 감사합니다!" : "0.001 Pi donation completed. Thank you!");
+            alert(currentLang === "ko" ? "0.001 Pi 후원이 완료되었습니다. 감사합니다!" : "0.01 Pi donation completed. Thank you!");
           },
           onCancel: (paymentId: string) => console.log("[Pi Payment] 취소:", paymentId),
           onError: (error: Error) => console.error("[Pi Payment] 에러:", error),
