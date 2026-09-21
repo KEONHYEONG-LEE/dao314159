@@ -208,20 +208,19 @@ export function Header({
               <X className="w-5 h-5" />
             </button>
 
-            {/* 3열 카테고리 그리드 (Lucide SVG 아이콘 안전 매핑) */}
+            {/* 3열 카테고리 그리드 (Icon 및 iconName 지원) */}
             <div className="grid grid-cols-3 gap-3 mt-2">
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
 
-                // icon 데이터 타입에 상관없이 안전하게 Lucide 컴포넌트 매핑
-                let IconComponent: React.ElementType = Flame;
-                if (typeof category.icon === "string") {
-                  IconComponent = ICON_MAP[category.icon] || Flame;
-                } else if (category.icon) {
-                  IconComponent = category.icon;
-                }
+                // categories.ts의 Icon(대문자) 컴포넌트 객체 또는 iconName/icon 문자열 동적 대응
+                const IconComponent =
+                  category.Icon ||
+                  (category.iconName ? ICON_MAP[category.iconName] : null) ||
+                  (category.icon ? (typeof category.icon === "string" ? ICON_MAP[category.icon] : category.icon) : null) ||
+                  Flame;
 
-                // 카테고리 라벨
+                // 라벨 텍스트
                 const labelText =
                   currentLang === "ko"
                     ? category.name || category.label || category.id
@@ -241,7 +240,7 @@ export function Header({
                         : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                     }`}
                   >
-                    {/* SVG 아이콘 컴포넌트 렌더링 */}
+                    {/* Lucide SVG 아이콘 컴포넌트 */}
                     <IconComponent className="w-6 h-6 mb-1 text-purple-400 shrink-0" />
                     <span className="text-[11px] font-medium text-slate-200 text-center px-1 truncate w-full">
                       {labelText}
