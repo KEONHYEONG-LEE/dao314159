@@ -5,10 +5,47 @@ import { ExternalLink, ChevronDown, ChevronUp, Lock, Share2 } from "lucide-react
 import { NEWS_DATA } from "@/lib/pi-news-v2";
 import { shareNews, stripHtml } from "@/lib/utils";
 
+// 팝업 메뉴 다국어 텍스트 정의
+const MENU_TEXTS = {
+  ko: {
+    open_new_tab: "새 탭에서 열기",
+    open_group_tab: "탭 그룹에서 열기",
+    open_bg_tab: "백그라운드 탭에서 열기",
+    open_new_window: "다른 창에서 열기",
+    open_incognito: "비밀 모드에서 열기",
+    select_text: "텍스트 선택",
+    share_link: "링크 공유",
+    copy_link: "링크 복사",
+    save_link: "링크 저장",
+    text_copied: "기사 텍스트가 복사되었습니다.",
+    link_copied: "링크가 클립보드에 복사되었습니다.",
+    link_saved: "기사가 저장되었습니다.",
+    login_required: "로그인 후 이용해 주세요.",
+  },
+  en: {
+    open_new_tab: "Open in new tab",
+    open_group_tab: "Open in tab group",
+    open_bg_tab: "Open in background tab",
+    open_new_window: "Open in new window",
+    open_incognito: "Open in incognito tab",
+    select_text: "Select text",
+    share_link: "Share link",
+    copy_link: "Copy link",
+    save_link: "Save link",
+    text_copied: "Article text copied to clipboard.",
+    link_copied: "Link copied to clipboard.",
+    link_saved: "Article saved.",
+    login_required: "Please log in to use this feature.",
+  },
+};
+
 export function LatestNews() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  
+  // 현재 앱 언어 상태 (기본값: 'en', localStorage 또는 system 설정 연동)
+  const [lang, setLang] = useState<"ko" | "en">("en");
 
   // 크롬 스타일 컨텍스트 메뉴 상태
   const [contextMenu, setContextMenu] = useState<{
@@ -26,17 +63,24 @@ export function LatestNews() {
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPress = useRef(false);
 
-  // 컴포넌트 마운트 시 로그인 상태 확인
+  // 현재 설정된 언어의 텍스트 가져오기
+  const t = MENU_TEXTS[lang] || MENU_TEXTS.en;
+
   useEffect(() => {
     const checkLogin = () => {
       const savedId = localStorage.getItem("pi_user_id");
       setIsLoggedIn(!!savedId);
+      
+      // 앱의 언어 설정 감지 (localStorage의 gpnr_lang 또는 pi_lang 값 체크)
+      const savedLang = localStorage.getItem("gpnr_lang") || localStorage.getItem("pi_lang");
+      if (savedLang === "ko" || savedLang === "en") {
+        setLang(savedLang as "ko" | "en");
+      }
     };
 
     checkLogin();
     window.addEventListener("storage", checkLogin);
 
-    // 외부 클릭 및 스크롤 시 컨텍스트 메뉴 닫기
     const handleOutsideClick = () => closeContextMenu();
     window.addEventListener("click", handleOutsideClick);
     window.addEventListener("scroll", handleOutsideClick);
@@ -70,7 +114,6 @@ export function LatestNews() {
     });
   };
 
-  // 모바일 롱 프레스 터치 핸들러
   const handleTouchStart = (
     itemData: { id: string; url: string; title: string; content: string },
     e: React.TouchEvent
@@ -92,7 +135,6 @@ export function LatestNews() {
     }
   };
 
-  // 우클릭 핸들러
   const handleContextMenu = (
     itemData: { id: string; url: string; title: string; content: string },
     e: React.MouseEvent
@@ -101,7 +143,6 @@ export function LatestNews() {
     openContextMenu(itemData, e.clientX, e.clientY);
   };
 
-  // 팝업 메뉴 액션 핸들러
   const handleMenuAction = (action: string) => {
     if (!contextMenu.item) return;
     const { url, title, content } = contextMenu.item;
@@ -116,22 +157,22 @@ export function LatestNews() {
         break;
       case "select_text":
         navigator.clipboard.writeText(`${title}\n${stripHtml(content)}`);
-        alert("기사 텍스트가 복사되었습니다.");
+        alert(t.text_copied);
         break;
       case "share_link":
         if (navigator.share) {
           navigator.share({ title, url }).catch(() => {});
         } else {
           navigator.clipboard.writeText(url);
-          alert("링크가 복사되었습니다.");
+          alert(t.link_copied);
         }
         break;
       case "copy_link":
         navigator.clipboard.writeText(url);
-        alert("링크가 클립보드에 복사되었습니다.");
+        alert(t.link_copied);
         break;
       case "save_link":
-        alert("기사가 저장되었습니다.");
+        alert(t.link_saved);
         break;
       default:
         break;
@@ -142,7 +183,7 @@ export function LatestNews() {
   const getText = (field: any) => {
     if (!field) return "";
     if (typeof field === "string") return field;
-    return field.ko || field.en || "";
+    return field[lang] || field.ko || field.en || "";
   };
 
   const formatDate = (dateStr: string) => {
@@ -164,7 +205,7 @@ export function LatestNews() {
 
   const handleToggleExpand = (id: string) => {
     if (!isLoggedIn) {
-      alert("로그인 후 이용해 주세요.");
+      alert(t.login_required);
       return;
     }
     setExpandedId(expandedId === id ? null : id);
@@ -173,7 +214,7 @@ export function LatestNews() {
   const handleExternalClick = (e: React.MouseEvent, url: string) => {
     e.stopPropagation();
     if (!isLoggedIn) {
-      alert("로그인 후 이용해 주세요.");
+      alert(t.login_required);
       return;
     }
     window.open(url, "_blank", "noopener,noreferrer");
@@ -182,7 +223,7 @@ export function LatestNews() {
   const handleShareClick = async (e: React.MouseEvent, news: any) => {
     e.stopPropagation();
     if (!isLoggedIn) {
-      alert("로그인 후 이용해 주세요.");
+      alert(t.login_required);
       return;
     }
 
@@ -254,7 +295,6 @@ export function LatestNews() {
                   </div>
                 </div>
 
-                {/* 썸네일 영역 */}
                 {hasValidImage && expandedId !== news.id && (
                   <div className="w-[70px] h-[70px] rounded-lg overflow-hidden bg-slate-800 flex-shrink-0 relative">
                     <img
@@ -267,7 +307,6 @@ export function LatestNews() {
                 )}
               </article>
 
-              {/* 상세 보기 영역 */}
               <div
                 className={`transition-all duration-500 ease-in-out overflow-hidden ${
                   expandedId === news.id && isLoggedIn
@@ -298,7 +337,7 @@ export function LatestNews() {
                         className="text-[13px] text-blue-400 flex items-center gap-1.5 hover:text-blue-300 transition-colors"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                        <span>원문 출처 이동</span>
+                        <span>{lang === "ko" ? "원문 출처 이동" : "Original Source"}</span>
                       </button>
 
                       <button
@@ -306,7 +345,7 @@ export function LatestNews() {
                         className="text-[13px] text-slate-400 flex items-center gap-1.5 hover:text-blue-400 transition-colors"
                       >
                         <Share2 className="w-3.5 h-3.5" />
-                        <span>공유하기</span>
+                        <span>{lang === "ko" ? "공유하기" : "Share"}</span>
                       </button>
                     </div>
 
@@ -317,7 +356,7 @@ export function LatestNews() {
                       }}
                       className="text-[12px] text-slate-500 hover:text-slate-300"
                     >
-                      닫기
+                      {lang === "ko" ? "닫기" : "Close"}
                     </button>
                   </div>
                 </div>
@@ -327,7 +366,7 @@ export function LatestNews() {
         })}
       </div>
 
-      {/* 구글 크롬 스타일 컨텍스트 메뉴 팝업 */}
+      {/* 동적 언어 반영 크롬 스타일 컨텍스트 메뉴 팝업 */}
       {contextMenu.visible && contextMenu.item && (
         <div 
           className="fixed z-50 w-64 bg-gray-900/95 text-gray-200 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 py-2.5 text-sm overflow-hidden transition-all duration-150 animate-in fade-in zoom-in-95"
@@ -337,41 +376,39 @@ export function LatestNews() {
             e.stopPropagation();
           }}
         >
-          {/* 상단 URL 헤더 */}
           <div className="px-4 py-2 border-b border-gray-700/60 text-xs text-gray-400 truncate">
             {contextMenu.item.url}
           </div>
 
-          {/* 메뉴 리스트 */}
           <div className="py-1">
             <button onClick={() => handleMenuAction("open_new_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              새 탭에서 열기
+              {t.open_new_tab}
             </button>
             <button onClick={() => handleMenuAction("open_group_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              탭 그룹에서 열기
+              {t.open_group_tab}
             </button>
             <button onClick={() => handleMenuAction("open_bg_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              백그라운드 탭에서 열기
+              {t.open_bg_tab}
             </button>
             <button onClick={() => handleMenuAction("open_new_window")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              다른 창에서 열기
+              {t.open_new_window}
             </button>
             <button onClick={() => handleMenuAction("open_incognito")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
-              비밀 모드에서 열기
+              {t.open_incognito}
             </button>
 
             <button onClick={() => handleMenuAction("select_text")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
-              텍스트 선택
+              {t.select_text}
             </button>
 
             <button onClick={() => handleMenuAction("share_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              링크 공유
+              {t.share_link}
             </button>
             <button onClick={() => handleMenuAction("copy_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              링크 복사
+              {t.copy_link}
             </button>
             <button onClick={() => handleMenuAction("save_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              링크 저장
+              {t.save_link}
             </button>
           </div>
         </div>
