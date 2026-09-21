@@ -18,8 +18,18 @@ export async function GET(request: Request) {
       },
     });
 
+    // 외부 API가 200 OK가 아닌 경우 (404, 401 등)
     if (!response.ok) {
-      throw new Error(`Pi Staking API Error: ${response.statusText}`);
+      console.warn(`Pi Staking API warning (${response.status}): ${response.statusText}`);
+      
+      // 404 등 데이터나 엔드포인트가 없는 경우 500을 터뜨리지 않고 
+      // 스테이킹 기본값(0)을 반환하거나 외부 상태 코드를 전달합니다.
+      return NextResponse.json({
+        success: false,
+        effectiveStake: 0,
+        isVip: false,
+        message: `Pi API responded with status ${response.status}`,
+      }, { status: 200 }); // 클라이언트 앱이 튕기지 않도록 200 처리 또는 response.status
     }
 
     const data = await response.json();
@@ -37,6 +47,7 @@ export async function GET(request: Request) {
       raw: data,
     });
   } catch (error: any) {
+    // 네트워크 연결 자체의 문제 등 실제 서버 내부 에러만 catch로 처리
     console.error("Staking API Fetch Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch staking data", details: error.message },
@@ -44,4 +55,3 @@ export async function GET(request: Request) {
     );
   }
 }
-
