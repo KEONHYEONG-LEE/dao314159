@@ -19,6 +19,37 @@ interface NewsItem {
   image?: string;
 }
 
+const MENU_TEXTS = {
+  ko: {
+    open_new_tab: "새 탭에서 열기",
+    open_group_tab: "탭 그룹에서 열기",
+    open_bg_tab: "백그라운드 탭에서 열기",
+    open_new_window: "다른 창에서 열기",
+    open_incognito: "비밀 모드에서 열기",
+    select_text: "텍스트 선택",
+    share_link: "링크 공유",
+    copy_link: "링크 복사",
+    save_link: "링크 저장",
+    text_copied: "기사 텍스트가 복사되었습니다.",
+    link_copied: "링크가 클립보드에 복사되었습니다.",
+    link_saved: "기사가 즐겨찾기에 저장되었습니다.",
+  },
+  en: {
+    open_new_tab: "Open in new tab",
+    open_group_tab: "Open in tab group",
+    open_bg_tab: "Open in background tab",
+    open_new_window: "Open in new window",
+    open_incognito: "Open in incognito tab",
+    select_text: "Select text",
+    share_link: "Share link",
+    copy_link: "Copy link",
+    save_link: "Save link",
+    text_copied: "Article text copied to clipboard.",
+    link_copied: "Link copied to clipboard.",
+    link_saved: "Article saved.",
+  },
+};
+
 export function CategoryNews({ 
   selectedCategory = "top-news", 
   currentLang = "ko" 
@@ -29,12 +60,10 @@ export function CategoryNews({
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // 반응 상태 관리
   const [checkedIds, setCheckedIds] = useState<{ [id: string]: boolean }>({});
   const [starredIds, setStarredIds] = useState<{ [id: string]: boolean }>({});
   const [likedIds, setLikedIds] = useState<{ [id: string]: boolean }>({});
 
-  // 크롬 스타일 컨텍스트 메뉴 상태
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
     x: number;
@@ -49,6 +78,9 @@ export function CategoryNews({
 
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPress = useRef(false);
+
+  const activeLang = currentLang === "ko" ? "ko" : "en";
+  const t = MENU_TEXTS[activeLang];
 
   const formatDateOnly = (rawDate: string) => {
     if (!rawDate) return "";
@@ -81,7 +113,6 @@ export function CategoryNews({
       console.error("저장된 반응 상태 로드 실패:", error);
     }
 
-    // 외부 클릭 및 스크롤 시 팝업 닫기
     const handleOutsideClick = () => closeContextMenu();
     window.addEventListener("click", handleOutsideClick);
     window.addEventListener("scroll", handleOutsideClick);
@@ -153,7 +184,6 @@ export function CategoryNews({
     });
   };
 
-  // 모바일 롱 프레스 터치 이벤트
   const handleTouchStart = (
     itemData: { id: string; url: string; title: string; content: string },
     e: React.TouchEvent
@@ -175,7 +205,6 @@ export function CategoryNews({
     }
   };
 
-  // 우클릭 이벤트 (PC/웹뷰)
   const handleContextMenu = (
     itemData: { id: string; url: string; title: string; content: string },
     e: React.MouseEvent
@@ -184,7 +213,6 @@ export function CategoryNews({
     openContextMenu(itemData, e.clientX, e.clientY);
   };
 
-  // 팝업 메뉴 클릭 액션
   const handleMenuAction = (action: string) => {
     if (!contextMenu.item) return;
     const { id, url, title, content } = contextMenu.item;
@@ -199,19 +227,19 @@ export function CategoryNews({
         break;
       case "select_text":
         navigator.clipboard.writeText(`${title}\n${content}`);
-        alert(currentLang === "ko" ? "기사 텍스트가 복사되었습니다." : "Text copied.");
+        alert(t.text_copied);
         break;
       case "share_link":
         if (navigator.share) {
           navigator.share({ title, url }).catch(() => {});
         } else {
           navigator.clipboard.writeText(url);
-          alert(currentLang === "ko" ? "링크가 복사되었습니다." : "Link copied.");
+          alert(t.link_copied);
         }
         break;
       case "copy_link":
         navigator.clipboard.writeText(url);
-        alert(currentLang === "ko" ? "링크가 클립보드에 복사되었습니다." : "Link copied to clipboard.");
+        alert(t.link_copied);
         break;
       case "save_link":
         setStarredIds((prev) => {
@@ -219,7 +247,7 @@ export function CategoryNews({
           try { localStorage.setItem("gpnr_news_starred", JSON.stringify(updated)); } catch (err) {}
           return updated;
         });
-        alert(currentLang === "ko" ? "기사가 즐겨찾기에 저장되었습니다." : "Link saved.");
+        alert(t.link_saved);
         break;
       default:
         break;
@@ -274,7 +302,9 @@ export function CategoryNews({
     return (
       <section className="py-8 px-1 bg-[#0f172a] text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500 mb-2"></div>
-        <p className="text-xs text-slate-400 font-medium">최신 실시간 Web2/Web3 뉴스를 불러오는 중입니다...</p>
+        <p className="text-xs text-slate-400 font-medium">
+          {currentLang === "ko" ? "최신 실시간 Web2/Web3 뉴스를 불러오는 중입니다..." : "Loading latest Web2/Web3 news..."}
+        </p>
       </section>
     );
   }
@@ -293,7 +323,7 @@ export function CategoryNews({
 
         {newsList.length === 0 ? (
           <div className="text-center py-12 text-slate-400 text-xs">
-            현재 카테고리에 뉴스가 없습니다.
+            {currentLang === "ko" ? "현재 카테고리에 뉴스가 없습니다." : "No news in this category."}
           </div>
         ) : (
           <div className="flex flex-col">
@@ -394,7 +424,7 @@ export function CategoryNews({
         )}
       </div>
 
-      {/* 구글 크롬 스타일 컨텍스트 메뉴 팝업 (첫 번째 사진 메뉴 100% 동일 구현) */}
+      {/* 다국어 자동 지원 팝업 */}
       {contextMenu.visible && contextMenu.item && (
         <div 
           className="fixed z-50 w-64 bg-gray-900/95 text-gray-200 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 py-2.5 text-sm overflow-hidden transition-all duration-150 animate-in fade-in zoom-in-95"
@@ -404,41 +434,39 @@ export function CategoryNews({
             e.stopPropagation();
           }}
         >
-          {/* 상단 URL 헤더 */}
           <div className="px-4 py-2 border-b border-gray-700/60 text-xs text-gray-400 truncate">
             {contextMenu.item.url}
           </div>
 
-          {/* 메뉴 리스트 */}
           <div className="py-1">
             <button onClick={() => handleMenuAction("open_new_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              새 탭에서 열기
+              {t.open_new_tab}
             </button>
             <button onClick={() => handleMenuAction("open_group_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              탭 그룹에서 열기
+              {t.open_group_tab}
             </button>
             <button onClick={() => handleMenuAction("open_bg_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              백그라운드 탭에서 열기
+              {t.open_bg_tab}
             </button>
             <button onClick={() => handleMenuAction("open_new_window")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              다른 창에서 열기
+              {t.open_new_window}
             </button>
             <button onClick={() => handleMenuAction("open_incognito")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
-              비밀 모드에서 열기
+              {t.open_incognito}
             </button>
 
             <button onClick={() => handleMenuAction("select_text")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
-              텍스트 선택
+              {t.select_text}
             </button>
 
             <button onClick={() => handleMenuAction("share_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              링크 공유
+              {t.share_link}
             </button>
             <button onClick={() => handleMenuAction("copy_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              링크 복사
+              {t.copy_link}
             </button>
             <button onClick={() => handleMenuAction("save_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              링크 저장
+              {t.save_link}
             </button>
           </div>
         </div>
