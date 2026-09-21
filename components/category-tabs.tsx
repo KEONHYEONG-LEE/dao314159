@@ -18,16 +18,17 @@ import {
   ShoppingCart,
   ShieldCheck,
   Code,
-  Home,
+  Building,
   TrendingUp,
   DollarSign,
   Shield,
-  Gavel,
+  Scale,
+  Calendar,
   LayoutGrid
 } from "lucide-react";
 
-// category.id 기준 아이콘 매핑 객체
-const ICON_MAP: Record<string, React.ElementType> = {
+// category.id 기준 완벽 아이콘 매핑 객체 (모달 화면 ID 호환 추가)
+export const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
   "mainnet": Globe,
   "node": Tv,
@@ -40,12 +41,23 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "commerce": ShoppingCart,
   "kyc": ShieldCheck,
   "developer": Code,
-  "ecosystem": Home,
+  "developers": Code,             // 모달 복수형 ID 대응
+  "ecosystem": Building,
+  "real-estate": Building,        // 모달 Real Estate 대응
   "outlook": TrendingUp,
+  "price-outlook": TrendingUp,    // 모달 Price Outlook 대응
   "price": DollarSign,
   "security": Shield,
-  "legal": Gavel,
+  "legal": Scale,
+  "regulations": Scale,          // 모달 Regulations 대응
+  "calendar": Calendar,           // 모달 Calendar 대응
 };
+
+// 타 컴포넌트(모달 등)에서 바로 불러와 쓸 수 있는 아이콘 컴포넌트
+export function CategoryIcon({ id, className = "w-4 h-4" }: { id: string; className?: string }) {
+  const IconComponent = ICON_MAP[id] || LayoutGrid;
+  return <IconComponent className={className} />;
+}
 
 interface CategoryTabsProps {
   selectedCategory: string;
