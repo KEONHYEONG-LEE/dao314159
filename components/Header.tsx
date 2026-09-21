@@ -1,8 +1,29 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
+
+// Lucide 아이콘 패키지 임포트
+import {
+  Flame,
+  Globe,
+  Tv,
+  Zap,
+  Wallet,
+  Compass,
+  Map,
+  FileText,
+  Users,
+  ShoppingCart,
+  ShieldCheck,
+  Code,
+  Home,
+  TrendingUp,
+  DollarSign,
+  Shield,
+  Gavel,
+} from "lucide-react";
 
 interface GpnrHeaderProps {
   currentCategory?: string;                     
@@ -10,25 +31,25 @@ interface GpnrHeaderProps {
   currentLanguage?: string;                     
 }
 
-// 17개 카테고리 구성
+// 17개 카테고리 구성 (Lucide 아이콘 컴포넌트 적용)
 const GRID_CATEGORIES = [
-  { id: "top-news", label: "주요뉴스", enLabel: "Top News", icon: "🔥" },
-  { id: "mainnet", label: "메인넷", enLabel: "Mainnet", icon: "🌐" },
-  { id: "node", label: "노드", enLabel: "Node", icon: "💻" },
-  { id: "mining", label: "채굴", enLabel: "Mining", icon: "⚡" },
-  { id: "wallet", label: "지갑", enLabel: "Wallet", icon: "👛" },
-  { id: "browser", label: "브라우저", enLabel: "Browser", icon: "🧭" },
-  { id: "roadmap", label: "로드맵", enLabel: "Roadmap", icon: "🗺️" },
-  { id: "whitepaper", label: "백서", enLabel: "Whitepaper", icon: "📄" },
-  { id: "community", label: "커뮤니티", enLabel: "Community", icon: "👥" },
-  { id: "commerce", label: "커머스", enLabel: "Commerce", icon: "🛒" },
-  { id: "kyc", label: "KYC", enLabel: "KYC", icon: "🛡️" },
-  { id: "developer", label: "개발자", enLabel: "Developer", icon: "</>" },
-  { id: "ecosystem", label: "부동산", enLabel: "Real Estate", icon: "🏠" },
-  { id: "outlook", label: "전망시세", enLabel: "Outlook", icon: "📈" },
-  { id: "price", label: "가격", enLabel: "Price", icon: "💲" },
-  { id: "security", label: "보안", enLabel: "Security", icon: "🛡️" },
-  { id: "legal", label: "관련법규", enLabel: "Legal", icon: "🔨" },
+  { id: "top-news", label: "주요뉴스", enLabel: "Top News", Icon: Flame },
+  { id: "mainnet", label: "메인넷", enLabel: "Mainnet", Icon: Globe },
+  { id: "node", label: "노드", enLabel: "Node", Icon: Tv },
+  { id: "mining", label: "채굴", enLabel: "Mining", Icon: Zap },
+  { id: "wallet", label: "지갑", enLabel: "Wallet", Icon: Wallet },
+  { id: "browser", label: "브라우저", enLabel: "Browser", Icon: Compass },
+  { id: "roadmap", label: "로드맵", enLabel: "Roadmap", Icon: Map },
+  { id: "whitepaper", label: "백서", enLabel: "Whitepaper", Icon: FileText },
+  { id: "community", label: "커뮤니티", enLabel: "Community", Icon: Users },
+  { id: "commerce", label: "커머스", enLabel: "Commerce", Icon: ShoppingCart },
+  { id: "kyc", label: "KYC", enLabel: "KYC", Icon: ShieldCheck },
+  { id: "developer", label: "개발자", enLabel: "Developer", Icon: Code },
+  { id: "ecosystem", label: "부동산", enLabel: "Real Estate", Icon: Home },
+  { id: "outlook", label: "전망시세", enLabel: "Outlook", Icon: TrendingUp },
+  { id: "price", label: "가격", enLabel: "Price", Icon: DollarSign },
+  { id: "security", label: "보안", enLabel: "Security", Icon: Shield },
+  { id: "legal", label: "관련법규", enLabel: "Legal", Icon: Gavel },
 ];
 
 export function GpnrHeader({ 
@@ -69,7 +90,7 @@ export function GpnrHeader({
       try {
         const origin = window.location.origin;
         await (window as any).Pi.createPayment({
-          amount: 0.01, // 0.01 Pi 후원 결제 요청
+          amount: 0.01,
           memo: currentLang === "ko" ? "GPNR 서비스 후원" : "GPNR Service Donation",
           metadata: { type: "one-time-donation", app: "GPNR" }
         }, {
@@ -169,6 +190,7 @@ export function GpnrHeader({
             <div className="grid grid-cols-3 gap-3 mt-2">
               {GRID_CATEGORIES.map((item) => {
                 const isSelected = currentCategory === item.id;
+                const IconComponent = item.Icon;
                 return (
                   <button
                     key={item.id}
@@ -182,7 +204,7 @@ export function GpnrHeader({
                         : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                     }`}
                   >
-                    <span className="text-2xl mb-1.5">{item.icon}</span>
+                    <IconComponent className="w-6 h-6 mb-1.5 text-purple-400" />
                     <span className="text-[12px] font-bold text-slate-200">
                       {currentLang === "ko" ? item.label : item.enLabel}
                     </span>
