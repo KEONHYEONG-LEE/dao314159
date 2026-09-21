@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
-// Lucide 아이콘 패키지 임포트 (Calendar 포함)
+// Lucide 아이콘 패키지 임포트
 import {
   Flame,
   Globe,
@@ -19,18 +19,44 @@ import {
   ShoppingCart,
   ShieldCheck,
   Code,
-  Home,
+  Building,
   TrendingUp,
   DollarSign,
   Shield,
-  Gavel,
+  Scale,
   Calendar,
   Menu,
-  X
+  X,
+  LayoutGrid
 } from "lucide-react";
 
-// 아이콘 문자열 명칭을 실제 Lucide 컴포넌트로 연결하는 매핑 객체
+// 1. category.id 및 문자열 명칭 기준 완벽 아이콘 매핑 객체
 const ICON_MAP: Record<string, React.ElementType> = {
+  // ID 기반 매핑 (모달 화면 카테고리 ID 완전 대응)
+  "top-news": Flame,
+  "mainnet": Globe,
+  "node": Tv,
+  "mining": Zap,
+  "wallet": Wallet,
+  "browser": Compass,
+  "roadmap": Map,
+  "whitepaper": FileText,
+  "community": Users,
+  "commerce": ShoppingCart,
+  "kyc": ShieldCheck,
+  "developer": Code,
+  "developers": Code,
+  "ecosystem": Building,
+  "real-estate": Building,
+  "outlook": TrendingUp,
+  "price-outlook": TrendingUp,
+  "price": DollarSign,
+  "security": Shield,
+  "legal": Scale,
+  "regulations": Scale,
+  "calendar": Calendar,
+
+  // 컴포넌트명 문자열 기반 매핑
   Flame,
   Globe,
   Tv,
@@ -43,11 +69,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
   ShoppingCart,
   ShieldCheck,
   Code,
-  Home,
+  Building,
   TrendingUp,
   DollarSign,
   Shield,
-  Gavel,
+  Scale,
   Calendar,
 };
 
@@ -208,17 +234,18 @@ export function Header({
               <X className="w-5 h-5" />
             </button>
 
-            {/* 3열 카테고리 그리드 (Icon 및 iconName 지원) */}
+            {/* 3열 카테고리 그리드 (아이콘 완벽 연동) */}
             <div className="grid grid-cols-3 gap-3 mt-2">
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
 
-                // categories.ts의 Icon(대문자) 컴포넌트 객체 또는 iconName/icon 문자열 동적 대응
+                // 아이콘 동적 검색 우선순위: ID 매핑 > iconName > Icon > icon > 기본값
                 const IconComponent =
-                  category.Icon ||
+                  ICON_MAP[category.id] ||
                   (category.iconName ? ICON_MAP[category.iconName] : null) ||
+                  category.Icon ||
                   (category.icon ? (typeof category.icon === "string" ? ICON_MAP[category.icon] : category.icon) : null) ||
-                  Flame;
+                  LayoutGrid;
 
                 // 라벨 텍스트
                 const labelText =
@@ -236,7 +263,7 @@ export function Header({
                     }}
                     className={`flex flex-col items-center justify-center p-2 min-h-[88px] rounded-2xl transition-all border ${
                       isSelected
-                        ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40"
+                        ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40 scale-105"
                         : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                     }`}
                   >
@@ -258,7 +285,7 @@ export function Header({
                 }}
                 className={`flex flex-col items-center justify-center p-2 min-h-[88px] rounded-2xl transition-all border ${
                   currentCategory === "calendar"
-                    ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40"
+                    ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40 scale-105"
                     : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                 }`}
               >
