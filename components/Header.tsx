@@ -1,10 +1,11 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
+import { NEWS_CATEGORIES } from "../lib/categories";
 
-// Lucide 아이콘 패키지 임포트
+// Lucide 아이콘 패키지 임포트 (Calendar 포함)
 import {
   Flame,
   Globe,
@@ -23,42 +24,46 @@ import {
   DollarSign,
   Shield,
   Gavel,
+  Calendar,
+  Menu,
+  X
 } from "lucide-react";
 
-interface GpnrHeaderProps {
-  currentCategory?: string;                     
-  onCategoryChange?: (categoryId: string) => void; 
-  currentLanguage?: string;                     
+// 아이콘 문자열 명칭을 실제 Lucide 컴포넌트로 연결하는 매핑 객체
+const ICON_MAP: Record<string, React.ElementType> = {
+  Flame,
+  Globe,
+  Tv,
+  Zap,
+  Wallet,
+  Compass,
+  Map,
+  FileText,
+  Users,
+  ShoppingCart,
+  ShieldCheck,
+  Code,
+  Home,
+  TrendingUp,
+  DollarSign,
+  Shield,
+  Gavel,
+  Calendar,
+};
+
+interface HeaderProps {
+  currentCategory?: string;
+  onCategoryChange?: (categoryId: string) => void;
+  currentLanguage?: string;
 }
 
-// 17개 카테고리 구성 (Lucide 아이콘 컴포넌트 적용)
-const GRID_CATEGORIES = [
-  { id: "top-news", label: "주요뉴스", enLabel: "Top News", Icon: Flame },
-  { id: "mainnet", label: "메인넷", enLabel: "Mainnet", Icon: Globe },
-  { id: "node", label: "노드", enLabel: "Node", Icon: Tv },
-  { id: "mining", label: "채굴", enLabel: "Mining", Icon: Zap },
-  { id: "wallet", label: "지갑", enLabel: "Wallet", Icon: Wallet },
-  { id: "browser", label: "브라우저", enLabel: "Browser", Icon: Compass },
-  { id: "roadmap", label: "로드맵", enLabel: "Roadmap", Icon: Map },
-  { id: "whitepaper", label: "백서", enLabel: "Whitepaper", Icon: FileText },
-  { id: "community", label: "커뮤니티", enLabel: "Community", Icon: Users },
-  { id: "commerce", label: "커머스", enLabel: "Commerce", Icon: ShoppingCart },
-  { id: "kyc", label: "KYC", enLabel: "KYC", Icon: ShieldCheck },
-  { id: "developer", label: "개발자", enLabel: "Developer", Icon: Code },
-  { id: "ecosystem", label: "부동산", enLabel: "Real Estate", Icon: Home },
-  { id: "outlook", label: "전망시세", enLabel: "Outlook", Icon: TrendingUp },
-  { id: "price", label: "가격", enLabel: "Price", Icon: DollarSign },
-  { id: "security", label: "보안", enLabel: "Security", Icon: Shield },
-  { id: "legal", label: "관련법규", enLabel: "Legal", Icon: Gavel },
-];
-
-export function GpnrHeader({ 
-  currentCategory = "top-news", 
+export function Header({
+  currentCategory = "top-news",
   onCategoryChange,
   currentLanguage
-}: GpnrHeaderProps) {
+}: HeaderProps) {
   const [mounted, setMounted] = useState<boolean>(false);
-  const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false); 
+  const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false);
   const [currentLang, setCurrentLang] = useState<string>("ko");
 
   const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
@@ -68,7 +73,11 @@ export function GpnrHeader({
     const syncLanguage = () => {
       try {
         if (typeof window !== "undefined") {
-          const targetLang = currentLanguage || localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
+          const targetLang =
+            currentLanguage ||
+            localStorage.getItem("language") ||
+            localStorage.getItem("gpnr-language") ||
+            "ko";
           setCurrentLang(targetLang);
         }
       } catch (e) {
@@ -89,34 +98,45 @@ export function GpnrHeader({
     if (typeof window !== "undefined" && (window as any).Pi) {
       try {
         const origin = window.location.origin;
-        await (window as any).Pi.createPayment({
-          amount: 0.01,
-          memo: currentLang === "ko" ? "GPNR 서비스 후원" : "GPNR Service Donation",
-          metadata: { type: "one-time-donation", app: "GPNR" }
-        }, {
-          onReadyForServerApproval: async (paymentId: string) => {
-            await fetch(`${origin}/api/payments/approve`, { 
-              method: 'POST', 
-              headers: { 'Content-Type': 'application/json' }, 
-              body: JSON.stringify({ paymentId }) 
-            });
+        await (window as any).Pi.createPayment(
+          {
+            amount: 0.01,
+            memo: currentLang === "ko" ? "GPNR 서비스 후원" : "GPNR Service Donation",
+            metadata: { type: "one-time-donation", app: "GPNR" }
           },
-          onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-            await fetch(`${origin}/api/payments/complete`, { 
-              method: 'POST', 
-              headers: { 'Content-Type': 'application/json' }, 
-              body: JSON.stringify({ paymentId, txid }) 
-            });
-            alert(currentLang === "ko" ? "0.01 Pi 후원이 완료되었습니다. 감사합니다!" : "0.01 Pi donation completed. Thank you!");
-          },
-          onCancel: (paymentId: string) => console.log("[Pi Payment] 취소:", paymentId),
-          onError: (error: Error) => console.error("[Pi Payment] 에러:", error),
-        });
+          {
+            onReadyForServerApproval: async (paymentId: string) => {
+              await fetch(`${origin}/api/payments/approve`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ paymentId })
+              });
+            },
+            onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+              await fetch(`${origin}/api/payments/complete`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ paymentId, txid })
+              });
+              alert(
+                currentLang === "ko"
+                  ? "0.01 Pi 후원이 완료되었습니다. 감사합니다!"
+                  : "0.01 Pi donation completed. Thank you!"
+              );
+            },
+            onCancel: (paymentId: string) => console.log("[Pi Payment] 취소:", paymentId),
+            onError: (error: Error) => console.error("[Pi Payment] 에러:", error)
+          }
+        );
       } catch (err) {
         console.error("Pi SDK payment failed:", err);
       }
     } else {
-      alert(currentLang === "ko" ? "Pi Browser에서 접속해 주세요." : "Please access through Pi Browser.");
+      alert(
+        currentLang === "ko"
+          ? "Pi Browser에서 접속해 주세요."
+          : "Please access through Pi Browser."
+      );
     }
   }, [currentLang]);
 
@@ -130,72 +150,82 @@ export function GpnrHeader({
 
   return (
     <>
-      {/* 상단 GPNR 헤더 바 */}
+      {/* GPNR 상단 메인 헤더 */}
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-3">
           <div className="flex h-[48px] items-center justify-between">
+            {/* 로고 영역 */}
             <div className="flex items-center gap-2">
-              <span 
-                className="font-black text-xl tracking-wider text-purple-400 cursor-pointer"
+              <span
+                className="font-black text-xl tracking-wider text-purple-400 cursor-pointer select-none"
                 onClick={() => onCategoryChange && onCategoryChange("top-news")}
               >
                 GPNR
               </span>
             </div>
-            
+
+            {/* 우측 버튼 영역 (후원 + 삼선/그리드 메뉴 버튼) */}
             <div className="flex items-center gap-2">
-              <button 
-                onClick={handleDonation} 
+              <button
+                onClick={handleDonation}
+                type="button"
                 className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold transition-colors"
               >
                 <span>🪙</span>
                 <span>0.01 Pi 후원</span>
               </button>
 
-              {/* 9개 점 그리드 모달 오픈 버튼 */}
+              {/* 삼선(햄버거) / 런처 모달 오픈 토글 버튼 */}
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
-                className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 transition-all border border-slate-700/50"
+                type="button"
+                className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 transition-all border border-slate-700/50 flex items-center justify-center"
+                aria-label="Toggle Menu"
               >
-                <div className="grid grid-cols-3 gap-0.5 w-4 h-4 items-center justify-center">
-                  {[...Array(9)].map((_, i) => (
-                    <span key={i} className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                  ))}
-                </div>
+                <Menu className="w-5 h-5 text-slate-200" />
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* 그리드 레이어 모달 */}
+      {/* 그리드 카테고리 풀 런처 모달 */}
       {isLauncherOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setIsLauncherOpen(false)}
         >
-          <div 
+          <div
             className="w-full max-w-md bg-[#131528] border border-purple-500/30 rounded-3xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 닫기 버튼 */}
-            <button 
+            <button
               onClick={() => setIsLauncherOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold p-1"
+              type="button"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors p-1"
             >
-              ✕
+              <X className="w-5 h-5" />
             </button>
 
-            {/* 3x6 그리드 아이콘 영역 */}
+            {/* 3열 카테고리 그리드 (Lucide SVG 아이콘 복구) */}
             <div className="grid grid-cols-3 gap-3 mt-2">
-              {GRID_CATEGORIES.map((item) => {
-                const isSelected = currentCategory === item.id;
-                const IconComponent = item.Icon;
+              {NEWS_CATEGORIES.map((category) => {
+                const isSelected = currentCategory === category.id;
+                // 문자열 아이콘 이름을 ICON_MAP에서 찾아 Lucide 컴포넌트로 매핑 (기본값 Flame)
+                const IconComponent = ICON_MAP[category.icon] || Flame;
+
+                const labelText =
+                  currentLang === "ko"
+                    ? category.name || category.label || category.id
+                    : category.enName || category.enLabel || category.id;
+
                 return (
                   <button
-                    key={item.id}
+                    key={category.id}
+                    type="button"
                     onClick={() => {
-                      if (onCategoryChange) onCategoryChange(item.id);
+                      if (onCategoryChange) onCategoryChange(category.id);
                       setIsLauncherOpen(false);
                     }}
                     className={`flex flex-col items-center justify-center h-[88px] rounded-2xl transition-all border ${
@@ -204,30 +234,77 @@ export function GpnrHeader({
                         : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                     }`}
                   >
+                    {/* SVG 아이콘 컴포넌트 렌더링 */}
                     <IconComponent className="w-6 h-6 mb-1.5 text-purple-400" />
-                    <span className="text-[12px] font-bold text-slate-200">
-                      {currentLang === "ko" ? item.label : item.enLabel}
+                    <span className="text-[12px] font-bold text-slate-200 text-center px-1 truncate w-full">
+                      {labelText}
                     </span>
                   </button>
                 );
               })}
+
+              {/* 달력(Calendar) 추가 항목 대응 */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (onCategoryChange) onCategoryChange("calendar");
+                  setIsLauncherOpen(false);
+                }}
+                className={`flex flex-col items-center justify-center h-[88px] rounded-2xl transition-all border ${
+                  currentCategory === "calendar"
+                    ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40"
+                    : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
+                }`}
+              >
+                <Calendar className="w-6 h-6 mb-1.5 text-rose-400" />
+                <span className="text-[12px] font-bold text-slate-200">
+                  {currentLang === "ko" ? "달력" : "Calendar"}
+                </span>
+              </button>
             </div>
 
-            {/* 계정 정보 / ID 해제 영역 */}
-            {isAuthenticated && (
-              <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                <span>연결된 ID: <strong className="text-purple-300 font-mono">{displayId}</strong></span>
-                <button
-                  onClick={() => {
-                    logout();
-                    setIsLauncherOpen(false);
-                  }}
-                  className="text-rose-400 hover:underline text-[11px]"
-                >
-                  ID 변경
-                </button>
-              </div>
-            )}
+            {/* 하단 계정 정보 및 Reset KYC ID / ID 변경 영역 */}
+            <div className="mt-5 pt-3 border-t border-slate-800/80 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    localStorage.removeItem("pi_user_id");
+                    localStorage.removeItem("pi_user_auth");
+                  }
+                  alert(
+                    currentLang === "ko"
+                      ? "KYC ID 인증 정보가 재설정되었습니다."
+                      : "Reset KYC ID completed."
+                  );
+                  setIsLauncherOpen(false);
+                }}
+                className="w-full py-2.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/50 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all text-center"
+              >
+                Reset KYC ID
+              </button>
+
+              {isAuthenticated && (
+                <div className="flex items-center justify-between text-xs text-slate-400 px-1 pt-1">
+                  <span>
+                    연결된 ID:{" "}
+                    <strong className="text-purple-300 font-mono">
+                      {displayId}
+                    </strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setIsLauncherOpen(false);
+                    }}
+                    className="text-rose-400 hover:underline text-[11px]"
+                  >
+                    ID 변경
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -235,4 +312,4 @@ export function GpnrHeader({
   );
 }
 
-export default GpnrHeader;
+export default Header;
