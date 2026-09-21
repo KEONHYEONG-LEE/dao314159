@@ -4,6 +4,49 @@
 import React, { useState, useRef, useEffect } from "react";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
+// Lucide 아이콘 패키지 임포트
+import {
+  Flame,
+  Globe,
+  Tv,
+  Zap,
+  Wallet,
+  Compass,
+  Map,
+  FileText,
+  Users,
+  ShoppingCart,
+  ShieldCheck,
+  Code,
+  Home,
+  TrendingUp,
+  DollarSign,
+  Shield,
+  Gavel,
+  LayoutGrid
+} from "lucide-react";
+
+// category.id 기준 아이콘 매핑 객체
+const ICON_MAP: Record<string, React.ElementType> = {
+  "top-news": Flame,
+  "mainnet": Globe,
+  "node": Tv,
+  "mining": Zap,
+  "wallet": Wallet,
+  "browser": Compass,
+  "roadmap": Map,
+  "whitepaper": FileText,
+  "community": Users,
+  "commerce": ShoppingCart,
+  "kyc": ShieldCheck,
+  "developer": Code,
+  "ecosystem": Home,
+  "outlook": TrendingUp,
+  "price": DollarSign,
+  "security": Shield,
+  "legal": Gavel,
+};
+
 interface CategoryTabsProps {
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
@@ -82,7 +125,7 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
     <div className="w-full bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/[0.05] shadow-2xl">
       <div className="mx-auto max-w-7xl relative px-2">
         
-        {/* 왼쪽 화살표 (lucide-react 대신 SVG 사용으로 에러 차단) */}
+        {/* 왼쪽 화살표 */}
         {showLeftArrow && (
           <div className="absolute left-0 top-0 bottom-0 w-12 z-10 flex items-center justify-start bg-gradient-to-r from-[#0f172a] via-[#0f172a]/80 to-transparent pointer-events-none">
             <button
@@ -112,19 +155,23 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
               ? (category.name || category.label || category.id) 
               : (category.enName || category.enLabel || category.id);
 
+            // 매핑 객체에서 아이콘 컴포넌트 조회 (없으면 기본 아이콘)
+            const IconComponent = ICON_MAP[category.id] || LayoutGrid;
+
             return (
               <button
                 key={category.id}
                 data-id={category.id}
                 type="button"
                 onClick={() => onCategoryChange(category.id)}
-                className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all duration-200 border ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all duration-200 border ${
                   isSelected
                     ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.4)] scale-105"
                     : "bg-slate-800/40 text-slate-400 border-white/[0.05] hover:border-slate-600 hover:text-slate-200"
                 }`}
               >
-                {labelText}
+                <IconComponent className="w-3.5 h-3.5" />
+                <span>{labelText}</span>
               </button>
             );
           })}
