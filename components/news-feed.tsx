@@ -16,7 +16,37 @@ export interface NewsItem {
   content?: string; 
 }
 
-// 한국어 카테고리 매핑
+const MENU_TEXTS = {
+  ko: {
+    open_new_tab: "새 탭에서 열기",
+    open_group_tab: "탭 그룹에서 열기",
+    open_bg_tab: "백그라운드 탭에서 열기",
+    open_new_window: "다른 창에서 열기",
+    open_incognito: "비밀 모드에서 열기",
+    select_text: "텍스트 선택",
+    share_link: "링크 공유",
+    copy_link: "링크 복사",
+    save_link: "링크 저장",
+    text_copied: "기사 텍스트가 복사되었습니다.",
+    link_copied: "링크가 클립보드에 복사되었습니다.",
+    link_saved: "기사가 즐겨찾기에 저장되었습니다.",
+  },
+  en: {
+    open_new_tab: "Open in new tab",
+    open_group_tab: "Open in tab group",
+    open_bg_tab: "Open in background tab",
+    open_new_window: "Open in new window",
+    open_incognito: "Open in incognito tab",
+    select_text: "Select text",
+    share_link: "Share link",
+    copy_link: "Copy link",
+    save_link: "Save link",
+    text_copied: "Article text copied to clipboard.",
+    link_copied: "Link copied to clipboard.",
+    link_saved: "Article saved.",
+  },
+};
+
 const CATEGORY_MAP: Record<string, string> = {
   ALL: "주요뉴스", MAINNET: "메인넷", COMMUNITY: "커뮤니티", COMMERCE: "커머스",
   NODE: "노드", MINING: "채굴", WALLET: "지갑", BROWSER: "브라우저",
@@ -25,7 +55,6 @@ const CATEGORY_MAP: Record<string, string> = {
   WHITEPAPER: "백서", LEGAL: "관련법규"
 };
 
-// 기본 영어 모드용 카테고리 매핑
 const EN_CATEGORY_MAP: Record<string, string> = {
   ALL: "Top News", MAINNET: "Mainnet", COMMUNITY: "Community", COMMERCE: "Commerce",
   NODE: "Node", MINING: "Mining", WALLET: "Wallet", BROWSER: "Browser",
@@ -39,9 +68,8 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<Record<string, { read: boolean; star: boolean; heart: boolean }>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [currentLang, setCurrentLang] = useState("en");
+  const [currentLang, setCurrentLang] = useState<"ko" | "en">("en");
 
-  // 크롬 스타일 컨텍스트 메뉴 팝업 상태
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
     x: number;
@@ -57,12 +85,14 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPress = useRef(false);
 
+  const t = MENU_TEXTS[currentLang] || MENU_TEXTS.en;
+
   useEffect(() => {
     const saved = localStorage.getItem('gpnr_status');
     if (saved) setStatus(JSON.parse(saved));
 
-    const targetLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en";
-    setCurrentLang(targetLang);
+    const targetLang = (localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en") as "ko" | "en";
+    setCurrentLang(targetLang === "ko" ? "ko" : "en");
 
     const fetchLatestNews = async () => {
       setLoading(true);
@@ -79,13 +109,12 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     fetchLatestNews();
 
     const handleLangChange = () => {
-      const updatedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en";
-      setCurrentLang(updatedLang);
+      const updatedLang = (localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en") as "ko" | "en";
+      setCurrentLang(updatedLang === "ko" ? "ko" : "en");
     };
     window.addEventListener("storage", handleLangChange);
     window.addEventListener("languageChange", handleLangChange);
 
-    // 외부 클릭 시 메뉴 닫기
     const handleOutsideClick = () => closeContextMenu();
     window.addEventListener("click", handleOutsideClick);
     window.addEventListener("scroll", handleOutsideClick);
@@ -102,9 +131,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     setContextMenu(prev => ({ ...prev, visible: false }));
   };
 
-  // 컨텍스트 메뉴 오픈 함수
   const openContextMenu = (item: NewsItem, clientX: number, clientY: number) => {
-    // 화면 이탈 방지 좌표 계산
     const menuWidth = 260;
     const menuHeight = 380;
     const x = Math.min(clientX, window.innerWidth - menuWidth - 16);
@@ -118,7 +145,6 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     });
   };
 
-  // 롱 프레스 터치 이벤트 (모바일)
   const handleTouchStart = (item: NewsItem, e: React.TouchEvent) => {
     isLongPress.current = false;
     const touch = e.touches[0];
@@ -128,7 +154,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     longPressTimer.current = setTimeout(() => {
       isLongPress.current = true;
       openContextMenu(item, clientX, clientY);
-    }, 500); // 0.5초 길게 누름
+    }, 500);
   };
 
   const handleTouchEnd = () => {
@@ -137,7 +163,6 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     }
   };
 
-  // 우클릭 이벤트 (PC/브라우저)
   const handleContextMenu = (item: NewsItem, e: React.MouseEvent) => {
     e.preventDefault();
     openContextMenu(item, e.clientX, e.clientY);
@@ -167,7 +192,6 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     });
   };
 
-  // 컨텍스트 메뉴 개별 클릭 액션
   const handleMenuAction = (action: string) => {
     if (!contextMenu.item) return;
     const { url, title, content } = contextMenu.item;
@@ -182,18 +206,18 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
         break;
       case "select_text":
         navigator.clipboard.writeText(`${title}\n${stripHtml(content || "")}`);
-        alert(currentLang === 'ko' ? "기사 텍스트가 복사되었습니다." : "Text copied.");
+        alert(t.text_copied);
         break;
       case "share_link":
         handleShare(contextMenu.item);
         break;
       case "copy_link":
         navigator.clipboard.writeText(url);
-        alert(currentLang === 'ko' ? "링크가 클립보드에 복사되었습니다." : "Link copied to clipboard.");
+        alert(t.link_copied);
         break;
       case "save_link":
         updateStatus(contextMenu.item.id, 'star');
-        alert(currentLang === 'ko' ? "기사가 즐겨찾기에 저장되었습니다." : "Link saved.");
+        alert(t.link_saved);
         break;
       default:
         break;
@@ -270,7 +294,6 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                 )}
               </div>
 
-              {/* 기사 확장 및 본문 표시 */}
               {isExpanded && (
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-3">
                   <p>{stripHtml(item.content || item.title)}</p>
@@ -288,7 +311,6 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                 </div>
               )}
 
-              {/* 하단 아이콘 (하트, 별표, 공유) */}
               <div className="mt-3 pt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-4">
                   <button 
@@ -320,7 +342,6 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
                   </button>
                 </div>
 
-                {/* 공유 버튼 */}
                 <button 
                   onClick={(e) => handleShare(item, e)}
                   className="flex items-center gap-1 hover:text-purple-600 dark:hover:text-purple-400 transition-colors p-1"
@@ -340,48 +361,46 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
         })
       )}
 
-      {/* 구글 크롬 스타일 컨텍스트 메뉴 팝업 (첫 번째 사진 메뉴와 100% 동일한 구성) */}
+      {/* 다국어 자동 지원 팝업 */}
       {contextMenu.visible && contextMenu.item && (
         <div 
           className="fixed z-50 w-64 bg-gray-900/95 text-gray-200 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 py-2.5 text-sm overflow-hidden transition-all duration-150 animate-in fade-in zoom-in-95"
           style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* 상단 URL 헤더 */}
           <div className="px-4 py-2 border-b border-gray-700/60 text-xs text-gray-400 truncate">
             {contextMenu.item.url}
           </div>
 
-          {/* 메뉴 리스트 */}
           <div className="py-1">
             <button onClick={() => handleMenuAction("open_new_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              새 탭에서 열기
+              {t.open_new_tab}
             </button>
             <button onClick={() => handleMenuAction("open_group_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              탭 그룹에서 열기
+              {t.open_group_tab}
             </button>
             <button onClick={() => handleMenuAction("open_bg_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              백그라운드 탭에서 열기
+              {t.open_bg_tab}
             </button>
             <button onClick={() => handleMenuAction("open_new_window")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              다른 창에서 열기
+              {t.open_new_window}
             </button>
             <button onClick={() => handleMenuAction("open_incognito")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
-              비밀 모드에서 열기
+              {t.open_incognito}
             </button>
 
             <button onClick={() => handleMenuAction("select_text")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
-              텍스트 선택
+              {t.select_text}
             </button>
 
             <button onClick={() => handleMenuAction("share_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              링크 공유
+              {t.share_link}
             </button>
             <button onClick={() => handleMenuAction("copy_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              링크 복사
+              {t.copy_link}
             </button>
             <button onClick={() => handleMenuAction("save_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              링크 저장
+              {t.save_link}
             </button>
           </div>
         </div>
