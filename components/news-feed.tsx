@@ -16,6 +16,7 @@ export interface NewsItem {
   content?: string; 
 }
 
+// 팝업 메뉴 다국어 딕셔너리
 const MENU_TEXTS = {
   ko: {
     open_new_tab: "새 탭에서 열기",
@@ -85,14 +86,26 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPress = useRef(false);
 
+  // 현재 언어 가져오기 함수 (모든 키 체크)
+  const getAppLanguage = (): "ko" | "en" => {
+    if (typeof window === "undefined") return "en";
+    const lang = 
+      localStorage.getItem("language") || 
+      localStorage.getItem("gpnr-language") || 
+      localStorage.getItem("gpnr_lang") || 
+      localStorage.getItem("pi_lang") || 
+      "en";
+    return lang.startsWith("ko") ? "ko" : "en";
+  };
+
   const t = MENU_TEXTS[currentLang] || MENU_TEXTS.en;
 
   useEffect(() => {
     const saved = localStorage.getItem('gpnr_status');
     if (saved) setStatus(JSON.parse(saved));
 
-    const targetLang = (localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en") as "ko" | "en";
-    setCurrentLang(targetLang === "ko" ? "ko" : "en");
+    // 언어 상태 동기화
+    setCurrentLang(getAppLanguage());
 
     const fetchLatestNews = async () => {
       setLoading(true);
@@ -108,18 +121,25 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     };
     fetchLatestNews();
 
+    // 언어 변경 및 로컬 스토리지 실시간 감지
     const handleLangChange = () => {
-      const updatedLang = (localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en") as "ko" | "en";
-      setCurrentLang(updatedLang === "ko" ? "ko" : "en");
+      setCurrentLang(getAppLanguage());
     };
+
     window.addEventListener("storage", handleLangChange);
     window.addEventListener("languageChange", handleLangChange);
+    // DOM 변화 감지로 언어 스위치 반응 보완
+    const interval = setInterval(() => {
+      const detected = getAppLanguage();
+      setCurrentLang((prev) => (prev !== detected ? detected : prev));
+    }, 500);
 
     const handleOutsideClick = () => closeContextMenu();
     window.addEventListener("click", handleOutsideClick);
     window.addEventListener("scroll", handleOutsideClick);
 
     return () => {
+      clearInterval(interval);
       window.removeEventListener("storage", handleLangChange);
       window.removeEventListener("languageChange", handleLangChange);
       window.removeEventListener("click", handleOutsideClick);
@@ -361,7 +381,7 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
         })
       )}
 
-      {/* 다국어 자동 지원 팝업 */}
+      {/* 다국어 자동 반영 팝업 메뉴 */}
       {contextMenu.visible && contextMenu.item && (
         <div 
           className="fixed z-50 w-64 bg-gray-900/95 text-gray-200 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 py-2.5 text-sm overflow-hidden transition-all duration-150 animate-in fade-in zoom-in-95"
