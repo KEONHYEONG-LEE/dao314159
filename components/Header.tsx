@@ -208,13 +208,20 @@ export function Header({
               <X className="w-5 h-5" />
             </button>
 
-            {/* 3열 카테고리 그리드 (Lucide SVG 아이콘 복구) */}
+            {/* 3열 카테고리 그리드 (Lucide SVG 아이콘 안전 매핑) */}
             <div className="grid grid-cols-3 gap-3 mt-2">
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
-                // 문자열 아이콘 이름을 ICON_MAP에서 찾아 Lucide 컴포넌트로 매핑 (기본값 Flame)
-                const IconComponent = ICON_MAP[category.icon] || Flame;
 
+                // icon 데이터 타입에 상관없이 안전하게 Lucide 컴포넌트 매핑
+                let IconComponent: React.ElementType = Flame;
+                if (typeof category.icon === "string") {
+                  IconComponent = ICON_MAP[category.icon] || Flame;
+                } else if (category.icon) {
+                  IconComponent = category.icon;
+                }
+
+                // 카테고리 라벨
                 const labelText =
                   currentLang === "ko"
                     ? category.name || category.label || category.id
@@ -228,15 +235,15 @@ export function Header({
                       if (onCategoryChange) onCategoryChange(category.id);
                       setIsLauncherOpen(false);
                     }}
-                    className={`flex flex-col items-center justify-center h-[88px] rounded-2xl transition-all border ${
+                    className={`flex flex-col items-center justify-center p-2 min-h-[88px] rounded-2xl transition-all border ${
                       isSelected
                         ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40"
                         : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                     }`}
                   >
                     {/* SVG 아이콘 컴포넌트 렌더링 */}
-                    <IconComponent className="w-6 h-6 mb-1.5 text-purple-400" />
-                    <span className="text-[12px] font-bold text-slate-200 text-center px-1 truncate w-full">
+                    <IconComponent className="w-6 h-6 mb-1 text-purple-400 shrink-0" />
+                    <span className="text-[11px] font-medium text-slate-200 text-center px-1 truncate w-full">
                       {labelText}
                     </span>
                   </button>
@@ -250,14 +257,14 @@ export function Header({
                   if (onCategoryChange) onCategoryChange("calendar");
                   setIsLauncherOpen(false);
                 }}
-                className={`flex flex-col items-center justify-center h-[88px] rounded-2xl transition-all border ${
+                className={`flex flex-col items-center justify-center p-2 min-h-[88px] rounded-2xl transition-all border ${
                   currentCategory === "calendar"
                     ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40"
                     : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                 }`}
               >
-                <Calendar className="w-6 h-6 mb-1.5 text-rose-400" />
-                <span className="text-[12px] font-bold text-slate-200">
+                <Calendar className="w-6 h-6 mb-1 text-rose-400 shrink-0" />
+                <span className="text-[11px] font-medium text-slate-200 text-center px-1 truncate w-full">
                   {currentLang === "ko" ? "달력" : "Calendar"}
                 </span>
               </button>
