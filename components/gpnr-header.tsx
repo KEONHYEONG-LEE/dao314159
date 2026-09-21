@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
-// Lucide 아이콘 임포트
+// 1. Lucide 아이콘들을 직접 불러옵니다.
 import {
   Flame,
   Globe,
@@ -28,8 +28,8 @@ import {
   LayoutGrid
 } from "lucide-react";
 
-// 카테고리 ID 및 이름 기준 완벽 아이콘 매핑
-const ICON_MAP: Record<string, React.ElementType> = {
+// 2. 카테고리 ID(id)와 Lucide 컴포넌트를 1:1로 매핑합니다.
+const ID_TO_ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
   "mainnet": Globe,
   "node": Tv,
@@ -52,11 +52,6 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "legal": Scale,
   "regulations": Scale,
   "calendar": Calendar,
-  
-  // 컴포넌트명 직접 매핑
-  Flame, Globe, Tv, Zap, Wallet, Compass, Map, FileText,
-  Users, ShoppingCart, ShieldCheck, Code, Building, TrendingUp,
-  DollarSign, Shield, Scale, Calendar
 };
 
 interface GpnrHeaderProps {
@@ -67,7 +62,7 @@ interface GpnrHeaderProps {
 
 interface LauncherItem {
   id: string;
-  iconComponent: React.ElementType;
+  iconComponent: React.ElementType; // React 컴포넌트 타입으로 지정
   label: string;
   enLabel: string;
 }
@@ -185,16 +180,11 @@ export function GpnrHeader({
     }
   }, [currentLang]);
 
-  // FIXED_LAUNCHER_ITEMS에서 신문 이모지 대신 Lucide 컴포넌트 매핑으로 교체
+  // 3. ID를 기준으로 Lucide 아이콘을 매핑하여 라우팅 아이템 생성
   const FIXED_LAUNCHER_ITEMS: LauncherItem[] = useMemo(() => {
     const rawCategories = Array.isArray(NEWS_CATEGORIES) ? NEWS_CATEGORIES : [];
     const items: LauncherItem[] = rawCategories.map(cat => {
-      const IconComponent =
-        ICON_MAP[cat.id] ||
-        (cat.iconName ? ICON_MAP[cat.iconName] : null) ||
-        cat.Icon ||
-        (cat.icon && typeof cat.icon !== "string" ? cat.icon : null) ||
-        LayoutGrid;
+      const IconComponent = ID_TO_ICON_MAP[cat.id] || LayoutGrid;
 
       return {
         id: cat.id,
@@ -300,7 +290,7 @@ export function GpnrHeader({
                   }}
                   className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all group ${isSelected ? 'bg-slate-800 border-slate-600 font-bold' : 'bg-slate-800/40 border-transparent hover:bg-slate-800 hover:border-slate-700'}`}
                 >
-                  {/* Lucide SVG 아이콘 렌더링 */}
+                  {/* 4. 이모지 대신 Lucide SVG 컴포넌트를 직접 출력합니다. */}
                   <IconComp className={`w-6 h-6 mb-1 transition-transform group-hover:scale-110 ${item.id === "calendar" ? "text-rose-400" : "text-slate-300"}`} />
                   
                   <span className="text-[11px] text-slate-300 text-center font-medium truncate w-full whitespace-nowrap">
