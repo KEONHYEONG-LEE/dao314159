@@ -1,6 +1,6 @@
 "use client"; 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { shareNews, stripHtml } from "@/lib/utils";
 
 export interface NewsItem {
@@ -39,13 +39,28 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<Record<string, { read: boolean; star: boolean; heart: boolean }>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [currentLang, setCurrentLang] = useState("en"); // 기본 영어 모드 세팅
+  const [currentLang, setCurrentLang] = useState("en");
+
+  // 크롬 스타일 컨텍스트 메뉴 팝업 상태
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    item: NewsItem | null;
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    item: null,
+  });
+
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isLongPress = useRef(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('gpnr_status');
     if (saved) setStatus(JSON.parse(saved));
 
-    // 현재 앱 언어 감지
     const targetLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en";
     setCurrentLang(targetLang);
 
@@ -63,7 +78,6 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     };
     fetchLatestNews();
 
-    // 언어 실시간 변경 감지 이벤트 바인딩
     const handleLangChange = () => {
       const updatedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en";
       setCurrentLang(updatedLang);
@@ -71,13 +85,64 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     window.addEventListener("storage", handleLangChange);
     window.addEventListener("languageChange", handleLangChange);
 
+    // 외부 클릭 시 메뉴 닫기
+    const handleOutsideClick = () => closeContextMenu();
+    window.addEventListener("click", handleOutsideClick);
+    window.addEventListener("scroll", handleOutsideClick);
+
     return () => {
       window.removeEventListener("storage", handleLangChange);
       window.removeEventListener("languageChange", handleLangChange);
+      window.removeEventListener("click", handleOutsideClick);
+      window.removeEventListener("scroll", handleOutsideClick);
     };
   }, [selectedCategory]);
 
-  // 상태 변경 저장 함수 (읽음, 별표, 하트)
+  const closeContextMenu = () => {
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  };
+
+  // 컨텍스트 메뉴 오픈 함수
+  const openContextMenu = (item: NewsItem, clientX: number, clientY: number) => {
+    // 화면 이탈 방지 좌표 계산
+    const menuWidth = 260;
+    const menuHeight = 380;
+    const x = Math.min(clientX, window.innerWidth - menuWidth - 16);
+    const y = Math.min(clientY, window.innerHeight - menuHeight - 16);
+
+    setContextMenu({
+      visible: true,
+      x: Math.max(16, x),
+      y: Math.max(16, y),
+      item,
+    });
+  };
+
+  // 롱 프레스 터치 이벤트 (모바일)
+  const handleTouchStart = (item: NewsItem, e: React.TouchEvent) => {
+    isLongPress.current = false;
+    const touch = e.touches[0];
+    const clientX = touch.clientX;
+    const clientY = touch.clientY;
+
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      openContextMenu(item, clientX, clientY);
+    }, 500); // 0.5초 길게 누름
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+
+  // 우클릭 이벤트 (PC/브라우저)
+  const handleContextMenu = (item: NewsItem, e: React.MouseEvent) => {
+    e.preventDefault();
+    openContextMenu(item, e.clientX, e.clientY);
+  };
+
   const updateStatus = (id: string, key: 'read' | 'star' | 'heart') => {
     const newStatus = {
       ...status,
@@ -92,20 +157,52 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
     localStorage.setItem('gpnr_status', JSON.stringify(newStatus));
   };
 
-  // 뉴스 공유 핸들러 함수 (Pi.shareFile 및 fallback 연동)
-  const handleShare = async (item: NewsItem, e: React.MouseEvent) => {
-    e.stopPropagation(); // 기사 클릭 이벤트 전파 방지
-    
+  const handleShare = async (item: NewsItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     const cleanContent = stripHtml(item.content || item.title);
     await shareNews({
       title: item.title,
-      text: cleanContent.slice(0, 100) + '...', // 공유 내용 요약
+      text: cleanContent.slice(0, 100) + '...',
       url: item.url
     });
   };
 
+  // 컨텍스트 메뉴 개별 클릭 액션
+  const handleMenuAction = (action: string) => {
+    if (!contextMenu.item) return;
+    const { url, title, content } = contextMenu.item;
+
+    switch (action) {
+      case "open_new_tab":
+      case "open_group_tab":
+      case "open_bg_tab":
+      case "open_new_window":
+      case "open_incognito":
+        window.open(url, "_blank");
+        break;
+      case "select_text":
+        navigator.clipboard.writeText(`${title}\n${stripHtml(content || "")}`);
+        alert(currentLang === 'ko' ? "기사 텍스트가 복사되었습니다." : "Text copied.");
+        break;
+      case "share_link":
+        handleShare(contextMenu.item);
+        break;
+      case "copy_link":
+        navigator.clipboard.writeText(url);
+        alert(currentLang === 'ko' ? "링크가 클립보드에 복사되었습니다." : "Link copied to clipboard.");
+        break;
+      case "save_link":
+        updateStatus(contextMenu.item.id, 'star');
+        alert(currentLang === 'ko' ? "기사가 즐겨찾기에 저장되었습니다." : "Link saved.");
+        break;
+      default:
+        break;
+    }
+    closeContextMenu();
+  };
+
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4 relative">
       {loading ? (
         <div className="py-12 text-center text-gray-500">
           {currentLang === 'ko' ? "뉴스를 불러오는 중입니다..." : "Loading news..."}
@@ -127,10 +224,18 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
           return (
             <div 
               key={item.id} 
-              className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer bg-white dark:bg-gray-800 ${
+              className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer select-none bg-white dark:bg-gray-800 ${
                 itemStatus.read ? "opacity-75 bg-gray-50 dark:bg-gray-900" : "border-gray-200 dark:border-gray-700"
               }`}
+              onTouchStart={(e) => handleTouchStart(item, e)}
+              onTouchEnd={handleTouchEnd}
+              onTouchMove={handleTouchEnd}
+              onContextMenu={(e) => handleContextMenu(item, e)}
               onClick={() => {
+                if (isLongPress.current) {
+                  isLongPress.current = false;
+                  return;
+                }
                 updateStatus(item.id, 'read');
                 setExpandedId(isExpanded ? null : item.id);
               }}
@@ -233,6 +338,53 @@ export default function NewsFeed({ selectedCategory }: { selectedCategory: strin
             </div>
           );
         })
+      )}
+
+      {/* 구글 크롬 스타일 컨텍스트 메뉴 팝업 (첫 번째 사진 메뉴와 100% 동일한 구성) */}
+      {contextMenu.visible && contextMenu.item && (
+        <div 
+          className="fixed z-50 w-64 bg-gray-900/95 text-gray-200 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 py-2.5 text-sm overflow-hidden transition-all duration-150 animate-in fade-in zoom-in-95"
+          style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* 상단 URL 헤더 */}
+          <div className="px-4 py-2 border-b border-gray-700/60 text-xs text-gray-400 truncate">
+            {contextMenu.item.url}
+          </div>
+
+          {/* 메뉴 리스트 */}
+          <div className="py-1">
+            <button onClick={() => handleMenuAction("open_new_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              새 탭에서 열기
+            </button>
+            <button onClick={() => handleMenuAction("open_group_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              탭 그룹에서 열기
+            </button>
+            <button onClick={() => handleMenuAction("open_bg_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              백그라운드 탭에서 열기
+            </button>
+            <button onClick={() => handleMenuAction("open_new_window")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              다른 창에서 열기
+            </button>
+            <button onClick={() => handleMenuAction("open_incognito")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
+              비밀 모드에서 열기
+            </button>
+
+            <button onClick={() => handleMenuAction("select_text")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
+              텍스트 선택
+            </button>
+
+            <button onClick={() => handleMenuAction("share_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              링크 공유
+            </button>
+            <button onClick={() => handleMenuAction("copy_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              링크 복사
+            </button>
+            <button onClick={() => handleMenuAction("save_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              링크 저장
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
