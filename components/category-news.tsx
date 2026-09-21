@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
 interface NewsItem {
@@ -34,6 +34,22 @@ export function CategoryNews({
   const [starredIds, setStarredIds] = useState<{ [id: string]: boolean }>({});
   const [likedIds, setLikedIds] = useState<{ [id: string]: boolean }>({});
 
+  // 크롬 스타일 컨텍스트 메뉴 상태
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    item: { id: string; url: string; title: string; content: string } | null;
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    item: null,
+  });
+
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isLongPress = useRef(false);
+
   const formatDateOnly = (rawDate: string) => {
     if (!rawDate) return "";
     if (typeof rawDate === "string" && rawDate.includes("년")) {
@@ -64,6 +80,16 @@ export function CategoryNews({
     } catch (error) {
       console.error("저장된 반응 상태 로드 실패:", error);
     }
+
+    // 외부 클릭 및 스크롤 시 팝업 닫기
+    const handleOutsideClick = () => closeContextMenu();
+    window.addEventListener("click", handleOutsideClick);
+    window.addEventListener("scroll", handleOutsideClick);
+
+    return () => {
+      window.removeEventListener("click", handleOutsideClick);
+      window.removeEventListener("scroll", handleOutsideClick);
+    };
   }, []);
 
   useEffect(() => {
@@ -104,6 +130,102 @@ export function CategoryNews({
 
     fetchRealNews();
   }, [selectedCategory]);
+
+  const closeContextMenu = () => {
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+  };
+
+  const openContextMenu = (
+    itemData: { id: string; url: string; title: string; content: string },
+    clientX: number,
+    clientY: number
+  ) => {
+    const menuWidth = 260;
+    const menuHeight = 380;
+    const x = Math.min(clientX, window.innerWidth - menuWidth - 16);
+    const y = Math.min(clientY, window.innerHeight - menuHeight - 16);
+
+    setContextMenu({
+      visible: true,
+      x: Math.max(16, x),
+      y: Math.max(16, y),
+      item: itemData,
+    });
+  };
+
+  // 모바일 롱 프레스 터치 이벤트
+  const handleTouchStart = (
+    itemData: { id: string; url: string; title: string; content: string },
+    e: React.TouchEvent
+  ) => {
+    isLongPress.current = false;
+    const touch = e.touches[0];
+    const clientX = touch.clientX;
+    const clientY = touch.clientY;
+
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      openContextMenu(itemData, clientX, clientY);
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+
+  // 우클릭 이벤트 (PC/웹뷰)
+  const handleContextMenu = (
+    itemData: { id: string; url: string; title: string; content: string },
+    e: React.MouseEvent
+  ) => {
+    e.preventDefault();
+    openContextMenu(itemData, e.clientX, e.clientY);
+  };
+
+  // 팝업 메뉴 클릭 액션
+  const handleMenuAction = (action: string) => {
+    if (!contextMenu.item) return;
+    const { id, url, title, content } = contextMenu.item;
+
+    switch (action) {
+      case "open_new_tab":
+      case "open_group_tab":
+      case "open_bg_tab":
+      case "open_new_window":
+      case "open_incognito":
+        window.open(url, "_blank");
+        break;
+      case "select_text":
+        navigator.clipboard.writeText(`${title}\n${content}`);
+        alert(currentLang === "ko" ? "기사 텍스트가 복사되었습니다." : "Text copied.");
+        break;
+      case "share_link":
+        if (navigator.share) {
+          navigator.share({ title, url }).catch(() => {});
+        } else {
+          navigator.clipboard.writeText(url);
+          alert(currentLang === "ko" ? "링크가 복사되었습니다." : "Link copied.");
+        }
+        break;
+      case "copy_link":
+        navigator.clipboard.writeText(url);
+        alert(currentLang === "ko" ? "링크가 클립보드에 복사되었습니다." : "Link copied to clipboard.");
+        break;
+      case "save_link":
+        setStarredIds((prev) => {
+          const updated = { ...prev, [id]: true };
+          try { localStorage.setItem("gpnr_news_starred", JSON.stringify(updated)); } catch (err) {}
+          return updated;
+        });
+        alert(currentLang === "ko" ? "기사가 즐겨찾기에 저장되었습니다." : "Link saved.");
+        break;
+      default:
+        break;
+    }
+    closeContextMenu();
+  };
 
   const toggleCheck = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -158,7 +280,7 @@ export function CategoryNews({
   }
 
   return (
-    <section className="py-2 px-1 bg-[#0f172a]">
+    <section className="py-2 px-1 bg-[#0f172a] relative">
       <div className="flex flex-col">
         <div className="flex items-center justify-between mb-3 border-b border-white/[0.08] pb-2">
           <div className="flex items-center gap-2">
@@ -178,6 +300,7 @@ export function CategoryNews({
             {newsList.map((article) => {
               const articleId = article.id || Math.random().toString();
               const titleStr = getParsedText(article.title);
+              const contentStr = getParsedText(article.content);
               const sourceStr = article.author || article.source || "GPNR News";
               const rawDateStr = article.publishedAt || article.date || "";
               const dateStr = formatDateOnly(rawDateStr);
@@ -188,13 +311,25 @@ export function CategoryNews({
               const isStarred = !!starredIds[articleId];
               const isLiked = !!likedIds[articleId];
 
+              const itemData = { id: articleId, url: targetUrl, title: titleStr, content: contentStr };
+
               return (
                 <a
                   key={articleId}
                   href={targetUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group block border-b border-white/[0.05] last:border-0"
+                  className="group block border-b border-white/[0.05] last:border-0 select-none"
+                  onTouchStart={(e) => handleTouchStart(itemData, e)}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchMove={handleTouchEnd}
+                  onContextMenu={(e) => handleContextMenu(itemData, e)}
+                  onClick={(e) => {
+                    if (isLongPress.current) {
+                      e.preventDefault();
+                      isLongPress.current = false;
+                    }
+                  }}
                 >
                   <article className="flex gap-4 py-4 items-center">
                     <div className="flex-1 min-w-0">
@@ -258,6 +393,56 @@ export function CategoryNews({
           </div>
         )}
       </div>
+
+      {/* 구글 크롬 스타일 컨텍스트 메뉴 팝업 (첫 번째 사진 메뉴 100% 동일 구현) */}
+      {contextMenu.visible && contextMenu.item && (
+        <div 
+          className="fixed z-50 w-64 bg-gray-900/95 text-gray-200 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 py-2.5 text-sm overflow-hidden transition-all duration-150 animate-in fade-in zoom-in-95"
+          style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          {/* 상단 URL 헤더 */}
+          <div className="px-4 py-2 border-b border-gray-700/60 text-xs text-gray-400 truncate">
+            {contextMenu.item.url}
+          </div>
+
+          {/* 메뉴 리스트 */}
+          <div className="py-1">
+            <button onClick={() => handleMenuAction("open_new_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              새 탭에서 열기
+            </button>
+            <button onClick={() => handleMenuAction("open_group_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              탭 그룹에서 열기
+            </button>
+            <button onClick={() => handleMenuAction("open_bg_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              백그라운드 탭에서 열기
+            </button>
+            <button onClick={() => handleMenuAction("open_new_window")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              다른 창에서 열기
+            </button>
+            <button onClick={() => handleMenuAction("open_incognito")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
+              비밀 모드에서 열기
+            </button>
+
+            <button onClick={() => handleMenuAction("select_text")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
+              텍스트 선택
+            </button>
+
+            <button onClick={() => handleMenuAction("share_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              링크 공유
+            </button>
+            <button onClick={() => handleMenuAction("copy_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              링크 복사
+            </button>
+            <button onClick={() => handleMenuAction("save_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+              링크 저장
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
