@@ -5,7 +5,7 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
-// Lucide 아이콘 패키지 전체 임포트 (카테고리 매핑 및 폴백용)
+// Lucide 아이콘 개별 임포트
 import {
   Flame,
   Globe,
@@ -28,6 +28,28 @@ import {
   LayoutGrid
 } from "lucide-react";
 
+// 카테고리 ID별 Lucide 아이콘 매핑 테이블
+const CATEGORY_ICON_MAP: Record<string, React.ComponentType<any>> = {
+  "top-news": Flame,
+  "mainnet": Globe,
+  "node": Tv,
+  "mining": Zap,
+  "wallet": Wallet,
+  "browser": Compass,
+  "roadmap": Map,
+  "whitepaper": FileText,
+  "community": Users,
+  "commerce": ShoppingCart,
+  "kyc": ShieldCheck,
+  "developer": Code,
+  "realestate": Home,
+  "price-prediction": TrendingUp,
+  "price": DollarSign,
+  "security": Shield,
+  "regulation": Gavel,
+  "calendar": Calendar
+};
+
 interface GpnrHeaderProps {
   currentCategory?: string;                     
   onCategoryChange?: (categoryId: string) => void; 
@@ -47,7 +69,7 @@ export function GpnrHeader({
   const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
 
   const [calendarYear, setCalendarYear] = useState<number>(2026);
-  const [calendarMonth, setCalendarMonth] = useState<number>(8); // 9월 (0부터 시작하므로 8)
+  const [calendarMonth, setCalendarMonth] = useState<number>(8);
 
   useEffect(() => {
     setMounted(true);
@@ -147,18 +169,23 @@ export function GpnrHeader({
     }
   }, [currentLang]);
 
-  // categories.ts 데이터와 달력 아이템 통합
+  // 카테고리 및 달력 메뉴 목록 구성
   const LAUNCHER_ITEMS = useMemo(() => {
     const rawCategories = Array.isArray(NEWS_CATEGORIES) ? NEWS_CATEGORIES : [];
     
-    const items = rawCategories.map((cat) => ({
-      id: cat.id,
-      label: cat.name || cat.label || cat.id,
-      enLabel: cat.enName || cat.enLabel || cat.id,
-      IconComponent: cat.Icon || cat.icon || LayoutGrid
-    }));
+    const items = rawCategories.map((cat) => {
+      // ID 기반 매핑을 최우선 적용, 없으면 기본 아이콘
+      const MappedIcon = CATEGORY_ICON_MAP[cat.id] || LayoutGrid;
 
-    // 달력 메뉴 항목 추가
+      return {
+        id: cat.id,
+        label: cat.name || cat.label || cat.id,
+        enLabel: cat.enName || cat.enLabel || cat.id,
+        IconComponent: MappedIcon
+      };
+    });
+
+    // 달력 항목 추가
     items.push({
       id: "calendar",
       label: "달력",
@@ -256,9 +283,7 @@ export function GpnrHeader({
                   className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all group ${isSelected ? 'bg-slate-800 border-slate-600 font-bold' : 'bg-slate-800/40 border-transparent hover:bg-slate-800 hover:border-slate-700'}`}
                 >
                   {/* Lucide SVG 컴포넌트 출력 */}
-                  {React.createElement(IconComp, {
-                    className: `w-6 h-6 mb-1 shrink-0 transition-transform group-hover:scale-110 ${item.id === 'calendar' ? 'text-rose-400' : isSelected ? 'text-[#deff9a]' : 'text-slate-300'}`
-                  })}
+                  <IconComp className={`w-6 h-6 mb-1 shrink-0 transition-transform group-hover:scale-110 ${item.id === 'calendar' ? 'text-rose-400' : isSelected ? 'text-[#deff9a]' : 'text-slate-300'}`} />
                   
                   <span className="text-[11px] text-slate-300 text-center font-medium truncate w-full whitespace-nowrap">
                     {currentLang === "ko" ? item.label : item.enLabel}
