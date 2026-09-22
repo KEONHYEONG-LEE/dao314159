@@ -27,13 +27,15 @@ import {
   Calendar,
   Menu,
   X,
-  LayoutGrid
+  LayoutGrid,
+  Newspaper
 } from "lucide-react";
 
-// 1. category.id 및 문자열 명칭 기준 완벽 아이콘 매핑 객체
+// 1. category.id, category.name(한글/영문) 완벽 아이콘 매핑 객체
 const ICON_MAP: Record<string, React.ElementType> = {
-  // ID 기반 매핑 (모달 화면 카테고리 ID 완전 대응)
+  // ID 및 Slug 기반
   "top-news": Flame,
+  "top_news": Flame,
   "mainnet": Globe,
   "node": Tv,
   "mining": Zap,
@@ -48,15 +50,42 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "developers": Code,
   "ecosystem": Building,
   "real-estate": Building,
+  "real_estate": Building,
   "outlook": TrendingUp,
   "price-outlook": TrendingUp,
+  "price_outlook": TrendingUp,
   "price": DollarSign,
   "security": Shield,
   "legal": Scale,
   "regulations": Scale,
   "calendar": Calendar,
 
-  // 컴포넌트명 문자열 기반 매핑
+  // 한글 카테고리명 기반 (직접 일치 보장)
+  "주요 뉴스": Flame,
+  "주요뉴스": Flame,
+  "메인넷": Globe,
+  "노드": Tv,
+  "채광": Zap,
+  "지갑": Wallet,
+  "브라우저": Compass,
+  "로드맵": Map,
+  "백서": FileText,
+  "지역 사회": Users,
+  "커뮤니티": Users,
+  "상업": ShoppingCart,
+  "KYC": ShieldCheck,
+  "개발자": Code,
+  "생태계": Building,
+  "부동산": Building,
+  "가격 전망": TrendingUp,
+  "가격전망": TrendingUp,
+  "가격": DollarSign,
+  "보안": Shield,
+  "규정": Scale,
+  "법률": Scale,
+  "달력": Calendar,
+
+  // Lucide 컴포넌트명 대응
   Flame,
   Globe,
   Tv,
@@ -174,6 +203,35 @@ export function Header({
       : user.username
     : "";
 
+  // 아이콘 동적 렌더링 도우미 함수
+  const renderCategoryIcon = (category: any) => {
+    // 1. ICON_MAP 검색 (ID, Name, iconName 기준)
+    const FoundIcon =
+      ICON_MAP[category.id] ||
+      ICON_MAP[category.name] ||
+      ICON_MAP[category.enName] ||
+      (category.iconName ? ICON_MAP[category.iconName] : null) ||
+      (typeof category.icon === "string" ? ICON_MAP[category.icon] : null);
+
+    if (FoundIcon) {
+      return <FoundIcon className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
+    }
+
+    // 2. React 컴포넌트 타입인 경우 직접 렌더링
+    if (typeof category.icon === "function" || typeof category.Icon === "function") {
+      const CustomIcon = category.icon || category.Icon;
+      return <CustomIcon className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
+    }
+
+    // 3. 이미지 URL 경로 문자열인 경우 <img> 렌더링
+    if (typeof category.icon === "string" && (category.icon.startsWith("http") || category.icon.startsWith("/"))) {
+      return <img src={category.icon} alt={category.name} className="w-6 h-6 mb-1 object-contain shrink-0" />;
+    }
+
+    // 4. 최후 폴백 기본 아이콘
+    return <Newspaper className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
+  };
+
   return (
     <>
       {/* GPNR 상단 메인 헤더 */}
@@ -239,14 +297,6 @@ export function Header({
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
 
-                // 아이콘 동적 검색 우선순위: ID 매핑 > iconName > Icon > icon > 기본값
-                const IconComponent =
-                  ICON_MAP[category.id] ||
-                  (category.iconName ? ICON_MAP[category.iconName] : null) ||
-                  category.Icon ||
-                  (category.icon ? (typeof category.icon === "string" ? ICON_MAP[category.icon] : category.icon) : null) ||
-                  LayoutGrid;
-
                 // 라벨 텍스트
                 const labelText =
                   currentLang === "ko"
@@ -267,8 +317,8 @@ export function Header({
                         : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                     }`}
                   >
-                    {/* Lucide SVG 아이콘 컴포넌트 */}
-                    <IconComponent className="w-6 h-6 mb-1 text-purple-400 shrink-0" />
+                    {/* Lucide SVG / Image 동적 렌더링 */}
+                    {renderCategoryIcon(category)}
                     <span className="text-[11px] font-medium text-slate-200 text-center px-1 truncate w-full">
                       {labelText}
                     </span>
@@ -296,7 +346,7 @@ export function Header({
               </button>
             </div>
 
-            {/* 하단 계정 정보 및 Reset KYC ID / ID 변경 영역 */}
+            {/* 하단 계정 정보 및 Reset KYC ID 영역 */}
             <div className="mt-5 pt-3 border-t border-slate-800/80 flex flex-col gap-2">
               <button
                 type="button"
