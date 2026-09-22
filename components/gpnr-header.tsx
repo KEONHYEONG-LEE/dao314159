@@ -5,49 +5,32 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
-// Lucide 아이콘 개별 임포트
+// Lucide 아이콘 임포트 (드롭다운 메뉴용 Menu, 달력용 Calendar)
 import {
-  Flame,
-  Globe,
-  Tv,
-  Zap,
-  Wallet,
-  Compass,
-  Map,
-  FileText,
-  Users,
-  ShoppingCart,
-  ShieldCheck,
-  Code,
-  Home,
-  TrendingUp,
-  DollarSign,
-  Shield,
-  Gavel,
-  Calendar,
-  LayoutGrid
+  Menu,
+  Calendar
 } from "lucide-react";
 
-// 카테고리 ID별 Lucide 아이콘 매핑 테이블
+// 카테고리 ID별 Lucide 아이콘 매핑 테이블 (달력을 제외한 모든 아이콘을 Menu로 통일)
 const CATEGORY_ICON_MAP: Record<string, React.ComponentType<any>> = {
-  "top-news": Flame,
-  "mainnet": Globe,
-  "node": Tv,
-  "mining": Zap,
-  "wallet": Wallet,
-  "browser": Compass,
-  "roadmap": Map,
-  "whitepaper": FileText,
-  "community": Users,
-  "commerce": ShoppingCart,
-  "kyc": ShieldCheck,
-  "developer": Code,
-  "realestate": Home,
-  "price-prediction": TrendingUp,
-  "price": DollarSign,
-  "security": Shield,
-  "regulation": Gavel,
-  "calendar": Calendar
+  "top-news": Menu,
+  "mainnet": Menu,
+  "node": Menu,
+  "mining": Menu,
+  "wallet": Menu,
+  "browser": Menu,
+  "roadmap": Menu,
+  "whitepaper": Menu,
+  "community": Menu,
+  "commerce": Menu,
+  "kyc": Menu,
+  "developer": Menu,
+  "realestate": Menu,
+  "price-prediction": Menu,
+  "price": Menu,
+  "security": Menu,
+  "regulation": Menu,
+  "calendar": Calendar // 달력 아이콘은 그대로 유지
 };
 
 interface GpnrHeaderProps {
@@ -174,8 +157,8 @@ export function GpnrHeader({
     const rawCategories = Array.isArray(NEWS_CATEGORIES) ? NEWS_CATEGORIES : [];
     
     const items = rawCategories.map((cat) => {
-      // ID 기반 매핑을 최우선 적용, 없으면 기본 아이콘
-      const MappedIcon = CATEGORY_ICON_MAP[cat.id] || LayoutGrid;
+      // ID 기반 매핑을 최우선 적용, 없으면 기본적으로 Menu 아이콘 지정
+      const MappedIcon = CATEGORY_ICON_MAP[cat.id] || Menu;
 
       return {
         id: cat.id,
