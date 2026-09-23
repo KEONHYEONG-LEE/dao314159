@@ -141,16 +141,6 @@ export function GpnrHeader({
     };
   }, [currentLanguage]);
 
-  useEffect(() => {
-    if (typeof document !== "undefined") {
-      if (isLauncherOpen) {
-        document.body.classList.add("gpnr-modal-open");
-      } else {
-        document.body.classList.remove("gpnr-modal-open");
-      }
-    }
-  }, [isLauncherOpen]);
-
   const handleDonation = useCallback(async () => {
     if (typeof window !== "undefined" && (window as any).Pi) {
       try {
@@ -231,14 +221,6 @@ export function GpnrHeader({
 
   return (
     <>
-      {/* 모달이 열려있을 때 하단 플로팅 언어 선택 버튼을 감춰서 달력/버튼 터치 방해 제거 */}
-      <style jsx global>{`
-        body.gpnr-modal-open [class*="fixed"][class*="bottom"],
-        body.gpnr-modal-open [class*="floating"] {
-          display: none !important;
-        }
-      `}</style>
-
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-3">
           <div className="flex h-[48px] items-center justify-between">
@@ -283,26 +265,68 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 그리드 모달 - 사이즈 압축 및 레이아웃 슬림화 */}
+      {/* 강제 인라인 스타일을 적용한 크기 축소 그리드 모달 */}
       {isLauncherOpen && (
         <div
-          className="fixed inset-0 z-[999999] flex items-center justify-center p-3 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 999999,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '12px'
+          }}
           onClick={() => setIsLauncherOpen(false)}
         >
           <div
-            className="w-full max-w-[320px] bg-[#131528] border border-purple-500/30 rounded-2xl p-3 shadow-2xl relative max-h-[75vh] overflow-y-auto"
+            style={{
+              width: '85%',
+              maxWidth: '300px',
+              maxHeight: '75vh',
+              overflowY: 'auto',
+              backgroundColor: '#131528',
+              border: '1px solid rgba(168, 85, 247, 0.3)',
+              borderRadius: '20px',
+              padding: '12px',
+              paddingBottom: '80px', // 하단 버튼과 절대 안 겹치도록 넉넉한 여백
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              position: 'relative'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setIsLauncherOpen(false)}
               type="button"
-              className="absolute top-2 right-2 text-slate-400 hover:text-white transition-colors p-1 z-10"
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                color: '#94a3b8',
+                background: 'none',
+                border: 'none',
+                padding: '4px',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
             >
               <X className="w-4 h-4" />
             </button>
 
-            {/* 4열 컴팩트 레이아웃 (사이즈 2/3 압축) */}
-            <div className="grid grid-cols-4 gap-1.5 mt-5">
+            {/* 4열 그리드강제 수동 스타일링 (2/3 사이즈 압축) */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                gap: '6px',
+                marginTop: '20px'
+              }}
+            >
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
                 const labelText =
@@ -318,14 +342,32 @@ export function GpnrHeader({
                       if (onCategoryChange) onCategoryChange(category.id);
                       setIsLauncherOpen(false);
                     }}
-                    className={`flex flex-col items-center justify-center p-1 min-h-[52px] rounded-lg transition-all border ${
-                      isSelected
-                        ? "bg-[#2d1b4e] border-purple-500 text-white shadow-md shadow-purple-900/40 scale-105"
-                        : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
-                    }`}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '4px',
+                      minHeight: '48px',
+                      borderRadius: '8px',
+                      border: isSelected ? '1px solid #a855f7' : '1px solid rgba(30, 41, 59, 0.8)',
+                      backgroundColor: isSelected ? '#2d1b4e' : 'rgba(28, 30, 54, 0.8)',
+                      color: isSelected ? '#ffffff' : '#cbd5e1',
+                      cursor: 'pointer'
+                    }}
                   >
                     {renderCategoryIcon(category)}
-                    <span className="text-[9px] font-medium text-slate-200 text-center px-0.5 truncate w-full">
+                    <span
+                      style={{
+                        fontSize: '9px',
+                        fontWeight: 500,
+                        textAlign: 'center',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        width: '100%'
+                      }}
+                    >
                       {labelText}
                     </span>
                   </button>
@@ -338,20 +380,38 @@ export function GpnrHeader({
                   if (onCategoryChange) onCategoryChange("calendar");
                   setIsLauncherOpen(false);
                 }}
-                className={`flex flex-col items-center justify-center p-1 min-h-[52px] rounded-lg transition-all border ${
-                  currentCategory === "calendar"
-                    ? "bg-[#2d1b4e] border-purple-500 text-white shadow-md shadow-purple-900/40 scale-105"
-                    : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
-                }`}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '4px',
+                  minHeight: '48px',
+                  borderRadius: '8px',
+                  border: currentCategory === "calendar" ? '1px solid #a855f7' : '1px solid rgba(30, 41, 59, 0.8)',
+                  backgroundColor: currentCategory === "calendar" ? '#2d1b4e' : 'rgba(28, 30, 54, 0.8)',
+                  color: currentCategory === "calendar" ? '#ffffff' : '#cbd5e1',
+                  cursor: 'pointer'
+                }}
               >
                 <Calendar className="w-4 h-4 mb-0.5 text-rose-400 shrink-0" />
-                <span className="text-[9px] font-medium text-slate-200 text-center px-0.5 truncate w-full">
+                <span
+                  style={{
+                    fontSize: '9px',
+                    fontWeight: 500,
+                    textAlign: 'center',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    width: '100%'
+                  }}
+                >
                   {currentLang === "ko" ? "달력" : "Calendar"}
                 </span>
               </button>
             </div>
 
-            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex flex-col gap-1.5">
+            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <button
                 type="button"
                 onClick={() => {
@@ -366,16 +426,26 @@ export function GpnrHeader({
                   );
                   setIsLauncherOpen(false);
                 }}
-                className="w-full py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/50 border border-rose-500/30 text-rose-300 text-[11px] font-bold transition-all text-center"
+                style={{
+                  width: '100%',
+                  padding: '6px 0',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(76, 5, 25, 0.4)',
+                  border: '1px solid rgba(244, 63, 94, 0.3)',
+                  color: '#fda4af',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
               >
                 Reset KYC ID
               </button>
 
               {isAuthenticated && (
-                <div className="flex items-center justify-between text-[10px] text-slate-400 px-1">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', padding: '0 4px' }}>
                   <span>
                     연결된 ID/지갑:{" "}
-                    <strong className="text-purple-300 font-mono">
+                    <strong style={{ color: '#d8b4fe', fontFamily: 'monospace' }}>
                       {displayId}
                     </strong>
                   </span>
@@ -385,7 +455,7 @@ export function GpnrHeader({
                       logout();
                       setIsLauncherOpen(false);
                     }}
-                    className="text-rose-400 hover:underline text-[10px]"
+                    style={{ color: '#fb7185', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', fontSize: '10px' }}
                   >
                     ID 변경
                   </button>
