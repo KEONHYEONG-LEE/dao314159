@@ -104,7 +104,7 @@ export function GpnrHeader({
       setCalendarYear(calendarYear + 1);
       setCalendarMonth(0);
     } else {
-      setCalendarMonth(calendarMonth + 1);
+      setCalendarMonth(calendarMonth - 1);
     }
   };
 
@@ -179,11 +179,15 @@ export function GpnrHeader({
     return items;
   }, []);
 
-  const displayId = user?.username
-    ? user.username.length > 12
-      ? `${user.username.substring(0, 5)}...${user.username.substring(user.username.length - 4)}`
-      : user.username
-    : "";
+  // 파이 사용자 계정 / 지갑 주소 안전 포맷팅 (앞 5자리...뒤 4자리)
+  const displayId = useMemo(() => {
+    const identifier = user?.username || user?.uid || "";
+    if (!identifier) return "";
+    if (identifier.length > 12) {
+      return `${identifier.substring(0, 5)}...${identifier.substring(identifier.length - 4)}`;
+    }
+    return identifier;
+  }, [user]);
 
   return (
     <>
