@@ -189,7 +189,6 @@ export function GpnrHeader({
 
   if (!mounted) return null;
 
-  // 파이 지갑/ID 축약 표현 (상단 우측용)
   const displayId = user?.username
     ? user.username.length > 10
       ? `${user.username.substring(0, 4)}...${user.username.substring(user.username.length - 4)}`
@@ -205,19 +204,19 @@ export function GpnrHeader({
       (typeof category.icon === "string" ? ICON_MAP[category.icon] : null);
 
     if (FoundIcon) {
-      return <FoundIcon className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
+      return <FoundIcon className="w-5 h-5 mb-1 text-purple-400 shrink-0" />;
     }
 
     if (typeof category.icon === "function" || typeof category.Icon === "function") {
       const CustomIcon = category.icon || category.Icon;
-      return <CustomIcon className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
+      return <CustomIcon className="w-5 h-5 mb-1 text-purple-400 shrink-0" />;
     }
 
     if (typeof category.icon === "string" && (category.icon.startsWith("http") || category.icon.startsWith("/"))) {
-      return <img src={category.icon} alt={category.name} className="w-6 h-6 mb-1 object-contain shrink-0" />;
+      return <img src={category.icon} alt={category.name} className="w-5 h-5 mb-1 object-contain shrink-0" />;
     }
 
-    return <Newspaper className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
+    return <Newspaper className="w-5 h-5 mb-1 text-purple-400 shrink-0" />;
   };
 
   return (
@@ -235,7 +234,7 @@ export function GpnrHeader({
               </span>
             </div>
 
-            {/* 우측 영역: [후원 버튼] [메뉴 ≡] [파이 ID/지갑 캡슐] */}
+            {/* 우측 영역 */}
             <div className="flex items-center gap-2">
               <button
                 onClick={handleDonation}
@@ -255,7 +254,6 @@ export function GpnrHeader({
                 <Menu className="w-5 h-5 text-slate-200" />
               </button>
 
-              {/* 우측 맨 끝: 파이 지갑/ID 표시 (외부 EVM 버튼 대신 파이 계정 바인딩) */}
               {displayId && (
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-900/60 rounded-full border border-purple-500/50 text-[11px] font-mono text-purple-200 shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -270,22 +268,22 @@ export function GpnrHeader({
       {/* 그리드 모달 */}
       {isLauncherOpen && (
         <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-3 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setIsLauncherOpen(false)}
         >
           <div
-            className="w-full max-w-md bg-[#131528] border border-purple-500/30 rounded-3xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto"
+            className="w-full max-w-sm bg-[#131528] border border-purple-500/30 rounded-3xl p-4 shadow-2xl relative max-h-[80vh] overflow-y-auto pb-20"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setIsLauncherOpen(false)}
               type="button"
-              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors p-1"
+              className="absolute top-3.5 right-3.5 text-slate-400 hover:text-white transition-colors p-1 z-10"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="grid grid-cols-3 gap-3 mt-2">
+            <div className="grid grid-cols-3 gap-2 mt-2">
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
                 const labelText =
@@ -301,14 +299,14 @@ export function GpnrHeader({
                       if (onCategoryChange) onCategoryChange(category.id);
                       setIsLauncherOpen(false);
                     }}
-                    className={`flex flex-col items-center justify-center p-2 min-h-[88px] rounded-2xl transition-all border ${
+                    className={`flex flex-col items-center justify-center p-1.5 min-h-[72px] rounded-xl transition-all border ${
                       isSelected
                         ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40 scale-105"
                         : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                     }`}
                   >
                     {renderCategoryIcon(category)}
-                    <span className="text-[11px] font-medium text-slate-200 text-center px-1 truncate w-full">
+                    <span className="text-[10px] font-medium text-slate-200 text-center px-0.5 truncate w-full">
                       {labelText}
                     </span>
                   </button>
@@ -321,20 +319,20 @@ export function GpnrHeader({
                   if (onCategoryChange) onCategoryChange("calendar");
                   setIsLauncherOpen(false);
                 }}
-                className={`flex flex-col items-center justify-center p-2 min-h-[88px] rounded-2xl transition-all border ${
+                className={`flex flex-col items-center justify-center p-1.5 min-h-[72px] rounded-xl transition-all border ${
                   currentCategory === "calendar"
                     ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40 scale-105"
                     : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                 }`}
               >
-                <Calendar className="w-6 h-6 mb-1 text-rose-400 shrink-0" />
-                <span className="text-[11px] font-medium text-slate-200 text-center px-1 truncate w-full">
+                <Calendar className="w-5 h-5 mb-1 text-rose-400 shrink-0" />
+                <span className="text-[10px] font-medium text-slate-200 text-center px-0.5 truncate w-full">
                   {currentLang === "ko" ? "달력" : "Calendar"}
                 </span>
               </button>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-slate-800/80 flex flex-col gap-2">
+            <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-col gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -349,7 +347,7 @@ export function GpnrHeader({
                   );
                   setIsLauncherOpen(false);
                 }}
-                className="w-full py-2.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/50 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all text-center"
+                className="w-full py-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/50 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all text-center"
               >
                 Reset KYC ID
               </button>
