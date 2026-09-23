@@ -141,6 +141,16 @@ export function GpnrHeader({
     };
   }, [currentLanguage]);
 
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      if (isLauncherOpen) {
+        document.body.classList.add("gpnr-modal-open");
+      } else {
+        document.body.classList.remove("gpnr-modal-open");
+      }
+    }
+  }, [isLauncherOpen]);
+
   const handleDonation = useCallback(async () => {
     if (typeof window !== "undefined" && (window as any).Pi) {
       try {
@@ -204,23 +214,31 @@ export function GpnrHeader({
       (typeof category.icon === "string" ? ICON_MAP[category.icon] : null);
 
     if (FoundIcon) {
-      return <FoundIcon className="w-5 h-5 mb-1 text-purple-400 shrink-0" />;
+      return <FoundIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
     }
 
     if (typeof category.icon === "function" || typeof category.Icon === "function") {
       const CustomIcon = category.icon || category.Icon;
-      return <CustomIcon className="w-5 h-5 mb-1 text-purple-400 shrink-0" />;
+      return <CustomIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
     }
 
     if (typeof category.icon === "string" && (category.icon.startsWith("http") || category.icon.startsWith("/"))) {
-      return <img src={category.icon} alt={category.name} className="w-5 h-5 mb-1 object-contain shrink-0" />;
+      return <img src={category.icon} alt={category.name} className="w-4 h-4 mb-0.5 object-contain shrink-0" />;
     }
 
-    return <Newspaper className="w-5 h-5 mb-1 text-purple-400 shrink-0" />;
+    return <Newspaper className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
   };
 
   return (
     <>
+      {/* 모달이 열려있을 때 하단 플로팅 언어 선택 버튼을 감춰서 달력/버튼 터치 방해 제거 */}
+      <style jsx global>{`
+        body.gpnr-modal-open [class*="fixed"][class*="bottom"],
+        body.gpnr-modal-open [class*="floating"] {
+          display: none !important;
+        }
+      `}</style>
+
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-3">
           <div className="flex h-[48px] items-center justify-between">
@@ -265,25 +283,26 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 그리드 모달 */}
+      {/* 그리드 모달 - 사이즈 압축 및 레이아웃 슬림화 */}
       {isLauncherOpen && (
         <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-3 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-[999999] flex items-center justify-center p-3 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setIsLauncherOpen(false)}
         >
           <div
-            className="w-full max-w-sm bg-[#131528] border border-purple-500/30 rounded-3xl p-4 shadow-2xl relative max-h-[80vh] overflow-y-auto pb-20"
+            className="w-full max-w-[320px] bg-[#131528] border border-purple-500/30 rounded-2xl p-3 shadow-2xl relative max-h-[75vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setIsLauncherOpen(false)}
               type="button"
-              className="absolute top-3.5 right-3.5 text-slate-400 hover:text-white transition-colors p-1 z-10"
+              className="absolute top-2 right-2 text-slate-400 hover:text-white transition-colors p-1 z-10"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            {/* 4열 컴팩트 레이아웃 (사이즈 2/3 압축) */}
+            <div className="grid grid-cols-4 gap-1.5 mt-5">
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
                 const labelText =
@@ -299,14 +318,14 @@ export function GpnrHeader({
                       if (onCategoryChange) onCategoryChange(category.id);
                       setIsLauncherOpen(false);
                     }}
-                    className={`flex flex-col items-center justify-center p-1.5 min-h-[72px] rounded-xl transition-all border ${
+                    className={`flex flex-col items-center justify-center p-1 min-h-[52px] rounded-lg transition-all border ${
                       isSelected
-                        ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40 scale-105"
+                        ? "bg-[#2d1b4e] border-purple-500 text-white shadow-md shadow-purple-900/40 scale-105"
                         : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                     }`}
                   >
                     {renderCategoryIcon(category)}
-                    <span className="text-[10px] font-medium text-slate-200 text-center px-0.5 truncate w-full">
+                    <span className="text-[9px] font-medium text-slate-200 text-center px-0.5 truncate w-full">
                       {labelText}
                     </span>
                   </button>
@@ -319,20 +338,20 @@ export function GpnrHeader({
                   if (onCategoryChange) onCategoryChange("calendar");
                   setIsLauncherOpen(false);
                 }}
-                className={`flex flex-col items-center justify-center p-1.5 min-h-[72px] rounded-xl transition-all border ${
+                className={`flex flex-col items-center justify-center p-1 min-h-[52px] rounded-lg transition-all border ${
                   currentCategory === "calendar"
-                    ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40 scale-105"
+                    ? "bg-[#2d1b4e] border-purple-500 text-white shadow-md shadow-purple-900/40 scale-105"
                     : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                 }`}
               >
-                <Calendar className="w-5 h-5 mb-1 text-rose-400 shrink-0" />
-                <span className="text-[10px] font-medium text-slate-200 text-center px-0.5 truncate w-full">
+                <Calendar className="w-4 h-4 mb-0.5 text-rose-400 shrink-0" />
+                <span className="text-[9px] font-medium text-slate-200 text-center px-0.5 truncate w-full">
                   {currentLang === "ko" ? "달력" : "Calendar"}
                 </span>
               </button>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-col gap-2">
+            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex flex-col gap-1.5">
               <button
                 type="button"
                 onClick={() => {
@@ -347,13 +366,13 @@ export function GpnrHeader({
                   );
                   setIsLauncherOpen(false);
                 }}
-                className="w-full py-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/50 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all text-center"
+                className="w-full py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/50 border border-rose-500/30 text-rose-300 text-[11px] font-bold transition-all text-center"
               >
                 Reset KYC ID
               </button>
 
               {isAuthenticated && (
-                <div className="flex items-center justify-between text-xs text-slate-400 px-1 pt-1">
+                <div className="flex items-center justify-between text-[10px] text-slate-400 px-1">
                   <span>
                     연결된 ID/지갑:{" "}
                     <strong className="text-purple-300 font-mono">
@@ -366,7 +385,7 @@ export function GpnrHeader({
                       logout();
                       setIsLauncherOpen(false);
                     }}
-                    className="text-rose-400 hover:underline text-[11px]"
+                    className="text-rose-400 hover:underline text-[10px]"
                   >
                     ID 변경
                   </button>
