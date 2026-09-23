@@ -5,7 +5,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
-// Lucide 아이콘 패키지 임포트
 import {
   Flame,
   Globe,
@@ -27,13 +26,10 @@ import {
   Calendar,
   Menu,
   X,
-  LayoutGrid,
   Newspaper
 } from "lucide-react";
 
-// 1. category.id, category.name(한글/영문) 완벽 아이콘 매핑 객체
 const ICON_MAP: Record<string, React.ElementType> = {
-  // ID 및 Slug 기반
   "top-news": Flame,
   "top_news": Flame,
   "mainnet": Globe,
@@ -59,8 +55,6 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "legal": Scale,
   "regulations": Scale,
   "calendar": Calendar,
-
-  // 한글 카테고리명 기반 (직접 일치 보장)
   "주요 뉴스": Flame,
   "주요뉴스": Flame,
   "메인넷": Globe,
@@ -84,8 +78,6 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "규정": Scale,
   "법률": Scale,
   "달력": Calendar,
-
-  // Lucide 컴포넌트명 대응
   Flame,
   Globe,
   Tv,
@@ -197,15 +189,14 @@ export function Header({
 
   if (!mounted) return null;
 
+  // 파이 지갑/ID 축약 표시
   const displayId = user?.username
     ? user.username.length > 12
       ? `${user.username.substring(0, 5)}...${user.username.substring(user.username.length - 4)}`
       : user.username
     : "";
 
-  // 아이콘 동적 렌더링 도우미 함수
   const renderCategoryIcon = (category: any) => {
-    // 1. ICON_MAP 검색 (ID, Name, iconName 기준)
     const FoundIcon =
       ICON_MAP[category.id] ||
       ICON_MAP[category.name] ||
@@ -217,28 +208,24 @@ export function Header({
       return <FoundIcon className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
     }
 
-    // 2. React 컴포넌트 타입인 경우 직접 렌더링
     if (typeof category.icon === "function" || typeof category.Icon === "function") {
       const CustomIcon = category.icon || category.Icon;
       return <CustomIcon className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
     }
 
-    // 3. 이미지 URL 경로 문자열인 경우 <img> 렌더링
     if (typeof category.icon === "string" && (category.icon.startsWith("http") || category.icon.startsWith("/"))) {
       return <img src={category.icon} alt={category.name} className="w-6 h-6 mb-1 object-contain shrink-0" />;
     }
 
-    // 4. 최후 폴백 기본 아이콘
     return <Newspaper className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
   };
 
   return (
     <>
-      {/* GPNR 상단 메인 헤더 */}
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-3">
           <div className="flex h-[48px] items-center justify-between">
-            {/* 로고 영역 */}
+            {/* 로고 */}
             <div className="flex items-center gap-2">
               <span
                 className="font-black text-xl tracking-wider text-purple-400 cursor-pointer select-none"
@@ -248,18 +235,26 @@ export function Header({
               </span>
             </div>
 
-            {/* 우측 버튼 영역 (후원 + 삼선/그리드 메뉴 버튼) */}
+            {/* 우측 영역 (후원 + 파이 지갑/ID 노출 + 메뉴) */}
             <div className="flex items-center gap-2">
               <button
                 onClick={handleDonation}
                 type="button"
-                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold transition-colors"
+                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold transition-colors"
               >
                 <span>🪙</span>
                 <span>0.01 Pi 후원</span>
               </button>
 
-              {/* 삼선(햄버거) / 런처 모달 오픈 토글 버튼 */}
+              {/* 상단 우측 파이 지갑/ID 표시 영역 */}
+              {displayId && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-950/60 rounded-full border border-purple-500/40 text-[11px] font-mono text-purple-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{displayId}</span>
+                </div>
+              )}
+
+              {/* 메뉴 토글 */}
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 type="button"
@@ -273,7 +268,7 @@ export function Header({
         </div>
       </header>
 
-      {/* 그리드 카테고리 풀 런처 모달 */}
+      {/* 런처 모달 */}
       {isLauncherOpen && (
         <div
           className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
@@ -283,7 +278,6 @@ export function Header({
             className="w-full max-w-md bg-[#131528] border border-purple-500/30 rounded-3xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 닫기 버튼 */}
             <button
               onClick={() => setIsLauncherOpen(false)}
               type="button"
@@ -292,12 +286,9 @@ export function Header({
               <X className="w-5 h-5" />
             </button>
 
-            {/* 3열 카테고리 그리드 (아이콘 완벽 연동) */}
             <div className="grid grid-cols-3 gap-3 mt-2">
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
-
-                // 라벨 텍스트
                 const labelText =
                   currentLang === "ko"
                     ? category.name || category.label || category.id
@@ -317,7 +308,6 @@ export function Header({
                         : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
                     }`}
                   >
-                    {/* Lucide SVG / Image 동적 렌더링 */}
                     {renderCategoryIcon(category)}
                     <span className="text-[11px] font-medium text-slate-200 text-center px-1 truncate w-full">
                       {labelText}
@@ -326,7 +316,6 @@ export function Header({
                 );
               })}
 
-              {/* 달력(Calendar) 추가 항목 대응 */}
               <button
                 type="button"
                 onClick={() => {
@@ -346,14 +335,13 @@ export function Header({
               </button>
             </div>
 
-            {/* 하단 계정 정보 및 Reset KYC ID 영역 */}
             <div className="mt-5 pt-3 border-t border-slate-800/80 flex flex-col gap-2">
               <button
                 type="button"
                 onClick={() => {
                   if (typeof window !== "undefined") {
-                    localStorage.removeItem("pi_user_id");
-                    localStorage.removeItem("pi_user_auth");
+                    localStorage.removeItem("gpnr_kyc_id");
+                    localStorage.removeItem("gpnr_wallet_address");
                   }
                   alert(
                     currentLang === "ko"
@@ -370,7 +358,7 @@ export function Header({
               {isAuthenticated && (
                 <div className="flex items-center justify-between text-xs text-slate-400 px-1 pt-1">
                   <span>
-                    연결된 ID:{" "}
+                    연결된 ID/지갑:{" "}
                     <strong className="text-purple-300 font-mono">
                       {displayId}
                     </strong>
