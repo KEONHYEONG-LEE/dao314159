@@ -250,8 +250,41 @@ export default function Home() {
         </div>
       )}
 
+      {/* [수정 부분] activeCategory 가 'calendar' 인 경우 캘린더 화면 출력, 그 외 뉴스 출력 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
-        <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
+        {activeCategory === "calendar" ? (
+          <div className="bg-[#1e293b] border border-purple-500/30 rounded-2xl p-5 shadow-xl text-center my-4">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <span className="text-2xl">📅</span>
+              <h2 className="text-base font-bold text-purple-300">
+                {currentLang === "ko" ? "Pi 네트워크 생태계 일정" : "Pi Network Events Schedule"}
+              </h2>
+            </div>
+
+            <p className="text-xs text-slate-400 mb-6">
+              {currentLang === "ko"
+                ? "주요 메인넷 마이그레이션, 해커톤 및 노드 업데이트 일정"
+                : "Key Mainnet migration, Hackathon, and Node update schedule"}
+            </p>
+
+            <div className="bg-[#0f172a] rounded-xl p-4 border border-slate-700 text-left space-y-3">
+              <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-800">
+                <span className="text-purple-400 font-semibold">📍 Open Mainnet Roadmap</span>
+                <span className="text-[10px] bg-purple-900/60 text-purple-200 px-2 py-0.5 rounded">Ongoing</span>
+              </div>
+              <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-800">
+                <span className="text-purple-400 font-semibold">📍 Node Version Syncing</span>
+                <span className="text-[10px] bg-blue-900/60 text-blue-200 px-2 py-0.5 rounded">Active</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-purple-400 font-semibold">📍 GPNR Live Syncing</span>
+                <span className="text-[10px] bg-emerald-900/60 text-emerald-200 px-2 py-0.5 rounded">Realtime</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
+        )}
       </div>
 
       <div className="fixed bottom-4 right-4 z-[99]">
