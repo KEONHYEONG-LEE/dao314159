@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { NEWS_CATEGORIES } from "../lib/categories";
+import { PiCalendar } from "./pi-calendar"; // 캘린더 컴포넌트 임포트
 
 interface NewsItem {
   id?: string;
@@ -57,6 +58,11 @@ export function CategoryNews({
   selectedCategory?: string; 
   currentLang?: string;
 }) {
+  // [핵심] 달력 카테고리가 선택되면 즉시 PiCalendar 컴포넌트를 렌더링
+  if (selectedCategory === "calendar") {
+    return <PiCalendar currentLang={currentLang} />;
+  }
+
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -336,7 +342,6 @@ export function CategoryNews({
               const contentStr = getParsedText(article.content);
               const targetUrl = article.sourceUrl || article.url || "";
 
-              // [핵심 문제 해결] 언어 변경/카테고리 이동에도 변하지 않는 언어 독립적 고유 ID 추출
               let rawTitleKey = "";
               if (typeof article.title === "object") {
                 rawTitleKey = article.title.en || article.title.ko || "";
