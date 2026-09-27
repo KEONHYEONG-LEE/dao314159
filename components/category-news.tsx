@@ -5,8 +5,8 @@ import { useEffect, useState, useRef } from "react";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
 interface NewsItem {
-  id: string;
-  category: string;
+  id?: string;
+  category?: string;
   title: { ko: string; en: string } | string;
   content?: { ko: string; en: string } | string;
   author?: string;
@@ -99,7 +99,13 @@ export function CategoryNews({
     return String(rawDate).split("T")[0].split(" ")[0];
   };
 
-  // 브라우저 및 Pi Browser 메모리(LocalStorage) 로드
+  const getParsedText = (field: any) => {
+    if (!field) return "";
+    if (typeof field === "string") return field;
+    return field[currentLang] || field.en || field.ko || "";
+  };
+
+  // 브라우저 및 Pi Browser 로컬 스토리지 메모리 로드
   useEffect(() => {
     try {
       if (typeof window !== "undefined") {
@@ -112,7 +118,7 @@ export function CategoryNews({
         if (savedLiked) setLikedIds(JSON.parse(savedLiked));
       }
     } catch (error) {
-      console.warn("저장소 메모리 읽기 중 예외 처리:", error);
+      console.warn("스토리지 메모리 읽기 중 예외 처리:", error);
     }
 
     const handleOutsideClick = () => closeContextMenu();
@@ -125,7 +131,7 @@ export function CategoryNews({
     };
   }, []);
 
-  // 뉴스 목록 Fetching
+  // 뉴스 목록 불러오기
   useEffect(() => {
     async function fetchRealNews() {
       setLoading(true);
@@ -258,7 +264,7 @@ export function CategoryNews({
     closeContextMenu();
   };
 
-  // 메모리 영구 저장 핸들러
+  // 저장소 상태 변경 핸들러 (체크/즐겨찾기/좋아요)
   const toggleCheck = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -287,12 +293,6 @@ export function CategoryNews({
       try { localStorage.setItem("gpnr_news_liked", JSON.stringify(updated)); } catch (err) {}
       return updated;
     });
-  };
-
-  const getParsedText = (field: any) => {
-    if (!field) return "";
-    if (typeof field === "string") return field;
-    return field[currentLang] || field.en || field.ko || "";
   };
 
   const activeCategoryId = (selectedCategory === "all" || !selectedCategory) ? "top-news" : selectedCategory;
@@ -332,14 +332,17 @@ export function CategoryNews({
         ) : (
           <div className="flex flex-col">
             {newsList.map((article) => {
-              const articleId = article.id || article.url || article.sourceUrl || Math.random().toString();
               const titleStr = getParsedText(article.title);
               const contentStr = getParsedText(article.content);
+              const targetUrl = article.sourceUrl || article.url || "#";
+
+              // [핵심 해결포인트] Math.random() 대신 고유한 ID(URL 또는 제목 기준)로 고정 생성!
+              const articleId = article.id || targetUrl !== "#" ? targetUrl : `news-${titleStr.substring(0, 30)}`;
+
               const sourceStr = article.author || article.source || "GPNR News";
               const rawDateStr = article.publishedAt || article.date || "";
               const dateStr = formatDateOnly(rawDateStr);
               const imageSrc = article.imageUrl || article.image || "https://picsum.photos/id/10/200/200";
-              const targetUrl = article.sourceUrl || article.url || "#";
 
               const isChecked = !!checkedIds[articleId];
               const isStarred = !!starredIds[articleId];
@@ -378,7 +381,7 @@ export function CategoryNews({
                           <span>{dateStr}</span>
                         </div>
 
-                        {/* 반응 아이콘 버튼 그룹 */}
+                        {/* 반응 아이콘 버튼들 */}
                         <div className="flex items-center gap-3">
                           <button
                             onClick={(e) => toggleCheck(e, articleId)}
@@ -429,7 +432,7 @@ export function CategoryNews({
         )}
       </div>
 
-      {/* 롱터치/우클릭 커스텀 팝업 메뉴 */}
+      {/* 컨텍스트 메뉴 팝업 */}
       {contextMenu.visible && contextMenu.item && (
         <div 
           className="fixed z-50 w-64 bg-gray-900/95 text-gray-200 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 py-2.5 text-sm overflow-hidden transition-all duration-150 animate-in fade-in zoom-in-95"
