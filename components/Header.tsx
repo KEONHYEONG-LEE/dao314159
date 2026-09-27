@@ -189,7 +189,7 @@ export function Header({
             {/* 로고 */}
             <div className="flex items-center gap-2">
               <span
-                className="font-black text-xl tracking-wider text-purple-400 cursor-pointer select-none"
+                className="font-black text-xl tracking-wider text-purple-400 cursor-pointer select-none hover:text-purple-300 transition-colors"
                 onClick={() => onCategoryChange && onCategoryChange("top-news")}
               >
                 GPNR
@@ -201,29 +201,29 @@ export function Header({
               <button
                 onClick={handleDonation}
                 type="button"
-                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold transition-colors"
+                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold transition-colors active:scale-95"
               >
                 <span>🪙</span>
-                <span>0.01 Pi 후원</span>
+                <span>0.01 Pi</span>
               </button>
+
+              {/* 상단 우측 파이 지갑/ID 표시 영역 */}
+              {displayId && (
+                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-purple-950/60 rounded-full border border-purple-500/40 text-[11px] font-mono text-purple-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{displayId}</span>
+                </div>
+              )}
 
               {/* 메뉴 토글 */}
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 type="button"
-                className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 transition-all border border-slate-700/50 flex items-center justify-center"
+                className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 transition-all border border-slate-700/50 flex items-center justify-center active:scale-95"
                 aria-label="Toggle Menu"
               >
                 <Menu className="w-5 h-5 text-slate-200" />
               </button>
-
-              {/* 상단 우측 파이 지갑/ID 표시 영역 */}
-              {displayId && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-950/60 rounded-full border border-purple-500/40 text-[11px] font-mono text-purple-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{displayId}</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -250,45 +250,43 @@ export function Header({
         >
           <div
             style={{
-              width: '85%',
-              maxWidth: '300px',
-              maxHeight: '75vh',
+              width: '90%',
+              maxWidth: '320px',
+              maxHeight: '80vh',
               overflowY: 'auto',
               backgroundColor: '#131528',
               border: '1px solid rgba(168, 85, 247, 0.3)',
               borderRadius: '20px',
-              padding: '12px',
-              paddingBottom: '80px',
+              padding: '14px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
               position: 'relative'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setIsLauncherOpen(false)}
-              type="button"
-              style={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                color: '#94a3b8',
-                background: 'none',
-                border: 'none',
-                padding: '4px',
-                cursor: 'pointer',
-                zIndex: 10
-              }}
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2">
+              <span className="text-xs font-bold text-purple-300">GPNR Navigation</span>
+              <button
+                onClick={() => setIsLauncherOpen(false)}
+                type="button"
+                style={{
+                  color: '#94a3b8',
+                  background: 'none',
+                  border: 'none',
+                  padding: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-            {/* 4열 그리드 (NEWS_CATEGORIES 단일 매핑으로 중복 제거) */}
+            {/* 4열 그리드 카테고리 매핑 */}
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
                 gap: '6px',
-                marginTop: '20px'
+                marginTop: '10px'
               }}
             >
               {NEWS_CATEGORIES.map((category) => {
@@ -311,25 +309,27 @@ export function Header({
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      padding: '4px',
-                      minHeight: '48px',
-                      borderRadius: '8px',
+                      padding: '6px 4px',
+                      minHeight: '52px',
+                      borderRadius: '10px',
                       border: isSelected ? '1px solid #a855f7' : '1px solid rgba(30, 41, 59, 0.8)',
                       backgroundColor: isSelected ? '#2d1b4e' : 'rgba(28, 30, 54, 0.8)',
                       color: isSelected ? '#ffffff' : '#cbd5e1',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
                     }}
                   >
                     {renderCategoryIcon(category)}
                     <span
                       style={{
-                        fontSize: '9px',
+                        fontSize: '9.5px',
                         fontWeight: 500,
                         textAlign: 'center',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        width: '100%'
+                        width: '100%',
+                        marginTop: '2px'
                       }}
                     >
                       {labelText}
@@ -339,7 +339,7 @@ export function Header({
               })}
             </div>
 
-            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
                 type="button"
                 onClick={() => {
@@ -356,12 +356,12 @@ export function Header({
                 }}
                 style={{
                   width: '100%',
-                  padding: '6px 0',
-                  borderRadius: '8px',
+                  padding: '8px 0',
+                  borderRadius: '10px',
                   backgroundColor: 'rgba(76, 5, 25, 0.4)',
                   border: '1px solid rgba(244, 63, 94, 0.3)',
                   color: '#fda4af',
-                  fontSize: '10px',
+                  fontSize: '11px',
                   fontWeight: 'bold',
                   cursor: 'pointer'
                 }}
@@ -370,7 +370,7 @@ export function Header({
               </button>
 
               {isAuthenticated && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', padding: '0 4px' }}>
+                <div style={{ display: 'flex', itemsCenter: 'center', justifyContent: 'space-between', fontSize: '10.5px', color: '#94a3b8', padding: '0 4px' }}>
                   <span>
                     {currentLang === "ko" ? "연결된 ID/지갑: " : "Connected ID/Wallet: "}
                     <strong style={{ color: '#d8b4fe', fontFamily: 'monospace' }}>
@@ -383,7 +383,7 @@ export function Header({
                       logout();
                       setIsLauncherOpen(false);
                     }}
-                    style={{ color: '#fb7185', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', fontSize: '10px' }}
+                    style={{ color: '#fb7185', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', fontSize: '10.5px' }}
                   >
                     {currentLang === "ko" ? "아이디 변경" : "Change ID"}
                   </button>
@@ -397,4 +397,6 @@ export function Header({
   );
 }
 
+// named export 및 default export 모두 지원하여 import 경로 충돌 방지
+export { Header as GpnrHeader };
 export default Header;
