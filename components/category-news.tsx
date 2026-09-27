@@ -105,7 +105,7 @@ export function CategoryNews({
     return field[currentLang] || field.en || field.ko || "";
   };
 
-  // 브라우저 및 Pi Browser 로컬 스토리지 메모리 로드
+  // 브라우저/Pi Browser 메모리 데이터 최초 로드
   useEffect(() => {
     try {
       if (typeof window !== "undefined") {
@@ -118,7 +118,7 @@ export function CategoryNews({
         if (savedLiked) setLikedIds(JSON.parse(savedLiked));
       }
     } catch (error) {
-      console.warn("스토리지 메모리 읽기 중 예외 처리:", error);
+      console.warn("메모리 읽기 중 예외 발생:", error);
     }
 
     const handleOutsideClick = () => closeContextMenu();
@@ -131,7 +131,7 @@ export function CategoryNews({
     };
   }, []);
 
-  // 뉴스 목록 불러오기
+  // 뉴스 Fetching
   useEffect(() => {
     async function fetchRealNews() {
       setLoading(true);
@@ -264,7 +264,7 @@ export function CategoryNews({
     closeContextMenu();
   };
 
-  // 저장소 상태 변경 핸들러 (체크/즐겨찾기/좋아요)
+  // 반응 액션 및 localStorage 동기화
   const toggleCheck = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -331,13 +331,22 @@ export function CategoryNews({
           </div>
         ) : (
           <div className="flex flex-col">
-            {newsList.map((article) => {
+            {newsList.map((article, index) => {
               const titleStr = getParsedText(article.title);
               const contentStr = getParsedText(article.content);
-              const targetUrl = article.sourceUrl || article.url || "#";
+              const targetUrl = article.sourceUrl || article.url || "";
 
-              // [핵심 해결포인트] Math.random() 대신 고유한 ID(URL 또는 제목 기준)로 고정 생성!
-              const articleId = article.id || targetUrl !== "#" ? targetUrl : `news-${titleStr.substring(0, 30)}`;
+              // [핵심 문제 해결] 언어 변경/카테고리 이동에도 변하지 않는 언어 독립적 고유 ID 추출
+              let rawTitleKey = "";
+              if (typeof article.title === "object") {
+                rawTitleKey = article.title.en || article.title.ko || "";
+              } else {
+                rawTitleKey = article.title || "";
+              }
+
+              const articleId = article.id 
+                || (targetUrl && targetUrl !== "#" ? targetUrl : null) 
+                || `news-key-${rawTitleKey.replace(/\s+/g, "_").slice(0, 40)}-${index}`;
 
               const sourceStr = article.author || article.source || "GPNR News";
               const rawDateStr = article.publishedAt || article.date || "";
@@ -348,12 +357,12 @@ export function CategoryNews({
               const isStarred = !!starredIds[articleId];
               const isLiked = !!likedIds[articleId];
 
-              const itemData = { id: articleId, url: targetUrl, title: titleStr, content: contentStr };
+              const itemData = { id: articleId, url: targetUrl || "#", title: titleStr, content: contentStr };
 
               return (
                 <a
                   key={articleId}
-                  href={targetUrl}
+                  href={targetUrl || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group block border-b border-white/[0.05] last:border-0 select-none"
@@ -381,7 +390,7 @@ export function CategoryNews({
                           <span>{dateStr}</span>
                         </div>
 
-                        {/* 반응 아이콘 버튼들 */}
+                        {/* 반응 아이콘 버튼 그룹 */}
                         <div className="flex items-center gap-3">
                           <button
                             onClick={(e) => toggleCheck(e, articleId)}
@@ -432,7 +441,7 @@ export function CategoryNews({
         )}
       </div>
 
-      {/* 컨텍스트 메뉴 팝업 */}
+      {/* 컨텍스트 메뉴 */}
       {contextMenu.visible && contextMenu.item && (
         <div 
           className="fixed z-50 w-64 bg-gray-900/95 text-gray-200 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 py-2.5 text-sm overflow-hidden transition-all duration-150 animate-in fade-in zoom-in-95"
