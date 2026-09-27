@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-// [수정] 실제 파일명인 ../components/gpnr-header 에서 가져옵니다.
+// 실제 프로젝트 경로에 맞춰 Import 유지
 import { GpnrHeader } from "../components/gpnr-header";
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
@@ -14,19 +14,44 @@ const CATEGORIES = NEWS_CATEGORIES.map(c => c.id);
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState('top-news');
-  const [currentLang, setCurrentLang] = useState('en');
+  const [currentLang, setCurrentLang] = useState('ko');
 
   const { user, isAuthenticated, isLoading, loginWithKycId, logout } = usePiNetworkAuthentication();
 
   const [inputKycId, setInputKycId] = useState("");
   const [inputError, setInputError] = useState("");
 
-  const t = translations[currentLang] || translations['en'];
+  const t = translations[currentLang] || translations['ko'] || translations['en'];
 
   const [tickerStats, setTickerStats] = useState<string[]>([
     "📢 실시간 글로벌 파이 뉴스룸 핫이슈 동기화 중입니다...",
     "📢 최신 생태계 핵심 소식 및 마이그레이션 모니터링 가동 중"
   ]);
+
+  // 언어 변경 및 로컬 스토리지 동기화
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
+      setCurrentLang(savedLang);
+    }
+
+    const handleLangChange = () => {
+      const savedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
+      setCurrentLang(savedLang);
+    };
+
+    window.addEventListener("languageChange", handleLangChange);
+    return () => window.removeEventListener("languageChange", handleLangChange);
+  }, []);
+
+  const handleLanguageSelect = (newLang: string) => {
+    setCurrentLang(newLang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("language", newLang);
+      localStorage.setItem("gpnr-language", newLang);
+      window.dispatchEvent(new Event("languageChange"));
+    }
+  };
 
   useEffect(() => {
     const loadHotNewsForTicker = async () => {
@@ -131,7 +156,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center text-slate-100">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-        <p className="text-sm font-medium tracking-wide">{t.loading}</p>
+        <p className="text-sm font-medium tracking-wide">{t.loading || "로딩 중..."}</p>
       </div>
     );
   }
@@ -151,7 +176,7 @@ export default function Home() {
           </div>
 
           <p className="text-xs text-slate-300 leading-relaxed mb-4 bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-            {t.login_msg}
+            {t.login_msg || "파이 네트워크 지갑 또는 KYC 식별 코드를 입력해 주세요."}
           </p>
 
           <form onSubmit={handleManualLogin} className="space-y-4">
@@ -194,7 +219,7 @@ export default function Home() {
 
   return (
     <main 
-      className="min-h-screen bg-[#0f172a] text-slate-100 touch-pan-y relative pb-12"
+      className="min-h-screen bg-[#0f172a] text-slate-100 touch-pan-y relative pb-16"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -233,7 +258,7 @@ export default function Home() {
           <div className="bg-[#1e293b] border border-slate-700/60 rounded-xl p-3 flex items-center justify-between shadow-inner">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-xs text-slate-300 font-medium">{t.wallet_connected}</span>
+              <span className="text-xs text-slate-300 font-medium">{t.wallet_connected || "PI 네트워크 지갑 연결됨"}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-purple-400 bg-purple-950/40 px-2.5 py-1 rounded border border-purple-800/30">
@@ -243,42 +268,59 @@ export default function Home() {
                 onClick={logout} 
                 className="text-[10px] text-slate-400 hover:text-rose-400 underline ml-1"
               >
-                {t.change_id}
+                {t.change_id || "ID 변경"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* [수정 부분] activeCategory 가 'calendar' 인 경우 캘린더 화면 출력, 그 외 뉴스 출력 */}
+      {/* activeCategory 가 'calendar' 인 경우 캘린더 화면 출력 (자연스러운 한국어 적용) */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
         {activeCategory === "calendar" ? (
           <div className="bg-[#1e293b] border border-purple-500/30 rounded-2xl p-5 shadow-xl text-center my-4">
             <div className="flex items-center justify-center gap-2 mb-3">
               <span className="text-2xl">📅</span>
               <h2 className="text-base font-bold text-purple-300">
-                {currentLang === "ko" ? "Pi 네트워크 생태계 일정" : "Pi Network Events Schedule"}
+                {currentLang === "ko" ? "Pi 네트워크 이벤트 일정" : "Pi Network Events Schedule"}
               </h2>
             </div>
 
             <p className="text-xs text-slate-400 mb-6">
               {currentLang === "ko"
-                ? "주요 메인넷 마이그레이션, 해커톤 및 노드 업데이트 일정"
+                ? "메인넷 마이그레이션, 해커톤 및 노드 업데이트 일정이 주요 일정으로 잡혔습니다."
                 : "Key Mainnet migration, Hackathon, and Node update schedule"}
             </p>
 
             <div className="bg-[#0f172a] rounded-xl p-4 border border-slate-700 text-left space-y-3">
               <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-800">
-                <span className="text-purple-400 font-semibold">📍 Open Mainnet Roadmap</span>
-                <span className="text-[10px] bg-purple-900/60 text-purple-200 px-2 py-0.5 rounded">Ongoing</span>
+                <span className="text-purple-300 font-semibold flex items-center gap-1.5">
+                  <span>📍</span>
+                  <span>{currentLang === "ko" ? "메인넷 오픈 로드맵" : "Open Mainnet Roadmap"}</span>
+                </span>
+                <span className="text-[11px] bg-purple-900/80 text-purple-200 px-2.5 py-0.5 rounded font-bold">
+                  {currentLang === "ko" ? "진행 중" : "Ongoing"}
+                </span>
               </div>
+
               <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-800">
-                <span className="text-purple-400 font-semibold">📍 Node Version Syncing</span>
-                <span className="text-[10px] bg-blue-900/60 text-blue-200 px-2 py-0.5 rounded">Active</span>
+                <span className="text-purple-300 font-semibold flex items-center gap-1.5">
+                  <span>📍</span>
+                  <span>{currentLang === "ko" ? "노드 버전 동기화" : "Node Version Syncing"}</span>
+                </span>
+                <span className="text-[11px] bg-blue-900/80 text-blue-200 px-2.5 py-0.5 rounded font-bold">
+                  {currentLang === "ko" ? "정상 작동" : "Active"}
+                </span>
               </div>
+
               <div className="flex justify-between items-center text-xs">
-                <span className="text-purple-400 font-semibold">📍 GPNR Live Syncing</span>
-                <span className="text-[10px] bg-emerald-900/60 text-emerald-200 px-2 py-0.5 rounded">Realtime</span>
+                <span className="text-purple-300 font-semibold flex items-center gap-1.5">
+                  <span>📍</span>
+                  <span>{currentLang === "ko" ? "GPNR 실시간 동기화" : "GPNR Live Syncing"}</span>
+                </span>
+                <span className="text-[11px] bg-emerald-900/80 text-emerald-200 px-2.5 py-0.5 rounded font-bold">
+                  {currentLang === "ko" ? "실시간" : "Realtime"}
+                </span>
               </div>
             </div>
           </div>
@@ -287,14 +329,15 @@ export default function Home() {
         )}
       </div>
 
+      {/* 우측 하단 플로팅 언어 선택 드롭다운 */}
       <div className="fixed bottom-4 right-4 z-[99]">
         <select
           value={currentLang}
-          onChange={(e) => setCurrentLang(e.target.value)}
-          className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3 py-2 rounded-full shadow-lg border border-blue-400/30 focus:outline-none cursor-pointer"
+          onChange={(e) => handleLanguageSelect(e.target.value)}
+          className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-xs px-3.5 py-2 rounded-full shadow-xl border border-blue-400/40 focus:outline-none cursor-pointer backdrop-blur-md transition-all"
         >
-          <option value="en" className="bg-[#1e293b] text-white">🌐 English</option>
           <option value="ko" className="bg-[#1e293b] text-white">🌐 한국어</option>
+          <option value="en" className="bg-[#1e293b] text-white">🌐 English</option>
           <option value="ja" className="bg-[#1e293b] text-white">🌐 日本語</option>
           <option value="zh" className="bg-[#1e293b] text-white">🌐 简体中文</option>
           <option value="es" className="bg-[#1e293b] text-white">🌐 Español</option>
