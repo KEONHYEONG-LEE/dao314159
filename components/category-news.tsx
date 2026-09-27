@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { NEWS_CATEGORIES } from "../lib/categories";
 import { PiCalendar } from "./pi-calendar"; // 캘린더 컴포넌트 임포트
 
@@ -51,6 +51,8 @@ const MENU_TEXTS = {
   },
 };
 
+const DEFAULT_IMAGE = "https://picsum.photos/id/10/200/200";
+
 export function CategoryNews({ 
   selectedCategory = "top-news", 
   currentLang = "ko" 
@@ -63,6 +65,7 @@ export function CategoryNews({
     return <PiCalendar currentLang={currentLang} />;
   }
 
+  const [mounted, setMounted] = useState<boolean>(false);
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -108,11 +111,15 @@ export function CategoryNews({
   const getParsedText = (field: any) => {
     if (!field) return "";
     if (typeof field === "string") return field;
-    return field[currentLang] || field.en || field.ko || "";
+    if (typeof field === "object") {
+      return field[currentLang] || field.en || field.ko || "";
+    }
+    return String(field);
   };
 
-  // 브라우저/Pi Browser 메모리 데이터 최초 로드
+  // 브라우저/Pi Browser 메모리 데이터 최초 로드 및 Hydration 안정화
   useEffect(() => {
+    setMounted(true);
     try {
       if (typeof window !== "undefined") {
         const savedChecked = localStorage.getItem("gpnr_news_checked");
@@ -238,23 +245,27 @@ export function CategoryNews({
       case "open_bg_tab":
       case "open_new_window":
       case "open_incognito":
-        window.open(url, "_blank");
+        if (url && url !== "#") window.open(url, "_blank");
         break;
       case "select_text":
-        navigator.clipboard.writeText(`${title}\n${content}`);
-        alert(t.text_copied);
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(`${title}\n${content}`);
+          alert(t.text_copied);
+        }
         break;
       case "share_link":
         if (navigator.share) {
           navigator.share({ title, url }).catch(() => {});
-        } else {
+        } else if (navigator.clipboard) {
           navigator.clipboard.writeText(url);
           alert(t.link_copied);
         }
         break;
       case "copy_link":
-        navigator.clipboard.writeText(url);
-        alert(t.link_copied);
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url);
+          alert(t.link_copied);
+        }
         break;
       case "save_link":
         setStarredIds((prev) => {
@@ -300,6 +311,8 @@ export function CategoryNews({
       return updated;
     });
   };
+
+  if (!mounted) return null;
 
   const activeCategoryId = (selectedCategory === "all" || !selectedCategory) ? "top-news" : selectedCategory;
   const matchedCategory = Array.isArray(NEWS_CATEGORIES) ? NEWS_CATEGORIES.find(c => c.id === activeCategoryId) : null;
@@ -356,7 +369,7 @@ export function CategoryNews({
               const sourceStr = article.author || article.source || "GPNR News";
               const rawDateStr = article.publishedAt || article.date || "";
               const dateStr = formatDateOnly(rawDateStr);
-              const imageSrc = article.imageUrl || article.image || "https://picsum.photos/id/10/200/200";
+              const imageSrc = article.imageUrl || article.image || DEFAULT_IMAGE;
 
               const isChecked = !!checkedIds[articleId];
               const isStarred = !!starredIds[articleId];
@@ -370,7 +383,7 @@ export function CategoryNews({
                   href={targetUrl || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group block border-b border-white/[0.05] last:border-0 select-none"
+                  className="group block border-b border-white/[0.05] last:border-0 select-none cursor-pointer"
                   onTouchStart={(e) => handleTouchStart(itemData, e)}
                   onTouchEnd={handleTouchEnd}
                   onTouchMove={handleTouchEnd}
@@ -398,9 +411,10 @@ export function CategoryNews({
                         {/* 반응 아이콘 버튼 그룹 */}
                         <div className="flex items-center gap-3">
                           <button
+                            type="button"
                             onClick={(e) => toggleCheck(e, articleId)}
                             title="체크 표시"
-                            className="p-0.5 transition-transform active:scale-125"
+                            className="p-0.5 transition-transform active:scale-125 cursor-pointer"
                           >
                             {isChecked ? (
                               <span className="text-amber-500 font-bold text-xs">✓</span>
@@ -410,17 +424,19 @@ export function CategoryNews({
                           </button>
 
                           <button
+                            type="button"
                             onClick={(e) => toggleStar(e, articleId)}
                             title="즐겨찾기"
-                            className="p-0.5 transition-transform active:scale-125"
+                            className="p-0.5 transition-transform active:scale-125 cursor-pointer"
                           >
                             <span className={isStarred ? "text-yellow-400 text-xs" : "text-slate-600 text-xs"}>★</span>
                           </button>
 
                           <button
+                            type="button"
                             onClick={(e) => toggleLike(e, articleId)}
                             title="좋아요"
-                            className="p-0.5 transition-transform active:scale-125"
+                            className="p-0.5 transition-transform active:scale-125 cursor-pointer"
                           >
                             <span className={isLiked ? "text-rose-500 text-xs" : "text-slate-600 text-xs"}>♥</span>
                           </button>
@@ -434,7 +450,10 @@ export function CategoryNews({
                         alt={titleStr}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
-                          e.currentTarget.src = "https://picsum.photos/id/10/200/200";
+                          const target = e.currentTarget;
+                          if (target.src !== DEFAULT_IMAGE) {
+                            target.src = DEFAULT_IMAGE;
+                          }
                         }}
                       />
                     </div>
@@ -461,33 +480,33 @@ export function CategoryNews({
           </div>
 
           <div className="py-1">
-            <button onClick={() => handleMenuAction("open_new_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+            <button type="button" onClick={() => handleMenuAction("open_new_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
               {t.open_new_tab}
             </button>
-            <button onClick={() => handleMenuAction("open_group_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+            <button type="button" onClick={() => handleMenuAction("open_group_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
               {t.open_group_tab}
             </button>
-            <button onClick={() => handleMenuAction("open_bg_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+            <button type="button" onClick={() => handleMenuAction("open_bg_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
               {t.open_bg_tab}
             </button>
-            <button onClick={() => handleMenuAction("open_new_window")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+            <button type="button" onClick={() => handleMenuAction("open_new_window")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
               {t.open_new_window}
             </button>
-            <button onClick={() => handleMenuAction("open_incognito")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
+            <button type="button" onClick={() => handleMenuAction("open_incognito")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
               {t.open_incognito}
             </button>
 
-            <button onClick={() => handleMenuAction("select_text")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
+            <button type="button" onClick={() => handleMenuAction("select_text")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
               {t.select_text}
             </button>
 
-            <button onClick={() => handleMenuAction("share_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+            <button type="button" onClick={() => handleMenuAction("share_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
               {t.share_link}
             </button>
-            <button onClick={() => handleMenuAction("copy_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+            <button type="button" onClick={() => handleMenuAction("copy_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
               {t.copy_link}
             </button>
-            <button onClick={() => handleMenuAction("save_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
+            <button type="button" onClick={() => handleMenuAction("save_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
               {t.save_link}
             </button>
           </div>
@@ -496,3 +515,5 @@ export function CategoryNews({
     </section>
   );
 }
+
+export default CategoryNews;
