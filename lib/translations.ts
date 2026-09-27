@@ -16,8 +16,8 @@ export interface TranslationKeys {
   no_results: string;
   loading: string;
   launcher: string;
-  calendar: string;
-  calendar_title: string;
+  defi: string;
+  defi_title: string;
   wallet_connected: string;
   change_id: string;
   reset_kyc: string;
@@ -45,8 +45,8 @@ const rawTranslations: Record<string, TranslationKeys> = {
     no_results: "검색 결과가 없습니다.",
     loading: "로딩 중...",
     launcher: "메뉴 런처",
-    calendar: "달력",
-    calendar_title: "파이 생태계 주요 일정",
+    defi: "디파이",
+    defi_title: "파이 탈중앙화 금융(DeFi)",
     wallet_connected: "Pi 네트워크 지갑 연동 완료",
     change_id: "ID 변경",
     reset_kyc: "KYC ID 해제 및 다시 입력하기",
@@ -72,8 +72,8 @@ const rawTranslations: Record<string, TranslationKeys> = {
     no_results: "No results found.",
     loading: "Loading...",
     launcher: "Menu Launcher",
-    calendar: "Calendar",
-    calendar_title: "Pi Ecosystem Schedule",
+    defi: "DeFi",
+    defi_title: "Pi Decentralized Finance",
     wallet_connected: "Pi Network Wallet Connected",
     change_id: "Change ID",
     reset_kyc: "Reset & Re-enter KYC ID",
@@ -99,8 +99,8 @@ const rawTranslations: Record<string, TranslationKeys> = {
     no_results: "結果が見つかりません。",
     loading: "読み込み中...",
     launcher: "ランチャー",
-    calendar: "カレンダー",
-    calendar_title: "Piエコシステムスケジュール",
+    defi: "DeFi",
+    defi_title: "Pi 分散型金融(DeFi)",
     wallet_connected: "Piネットワークウォレット連携完了",
     change_id: "ID変更",
     reset_kyc: "KYC ID解除および再入力",
@@ -126,8 +126,8 @@ const rawTranslations: Record<string, TranslationKeys> = {
     no_results: "未找到结果。",
     loading: "加载中...",
     launcher: "应用启动器",
-    calendar: "日历",
-    calendar_title: "Pi 生态系统日程",
+    defi: "去中心化金融",
+    defi_title: "Pi 去中心化金融 (DeFi)",
     wallet_connected: "Pi 网络钱包已连接",
     change_id: "更改 ID",
     reset_kyc: "重置并重新输入 KYC ID",
@@ -153,8 +153,8 @@ const rawTranslations: Record<string, TranslationKeys> = {
     no_results: "No se encontraron resultados.",
     loading: "Cargando...",
     launcher: "Lanzador",
-    calendar: "Calendario",
-    calendar_title: "Calendario del Ecosistema Pi",
+    defi: "DeFi",
+    defi_title: "Finanzas Descentralizadas Pi",
     wallet_connected: "Billetera Pi Network Conectada",
     change_id: "Cambiar ID",
     reset_kyc: "Restablecer y reingresar ID de KYC",
@@ -180,8 +180,8 @@ const rawTranslations: Record<string, TranslationKeys> = {
     no_results: "Không tìm thấy kết quả.",
     loading: "Đang tải...",
     launcher: "Trình khởi chạy",
-    calendar: "Lịch",
-    calendar_title: "Lịch Trình Hệ Sinh Thái Pi",
+    defi: "DeFi",
+    defi_title: "Tài Chính Phi Tập Trung Pi",
     wallet_connected: "Ví Pi Network Đã Kết Nối",
     change_id: "Đổi ID",
     reset_kyc: "Đặt lại & Nhập lại ID KYC",
