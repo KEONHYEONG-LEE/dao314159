@@ -22,8 +22,9 @@ import {
   TrendingUp,
   DollarSign,
   Shield,
-  Scale,
+  Gavel,
   Calendar,
+  Coins,
   Menu,
   X,
   Newspaper
@@ -31,7 +32,6 @@ import {
 
 const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
-  "top_news": Flame,
   "mainnet": Globe,
   "node": Tv,
   "mining": Zap,
@@ -44,58 +44,14 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "kyc": ShieldCheck,
   "developer": Code,
   "developers": Code,
-  "ecosystem": Building,
-  "real-estate": Building,
-  "real_estate": Building,
+  "calendar": Calendar,
   "outlook": TrendingUp,
   "price-outlook": TrendingUp,
-  "price_outlook": TrendingUp,
   "price": DollarSign,
   "security": Shield,
-  "legal": Scale,
-  "regulations": Scale,
-  "calendar": Calendar,
-  "주요 뉴스": Flame,
-  "주요뉴스": Flame,
-  "메인넷": Globe,
-  "노드": Tv,
-  "채광": Zap,
-  "지갑": Wallet,
-  "브라우저": Compass,
-  "로드맵": Map,
-  "백서": FileText,
-  "지역 사회": Users,
-  "커뮤니티": Users,
-  "상업": ShoppingCart,
-  "KYC": ShieldCheck,
-  "개발자": Code,
-  "생태계": Building,
-  "부동산": Building,
-  "가격 전망": TrendingUp,
-  "가격전망": TrendingUp,
-  "가격": DollarSign,
-  "보안": Shield,
-  "규정": Scale,
-  "법률": Scale,
-  "달력": Calendar,
-  Flame,
-  Globe,
-  Tv,
-  Zap,
-  Wallet,
-  Compass,
-  Map,
-  FileText,
-  Users,
-  ShoppingCart,
-  ShieldCheck,
-  Code,
-  Building,
-  TrendingUp,
-  DollarSign,
-  Shield,
-  Scale,
-  Calendar,
+  "legal": Gavel,
+  "regulations": Gavel,
+  "defi": Coins,
 };
 
 interface GpnrHeaderProps {
@@ -294,7 +250,7 @@ export function GpnrHeader({
               border: '1px solid rgba(168, 85, 247, 0.3)',
               borderRadius: '20px',
               padding: '12px',
-              paddingBottom: '80px', // 하단 버튼과 절대 안 겹치도록 넉넉한 여백
+              paddingBottom: '80px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
               position: 'relative'
             }}
@@ -318,7 +274,7 @@ export function GpnrHeader({
               <X className="w-4 h-4" />
             </button>
 
-            {/* 4열 그리드강제 수동 스타일링 (2/3 사이즈 압축) */}
+            {/* 4열 그리드 (NEWS_CATEGORIES 매핑만 출력하여 수동 달력 중복 제거) */}
             <div
               style={{
                 display: 'grid',
@@ -373,42 +329,6 @@ export function GpnrHeader({
                   </button>
                 );
               })}
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (onCategoryChange) onCategoryChange("calendar");
-                  setIsLauncherOpen(false);
-                }}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '4px',
-                  minHeight: '48px',
-                  borderRadius: '8px',
-                  border: currentCategory === "calendar" ? '1px solid #a855f7' : '1px solid rgba(30, 41, 59, 0.8)',
-                  backgroundColor: currentCategory === "calendar" ? '#2d1b4e' : 'rgba(28, 30, 54, 0.8)',
-                  color: currentCategory === "calendar" ? '#ffffff' : '#cbd5e1',
-                  cursor: 'pointer'
-                }}
-              >
-                <Calendar className="w-4 h-4 mb-0.5 text-rose-400 shrink-0" />
-                <span
-                  style={{
-                    fontSize: '9px',
-                    fontWeight: 500,
-                    textAlign: 'center',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    width: '100%'
-                  }}
-                >
-                  {currentLang === "ko" ? "달력" : "Calendar"}
-                </span>
-              </button>
             </div>
 
             <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -438,13 +358,13 @@ export function GpnrHeader({
                   cursor: 'pointer'
                 }}
               >
-                Reset KYC ID
+                {currentLang === "ko" ? "KYC ID 재설정" : "Reset KYC ID"}
               </button>
 
               {isAuthenticated && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', padding: '0 4px' }}>
                   <span>
-                    연결된 ID/지갑:{" "}
+                    {currentLang === "ko" ? "연결된 ID/지갑: " : "Connected ID/Wallet: "}
                     <strong style={{ color: '#d8b4fe', fontFamily: 'monospace' }}>
                       {displayId}
                     </strong>
@@ -457,7 +377,7 @@ export function GpnrHeader({
                     }}
                     style={{ color: '#fb7185', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', fontSize: '10px' }}
                   >
-                    ID 변경
+                    {currentLang === "ko" ? "아이디 변경" : "Change ID"}
                   </button>
                 </div>
               )}
