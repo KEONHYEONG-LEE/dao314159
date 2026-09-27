@@ -12,7 +12,7 @@ import {
   ShoppingCart,
   ShieldCheck,
   Code,
-  Calendar, // Calendar 아이콘 추가
+  Calendar,
   TrendingUp,
   DollarSign,
   Shield,
@@ -48,14 +48,13 @@ export const NEWS_CATEGORIES: Category[] = [
   { id: "commerce", name: "커머스", label: "커머스", enName: "Commerce", enLabel: "Commerce", iconName: "ShoppingCart", Icon: ShoppingCart, group: "ecosystem" },
   { id: "kyc", name: "KYC", label: "KYC", enName: "KYC", enLabel: "KYC", iconName: "ShieldCheck", Icon: ShieldCheck, group: "ecosystem" },
   { id: "developer", name: "개발자", label: "개발자", enName: "Developers", enLabel: "Developers", iconName: "Code", Icon: Code, group: "ecosystem" },
-  // 달력 아이콘 위치에 맞게 calendar로 수정
-  { id: "calendar", name: "일정", label: "일정", enName: "Calendar", enLabel: "Calendar", iconName: "Calendar", Icon: Calendar, group: "ecosystem" },
+  { id: "calendar", name: "달력", label: "달력", enName: "Calendar", enLabel: "Calendar", iconName: "Calendar", Icon: Calendar, group: "ecosystem" },
 
   // 3. 마켓 및 보안 (Market & Legal)
-  { id: "outlook", name: "전망시세", label: "전망시세", enName: "Price Outlook", enLabel: "Price Outlook", iconName: "TrendingUp", Icon: TrendingUp, group: "market_legal" },
+  { id: "outlook", name: "가격 전망", label: "가격 전망", enName: "Price Outlook", enLabel: "Price Outlook", iconName: "TrendingUp", Icon: TrendingUp, group: "market_legal" },
   { id: "price", name: "가격", label: "가격", enName: "Price", enLabel: "Price", iconName: "DollarSign", Icon: DollarSign, group: "market_legal" },
   { id: "security", name: "보안", label: "보안", enName: "Security", enLabel: "Security", iconName: "Shield", Icon: Shield, group: "market_legal" },
-  { id: "legal", name: "관련법규", label: "관련법규", enName: "Regulations", enLabel: "Regulations", iconName: "Gavel", Icon: Gavel, group: "market_legal" },
+  { id: "legal", name: "규정", label: "규정", enName: "Regulations", enLabel: "Regulations", iconName: "Gavel", Icon: Gavel, group: "market_legal" },
   { id: "defi", name: "디파이", label: "디파이", enName: "DeFi", enLabel: "DeFi", iconName: "Coins", Icon: Coins, group: "market_legal" }
 ];
 
