@@ -12,12 +12,12 @@ import {
   ShoppingCart,
   ShieldCheck,
   Code,
-  Home,
+  Calendar, // Calendar 아이콘 추가
   TrendingUp,
   DollarSign,
   Shield,
   Gavel,
-  Coins, // DeFi 아이콘 추가
+  Coins,
   type LucideIcon
 } from "lucide-react";
 
@@ -48,7 +48,8 @@ export const NEWS_CATEGORIES: Category[] = [
   { id: "commerce", name: "커머스", label: "커머스", enName: "Commerce", enLabel: "Commerce", iconName: "ShoppingCart", Icon: ShoppingCart, group: "ecosystem" },
   { id: "kyc", name: "KYC", label: "KYC", enName: "KYC", enLabel: "KYC", iconName: "ShieldCheck", Icon: ShieldCheck, group: "ecosystem" },
   { id: "developer", name: "개발자", label: "개발자", enName: "Developers", enLabel: "Developers", iconName: "Code", Icon: Code, group: "ecosystem" },
-  { id: "ecosystem", name: "부동산", label: "부동산", enName: "Real Estate", enLabel: "Real Estate", iconName: "Home", Icon: Home, group: "ecosystem" },
+  // 달력 아이콘 위치에 맞게 calendar로 수정
+  { id: "calendar", name: "일정", label: "일정", enName: "Calendar", enLabel: "Calendar", iconName: "Calendar", Icon: Calendar, group: "ecosystem" },
 
   // 3. 마켓 및 보안 (Market & Legal)
   { id: "outlook", name: "전망시세", label: "전망시세", enName: "Price Outlook", enLabel: "Price Outlook", iconName: "TrendingUp", Icon: TrendingUp, group: "market_legal" },
