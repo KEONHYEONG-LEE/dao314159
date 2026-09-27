@@ -22,12 +22,13 @@ import {
   TrendingUp,
   DollarSign,
   Shield,
-  Scale,
+  Gavel,
   Calendar,
+  Coins,
   LayoutGrid
 } from "lucide-react";
 
-// category.id 기준 완벽 아이콘 매핑 객체 (모달 화면 ID 호환 추가)
+// category.id 기준 완벽 아이콘 매핑 객체
 export const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
   "mainnet": Globe,
@@ -41,16 +42,15 @@ export const ICON_MAP: Record<string, React.ElementType> = {
   "commerce": ShoppingCart,
   "kyc": ShieldCheck,
   "developer": Code,
-  "developers": Code,             // 모달 복수형 ID 대응
-  "ecosystem": Building,
-  "real-estate": Building,        // 모달 Real Estate 대응
+  "developers": Code,
+  "calendar": Calendar,
   "outlook": TrendingUp,
-  "price-outlook": TrendingUp,    // 모달 Price Outlook 대응
+  "price-outlook": TrendingUp,
   "price": DollarSign,
   "security": Shield,
-  "legal": Scale,
-  "regulations": Scale,          // 모달 Regulations 대응
-  "calendar": Calendar,           // 모달 Calendar 대응
+  "legal": Gavel,
+  "regulations": Gavel,
+  "defi": Coins,
 };
 
 // 타 컴포넌트(모달 등)에서 바로 불러와 쓸 수 있는 아이콘 컴포넌트
@@ -69,7 +69,9 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
-  const [currentLang, setCurrentLang] = useState(language || "en");
+  
+  // 기본 언어 상태 설정 (기본값 ko로 변경)
+  const [currentLang, setCurrentLang] = useState(language || "ko");
 
   // 언어 변경 감지
   useEffect(() => {
@@ -77,13 +79,13 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
       setCurrentLang(language);
     } else {
       try {
-        const savedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en";
+        const savedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
         setCurrentLang(savedLang);
       } catch (e) {}
 
       const handleStorageChange = () => {
         try {
-          const updatedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "en";
+          const updatedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
           setCurrentLang(updatedLang);
         } catch (e) {}
       };
@@ -163,11 +165,12 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
               selectedCategory === category.id || 
               ((selectedCategory === "all" || !selectedCategory) && category.id === "top-news");
 
+            // 한국어/영어 라벨 선택
             const labelText = currentLang === "ko" 
               ? (category.name || category.label || category.id) 
               : (category.enName || category.enLabel || category.id);
 
-            // 매핑 객체에서 아이콘 컴포넌트 조회 (없으면 기본 아이콘)
+            // 매핑 객체에서 아이콘 컴포넌트 조회
             const IconComponent = ICON_MAP[category.id] || LayoutGrid;
 
             return (
