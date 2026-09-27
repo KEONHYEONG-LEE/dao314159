@@ -69,19 +69,27 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+  const [mounted, setMounted] = useState(false);
   
-  // 기본 언어 상태 설정 (기본값 ko로 변경)
+  // 기본 언어 상태 설정
   const [currentLang, setCurrentLang] = useState(language || "ko");
 
-  // 언어 변경 감지
+  // Hydration 안정화
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 언어 변경 감지 및 localStorage 연동
   useEffect(() => {
     if (language) {
       setCurrentLang(language);
-    } else {
+    } else if (typeof window !== "undefined") {
       try {
         const savedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
         setCurrentLang(savedLang);
-      } catch (e) {}
+      } catch (e) {
+        console.warn("Language reading error:", e);
+      }
 
       const handleStorageChange = () => {
         try {
@@ -105,6 +113,8 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
 
   // 활성화된 탭으로 스크롤 이동
   useEffect(() => {
+    if (!mounted) return;
+
     if (scrollRef.current) {
       const targetId = selectedCategory === "all" || !selectedCategory ? "top-news" : selectedCategory;
       const activeTab = scrollRef.current.querySelector(`[data-id="${targetId}"]`) as HTMLElement;
@@ -116,9 +126,9 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
       }
     }
     handleScroll();
-  }, [selectedCategory]);
+  }, [selectedCategory, mounted]);
 
-  // 좌우 스크롤 이동
+  // 좌우 스크롤 이동 버튼
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
       const scrollAmount = 240;
@@ -135,6 +145,9 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
     return () => window.removeEventListener("resize", handleScroll);
   }, []);
 
+  // SSR 단계 미스매치 방지
+  if (!mounted) return null;
+
   return (
     <div className="w-full bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/[0.05] shadow-2xl">
       <div className="mx-auto max-w-7xl relative px-2">
@@ -145,7 +158,7 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
             <button
               onClick={() => scroll("left")}
               type="button"
-              className="pointer-events-auto ml-1 w-7 h-7 flex items-center justify-center bg-slate-800 border border-slate-700/60 rounded-full text-white shadow-xl hover:bg-slate-700 transition-colors"
+              className="pointer-events-auto ml-1 w-7 h-7 flex items-center justify-center bg-slate-800 border border-slate-700/60 rounded-full text-white shadow-xl hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
             >
               <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -179,13 +192,13 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
                 data-id={category.id}
                 type="button"
                 onClick={() => onCategoryChange(category.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all duration-200 border ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all duration-200 border cursor-pointer select-none ${
                   isSelected
                     ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.4)] scale-105"
-                    : "bg-slate-800/40 text-slate-400 border-white/[0.05] hover:border-slate-600 hover:text-slate-200"
+                    : "bg-slate-800/40 text-slate-400 border-white/[0.05] hover:border-slate-600 hover:text-slate-200 active:scale-95"
                 }`}
               >
-                <IconComponent className="w-3.5 h-3.5" />
+                <IconComponent className="w-3.5 h-3.5 flex-shrink-0" />
                 <span>{labelText}</span>
               </button>
             );
@@ -198,7 +211,7 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
             <button
               onClick={() => scroll("right")}
               type="button"
-              className="pointer-events-auto mr-1 w-7 h-7 flex items-center justify-center bg-slate-800 border border-slate-700/60 rounded-full text-white shadow-xl hover:bg-slate-700 transition-colors"
+              className="pointer-events-auto mr-1 w-7 h-7 flex items-center justify-center bg-slate-800 border border-slate-700/60 rounded-full text-white shadow-xl hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
             >
               <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -210,3 +223,5 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
     </div>
   );
 }
+
+export default CategoryTabs;
