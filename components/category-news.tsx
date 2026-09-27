@@ -317,9 +317,15 @@ export function CategoryNews({
   const activeCategoryId = (selectedCategory === "all" || !selectedCategory) ? "top-news" : selectedCategory;
   const matchedCategory = Array.isArray(NEWS_CATEGORIES) ? NEWS_CATEGORIES.find(c => c.id === activeCategoryId) : null;
   
-  const categoryTitle = currentLang === "ko" 
+  // 카테고리 명칭 파싱
+  const rawCategoryTitle = currentLang === "ko" 
     ? (matchedCategory?.name || matchedCategory?.label || "주요뉴스") 
     : (matchedCategory?.enName || matchedCategory?.enLabel || "Top News");
+
+  // [핵심] "일정 일정" 중복 문구 정제 처리
+  const categoryTitle = rawCategoryTitle.includes("일정") && rawCategoryTitle.endsWith("일정 일정")
+    ? rawCategoryTitle.replace("일정 일정", "일정")
+    : rawCategoryTitle;
 
   if (loading) {
     return (
@@ -338,7 +344,8 @@ export function CategoryNews({
         <div className="flex items-center justify-between mb-3 border-b border-white/[0.08] pb-2">
           <div className="flex items-center gap-2">
             <span className="text-base">🔥</span>
-            <h2 className="text-xs font-black text-slate-100 tracking-widest uppercase">
+            {/* [핵심] notranslate 및 translate="no" 적용으로 자동 번역 오역 및 중복 방지 */}
+            <h2 className="text-xs font-black text-slate-100 tracking-widest uppercase notranslate" translate="no">
               {categoryTitle}
             </h2>
           </div>
