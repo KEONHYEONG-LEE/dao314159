@@ -27,7 +27,8 @@ import {
   Coins,
   Menu,
   X,
-  Newspaper
+  Newspaper,
+  Loader2
 } from "lucide-react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -67,6 +68,7 @@ export function GpnrHeader({
 }: GpnrHeaderProps) {
   const [mounted, setMounted] = useState<boolean>(false);
   const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false);
+  const [isPaying, setIsPaying] = useState<boolean>(false);
   const [currentLang, setCurrentLang] = useState<string>("ko");
 
   const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
@@ -78,6 +80,7 @@ export function GpnrHeader({
         if (typeof window !== "undefined") {
           const targetLang =
             currentLanguage ||
+            localStorage.getItem("gpnr_lang") ||
             localStorage.getItem("language") ||
             localStorage.getItem("gpnr-language") ||
             "ko";
@@ -98,8 +101,11 @@ export function GpnrHeader({
   }, [currentLanguage]);
 
   const handleDonation = useCallback(async () => {
+    if (isPaying) return;
+
     if (typeof window !== "undefined" && (window as any).Pi) {
       try {
+        setIsPaying(true);
         const origin = window.location.origin;
         await (window as any).Pi.createPayment(
           {
@@ -121,18 +127,26 @@ export function GpnrHeader({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ paymentId, txid })
               });
+              setIsPaying(false);
               alert(
                 currentLang === "ko"
                   ? "0.01 Pi 후원이 완료되었습니다. 감사합니다!"
                   : "0.01 Pi donation completed. Thank you!"
               );
             },
-            onCancel: (paymentId: string) => console.log("[Pi Payment] 취소:", paymentId),
-            onError: (error: Error) => console.error("[Pi Payment] 에러:", error)
+            onCancel: (paymentId: string) => {
+              console.log("[Pi Payment] 취소:", paymentId);
+              setIsPaying(false);
+            },
+            onError: (error: Error) => {
+              console.error("[Pi Payment] 에러:", error);
+              setIsPaying(false);
+            }
           }
         );
       } catch (err) {
         console.error("Pi SDK payment failed:", err);
+        setIsPaying(false);
       }
     } else {
       alert(
@@ -141,7 +155,7 @@ export function GpnrHeader({
           : "Please access through Pi Browser."
       );
     }
-  }, [currentLang]);
+  }, [currentLang, isPaying]);
 
   if (!mounted) return null;
 
@@ -169,7 +183,7 @@ export function GpnrHeader({
     }
 
     if (typeof category.icon === "string" && (category.icon.startsWith("http") || category.icon.startsWith("/"))) {
-      return <img src={category.icon} alt={category.name} className="w-4 h-4 mb-0.5 object-contain shrink-0" />;
+      return <img src={category.icon} alt={category.name || "icon"} className="w-4 h-4 mb-0.5 object-contain shrink-0" />;
     }
 
     return <Newspaper className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
@@ -183,29 +197,34 @@ export function GpnrHeader({
             {/* 로고 */}
             <div className="flex items-center gap-2">
               <span
-                className="font-black text-xl tracking-wider text-purple-400 cursor-pointer select-none"
+                className="font-black text-xl tracking-wider text-purple-400 cursor-pointer select-none active:scale-95 transition-transform"
                 onClick={() => onCategoryChange && onCategoryChange("top-news")}
               >
                 GPNR
               </span>
             </div>
 
-            {/* 우측 영역 */}
+            {/* 우측 액션 영역 */}
             <div className="flex items-center gap-2">
               <button
                 onClick={handleDonation}
+                disabled={isPaying}
                 type="button"
-                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 text-[11px] font-bold transition-colors"
+                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 active:scale-95 text-[11px] font-bold transition-all disabled:opacity-50 cursor-pointer"
               >
-                <span>🪙</span>
-                <span>0.01 Pi 후원</span>
+                {isPaying ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-purple-300" />
+                ) : (
+                  <span>🪙</span>
+                )}
+                <span>{currentLang === "ko" ? "0.01 Pi 후원" : "0.01 Pi Donate"}</span>
               </button>
 
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 type="button"
-                className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 transition-all border border-slate-700/50 flex items-center justify-center"
-                aria-label="Toggle Menu"
+                className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 active:scale-95 transition-all border border-slate-700/50 flex items-center justify-center cursor-pointer"
+                aria-label="Toggle Category Launcher"
               >
                 <Menu className="w-5 h-5 text-slate-200" />
               </button>
@@ -221,7 +240,7 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 강제 인라인 스타일을 적용한 크기 축소 그리드 모달 */}
+      {/* 4열 모바일 최적화 카테고리 그리드 런처 모달 */}
       {isLauncherOpen && (
         <div
           style={{
@@ -242,15 +261,15 @@ export function GpnrHeader({
         >
           <div
             style={{
-              width: '85%',
-              maxWidth: '300px',
-              maxHeight: '75vh',
+              width: '90%',
+              maxWidth: '320px',
+              maxHeight: '80vh',
               overflowY: 'auto',
               backgroundColor: '#131528',
               border: '1px solid rgba(168, 85, 247, 0.3)',
               borderRadius: '20px',
-              padding: '12px',
-              paddingBottom: '80px',
+              padding: '14px',
+              paddingBottom: '20px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
               position: 'relative'
             }}
@@ -270,17 +289,18 @@ export function GpnrHeader({
                 cursor: 'pointer',
                 zIndex: 10
               }}
+              aria-label="Close"
             >
               <X className="w-4 h-4" />
             </button>
 
-            {/* 4열 그리드 (NEWS_CATEGORIES 매핑만 출력하여 수동 달력 중복 제거) */}
+            {/* 4열 그리드 매핑 */}
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
                 gap: '6px',
-                marginTop: '20px'
+                marginTop: '16px'
               }}
             >
               {NEWS_CATEGORIES.map((category) => {
@@ -303,13 +323,14 @@ export function GpnrHeader({
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      padding: '4px',
-                      minHeight: '48px',
-                      borderRadius: '8px',
+                      padding: '6px 2px',
+                      minHeight: '52px',
+                      borderRadius: '10px',
                       border: isSelected ? '1px solid #a855f7' : '1px solid rgba(30, 41, 59, 0.8)',
                       backgroundColor: isSelected ? '#2d1b4e' : 'rgba(28, 30, 54, 0.8)',
                       color: isSelected ? '#ffffff' : '#cbd5e1',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
                     }}
                   >
                     {renderCategoryIcon(category)}
@@ -321,7 +342,9 @@ export function GpnrHeader({
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        width: '100%'
+                        width: '100%',
+                        paddingLeft: '2px',
+                        paddingRight: '2px'
                       }}
                     >
                       {labelText}
@@ -331,7 +354,7 @@ export function GpnrHeader({
               })}
             </div>
 
-            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <button
                 type="button"
                 onClick={() => {
@@ -348,7 +371,7 @@ export function GpnrHeader({
                 }}
                 style={{
                   width: '100%',
-                  padding: '6px 0',
+                  padding: '7px 0',
                   borderRadius: '8px',
                   backgroundColor: 'rgba(76, 5, 25, 0.4)',
                   border: '1px solid rgba(244, 63, 94, 0.3)',
@@ -362,9 +385,9 @@ export function GpnrHeader({
               </button>
 
               {isAuthenticated && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', padding: '0 4px' }}>
+                <div style={{ display: 'flex', itemsCenter: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', padding: '0 4px' }}>
                   <span>
-                    {currentLang === "ko" ? "연결된 ID/지갑: " : "Connected ID/Wallet: "}
+                    {currentLang === "ko" ? "연결: " : "Connected: "}
                     <strong style={{ color: '#d8b4fe', fontFamily: 'monospace' }}>
                       {displayId}
                     </strong>
@@ -377,7 +400,7 @@ export function GpnrHeader({
                     }}
                     style={{ color: '#fb7185', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', fontSize: '10px' }}
                   >
-                    {currentLang === "ko" ? "아이디 변경" : "Change ID"}
+                    {currentLang === "ko" ? "로그아웃/변경" : "Change ID"}
                   </button>
                 </div>
               )}
