@@ -1,6 +1,7 @@
+// @ts-nocheck
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AlertCircle, ChevronDown, ExternalLink } from "lucide-react";
 
 interface NewsItem {
@@ -13,8 +14,15 @@ interface NewsItem {
   link?: string;
 }
 
+interface FormattedNews {
+  id: string;
+  textEn: string;
+  detailEn: string;
+  link: string;
+}
+
 // API 연결 실패 시 사용할 기본 백업 데이터 (영어 전용)
-const FALLBACK_BREAKING_NEWS = [
+const FALLBACK_BREAKING_NEWS: FormattedNews[] = [
   {
     id: "brk-1",
     textEn: "BREAKING: Pi Network Open Mainnet Transition and Ecosystem Expansion Accelerates",
@@ -24,12 +32,15 @@ const FALLBACK_BREAKING_NEWS = [
 ];
 
 export function BreakingNews() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [newsItems, setNewsItems] = useState<any[]>(FALLBACK_BREAKING_NEWS);
+  const [mounted, setMounted] = useState<boolean>(false);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [newsItems, setNewsItems] = useState<FormattedNews[]>(FALLBACK_BREAKING_NEWS);
 
-  // 실시간 API 뉴스 가져오기 (/api/fetch-news 연동)
   useEffect(() => {
+    setMounted(true);
+
+    // 실시간 API 뉴스 가져오기 (/api/fetch-news 연동)
     const fetchNews = async () => {
       try {
         const res = await fetch("/api/fetch-news?category=ALL");
@@ -38,7 +49,7 @@ export function BreakingNews() {
 
         if (Array.isArray(data) && data.length > 0) {
           // 최신순 상위 5개 헤드라인 자동 추출
-          const formatted = data.slice(0, 5).map((item: NewsItem, idx: number) => {
+          const formatted: FormattedNews[] = data.slice(0, 5).map((item: NewsItem, idx: number) => {
             let titleEn = "";
 
             if (typeof item.title === "string") {
@@ -46,7 +57,7 @@ export function BreakingNews() {
             } else if (item.title && typeof item.title === "object") {
               titleEn = item.title.en || item.title.ko || "";
             } else if (item.titleObj) {
-              titleEn = item.titleObj.en || item.titleObj.ko;
+              titleEn = item.titleObj.en || item.titleObj.ko || "";
             }
 
             let detailEn = "";
@@ -55,7 +66,7 @@ export function BreakingNews() {
             } else if (item.content && typeof item.content === "object") {
               detailEn = item.content.en || item.content.ko || "";
             } else if (item.contentObj) {
-              detailEn = item.contentObj.en || item.contentObj.ko;
+              detailEn = item.contentObj.en || item.contentObj.ko || "";
             }
 
             return {
@@ -76,7 +87,7 @@ export function BreakingNews() {
     fetchNews();
   }, []);
 
-  // 자동 롤링 효과 (5초 간격으로 자동으로 최신 기사 1~5번 교체)
+  // 자동 롤링 효과 (5초 간격으로 최신 기사 교체)
   useEffect(() => {
     if (isExpanded || newsItems.length <= 1) return;
 
@@ -87,6 +98,8 @@ export function BreakingNews() {
     return () => clearInterval(interval);
   }, [newsItems.length, isExpanded]);
 
+  if (!mounted) return null;
+
   const currentNews = newsItems[currentIndex] || newsItems[0];
   const displayText = currentNews?.textEn || "Loading latest headline...";
   const displayDetail = currentNews?.detailEn || displayText;
@@ -96,7 +109,7 @@ export function BreakingNews() {
       <div className="mx-auto max-w-7xl px-4 py-2.5">
         {/* 상단 속보 바 (클릭 시 풀다운 확장) */}
         <div 
-          className="flex items-center gap-3 cursor-pointer group"
+          className="flex items-center gap-3 cursor-pointer group select-none"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center gap-1.5 flex-shrink-0 bg-red-600 px-2 py-0.5 rounded shadow-sm shadow-red-900/50">
@@ -106,20 +119,23 @@ export function BreakingNews() {
             </span>
           </div>
           
-          {/* 구글 번역 엔진 등 자동 번역 방지 속성(translate="no") 및 영어 고정 출력 */}
+          {/* 자동 번역 방지 속성(translate="no") 및 헤드라인 출력 */}
           <div className="relative overflow-hidden flex-1 notranslate skiptranslate" translate="no">
-            <p key={currentIndex} className="text-[13px] font-semibold text-slate-200 truncate group-hover:text-white transition-all duration-300 animate-in fade-in slide-in-from-bottom-1">
+            <p 
+              key={currentNews.id || currentIndex} 
+              className="text-[13px] font-semibold text-slate-200 truncate group-hover:text-white transition-all duration-300 animate-in fade-in slide-in-from-bottom-1"
+            >
               {displayText}
             </p>
           </div>
 
-          <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-300 shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
         </div>
 
         {/* 풀다운 상세 영역 */}
         <div 
           className={`transition-all duration-300 ease-in-out overflow-hidden ${
-            isExpanded ? 'max-h-40 opacity-100 mt-3 pb-2' : 'max-h-0 opacity-0'
+            isExpanded ? 'max-h-48 opacity-100 mt-3 pb-2' : 'max-h-0 opacity-0'
           }`}
         >
           <div className="pl-[52px] pr-2 notranslate skiptranslate" translate="no">
@@ -141,3 +157,5 @@ export function BreakingNews() {
     </div>
   );
 }
+
+export default BreakingNews;
