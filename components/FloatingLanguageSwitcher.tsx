@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Globe, ChevronUp } from "lucide-react";
-import { usePiStorage } from "../hooks/usePiStorage"; // [수정] @/ 대신 ../ 상대경로 사용
+import { usePiStorage } from "../hooks/usePiStorage";
 
 // 지원할 다국어 리스트 정의
 const LANGUAGES = [
@@ -16,53 +16,65 @@ const LANGUAGES = [
 
 export function FloatingLanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
-  // 파이 브라우저 최적화 로컬 스토리지 Hook 사용
-  const [currentLang, setCurrentLang, isLoaded] = usePiStorage<string>("gpnr_lang", "en");
+  const [mounted, setMounted] = useState(false);
+  
+  // 파이 브라우저 최적화 로컬 스토리지 Hook 사용 (기본값 "ko")
+  const [currentLang, setCurrentLang, isLoaded] = usePiStorage<string>("gpnr_lang", "ko");
 
   useEffect(() => {
-    if (!isLoaded) return;
+    setMounted(true);
+  }, []);
 
-    // 구글 번역 위젯 및 외부 스위처 아이콘 완벽 숨김 처리
-    const style = document.createElement("style");
-    style.innerHTML = `
-      .goog-te-banner-frame, 
-      #goog-gt-tt, 
-      .goog-te-balloon-frame,
-      .VIpgJd-yD22b-y03Lfd,
-      .VIpgJd-yD22b-y03Lfd-v922d,
-      .goog-te-gadget-icon,
-      .goog-te-gadget,
-      #google_translate_element,
-      .skiptranslate,
-      iframe.goog-te-banner-frame { 
-        display: none !important; 
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        width: 0 !important;
-        height: 0 !important;
-        position: absolute !important;
-        left: -9999px !important;
-      }
-      body { top: 0 !important; position: static !important; }
-    `;
-    document.head.appendChild(style);
+  useEffect(() => {
+    if (!isLoaded || !mounted) return;
+
+    // 구글 번역 위젯 및 외부 스위처 아이콘 완벽 숨김 처리 (중복 생성 방지 ID 부여)
+    const styleId = "gpnr-google-translate-hide-style";
+    let style = document.getElementById(styleId) as HTMLStyleElement;
+
+    if (!style) {
+      style = document.createElement("style");
+      style.id = styleId;
+      style.innerHTML = `
+        .goog-te-banner-frame, 
+        #goog-gt-tt, 
+        .goog-te-balloon-frame,
+        .VIpgJd-yD22b-y03Lfd,
+        .VIpgJd-yD22b-y03Lfd-v922d,
+        .goog-te-gadget-icon,
+        .goog-te-gadget,
+        #google_translate_element,
+        .skiptranslate,
+        iframe.goog-te-banner-frame { 
+          display: none !important; 
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          position: absolute !important;
+          left: -9999px !important;
+        }
+        body { top: 0 !important; position: static !important; }
+      `;
+      document.head.appendChild(style);
+    }
 
     // 영어가 아닐 때 구글 번역 셀렉터 제어
-    if (currentLang !== "en") {
+    if (currentLang && currentLang !== "en") {
       const timer = setTimeout(() => {
         const combo = document.querySelector(".goog-te-combo") as HTMLSelectElement;
         if (combo) {
           combo.value = currentLang;
           combo.dispatchEvent(new Event("change"));
         }
-      }, 1000);
+      }, 800);
       return () => clearTimeout(timer);
     }
-  }, [currentLang, isLoaded]);
+  }, [currentLang, isLoaded, mounted]);
 
   const handleLanguageChange = (langCode: string) => {
-    // 파이 스토리지 및 일반 LocalStorage 동시 업데이트
+    // 파이 스토리지 및 LocalStorage 동시 업데이트
     setCurrentLang(langCode);
     
     // 쿠키 제거
@@ -89,7 +101,9 @@ export function FloatingLanguageSwitcher() {
     setIsOpen(false);
   };
 
-  const currentLabel = LANGUAGES.find(l => l.code === currentLang)?.label || "English";
+  if (!mounted) return null;
+
+  const currentLabel = LANGUAGES.find(l => l.code === currentLang)?.label || "한국어";
 
   return (
     // 브라우저 기본 번역 버튼과 겹치지 않도록 bottom-20으로 위치 조정
