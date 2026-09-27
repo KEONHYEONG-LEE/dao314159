@@ -60,6 +60,7 @@ export function CategoryNews({
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // 반응 상태 (체크, 즐겨찾기, 좋아요)
   const [checkedIds, setCheckedIds] = useState<{ [id: string]: boolean }>({});
   const [starredIds, setStarredIds] = useState<{ [id: string]: boolean }>({});
   const [likedIds, setLikedIds] = useState<{ [id: string]: boolean }>({});
@@ -98,6 +99,7 @@ export function CategoryNews({
     return String(rawDate).split("T")[0].split(" ")[0];
   };
 
+  // 브라우저 및 Pi Browser 메모리(LocalStorage) 로드
   useEffect(() => {
     try {
       if (typeof window !== "undefined") {
@@ -110,7 +112,7 @@ export function CategoryNews({
         if (savedLiked) setLikedIds(JSON.parse(savedLiked));
       }
     } catch (error) {
-      console.error("저장된 반응 상태 로드 실패:", error);
+      console.warn("저장소 메모리 읽기 중 예외 처리:", error);
     }
 
     const handleOutsideClick = () => closeContextMenu();
@@ -123,6 +125,7 @@ export function CategoryNews({
     };
   }, []);
 
+  // 뉴스 목록 Fetching
   useEffect(() => {
     async function fetchRealNews() {
       setLoading(true);
@@ -255,6 +258,7 @@ export function CategoryNews({
     closeContextMenu();
   };
 
+  // 메모리 영구 저장 핸들러
   const toggleCheck = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -328,7 +332,7 @@ export function CategoryNews({
         ) : (
           <div className="flex flex-col">
             {newsList.map((article) => {
-              const articleId = article.id || Math.random().toString();
+              const articleId = article.id || article.url || article.sourceUrl || Math.random().toString();
               const titleStr = getParsedText(article.title);
               const contentStr = getParsedText(article.content);
               const sourceStr = article.author || article.source || "GPNR News";
@@ -374,6 +378,7 @@ export function CategoryNews({
                           <span>{dateStr}</span>
                         </div>
 
+                        {/* 반응 아이콘 버튼 그룹 */}
                         <div className="flex items-center gap-3">
                           <button
                             onClick={(e) => toggleCheck(e, articleId)}
@@ -424,7 +429,7 @@ export function CategoryNews({
         )}
       </div>
 
-      {/* 다국어 자동 지원 팝업 */}
+      {/* 롱터치/우클릭 커스텀 팝업 메뉴 */}
       {contextMenu.visible && contextMenu.item && (
         <div 
           className="fixed z-50 w-64 bg-gray-900/95 text-gray-200 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 py-2.5 text-sm overflow-hidden transition-all duration-150 animate-in fade-in zoom-in-95"
