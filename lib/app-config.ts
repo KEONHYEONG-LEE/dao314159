@@ -18,11 +18,10 @@ export const APP_CONFIG = {
     textColor: "#212121",
   },
   api: {
-    // [수정] Vercel 환경에서는 baseUrl을 비워두는 것이 가장 안전합니다.
+    // Vercel 환경에서는 상대 경로 호출을 위해 baseUrl을 빈 문자열로 유지합니다.
     baseUrl: "", 
     timeout: 10000,
     endpoints: {
-      // [중요] 위에서 만든 파일명과 반드시 일치해야 합니다.
       news: "/api/fetch-news",
       gcv: "/api/gcv-trends",
       community: "/api/dao-community",
@@ -30,10 +29,11 @@ export const APP_CONFIG = {
   },
   categories: ["General", "GCV", "Tech", "Market", "Community", "Ecosystem", "Nodes"],
   links: {
-    github: "https://github.com/KEONHYEONG-LEE/dao314",
-    domain: "https://gpnr4036.pinet.com",
+    github: "https://github.com/KEONHYEONG-LEE/dao314159",
+    domain: "https://gpnr4915.pinet.com",
+    productionUrl: "https://dao314159-dusky.vercel.app",
     supportEmail: "kh1253.lee@gmail.com",
   },
-};
+} as const;
 
 export type AppConfig = typeof APP_CONFIG;
