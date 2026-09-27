@@ -22,8 +22,9 @@ import {
   TrendingUp,
   DollarSign,
   Shield,
-  Scale,
+  Gavel,
   Calendar,
+  Coins,
   Menu,
   X,
   Newspaper
@@ -52,50 +53,10 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "price_outlook": TrendingUp,
   "price": DollarSign,
   "security": Shield,
-  "legal": Scale,
-  "regulations": Scale,
+  "legal": Gavel,
+  "regulations": Gavel,
   "calendar": Calendar,
-  "주요 뉴스": Flame,
-  "주요뉴스": Flame,
-  "메인넷": Globe,
-  "노드": Tv,
-  "채광": Zap,
-  "지갑": Wallet,
-  "브라우저": Compass,
-  "로드맵": Map,
-  "백서": FileText,
-  "지역 사회": Users,
-  "커뮤니티": Users,
-  "상업": ShoppingCart,
-  "KYC": ShieldCheck,
-  "개발자": Code,
-  "생태계": Building,
-  "부동산": Building,
-  "가격 전망": TrendingUp,
-  "가격전망": TrendingUp,
-  "가격": DollarSign,
-  "보안": Shield,
-  "규정": Scale,
-  "법률": Scale,
-  "달력": Calendar,
-  Flame,
-  Globe,
-  Tv,
-  Zap,
-  Wallet,
-  Compass,
-  Map,
-  FileText,
-  Users,
-  ShoppingCart,
-  ShieldCheck,
-  Code,
-  Building,
-  TrendingUp,
-  DollarSign,
-  Shield,
-  Scale,
-  Calendar,
+  "defi": Coins,
 };
 
 interface HeaderProps {
@@ -205,19 +166,19 @@ export function Header({
       (typeof category.icon === "string" ? ICON_MAP[category.icon] : null);
 
     if (FoundIcon) {
-      return <FoundIcon className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
+      return <FoundIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
     }
 
     if (typeof category.icon === "function" || typeof category.Icon === "function") {
       const CustomIcon = category.icon || category.Icon;
-      return <CustomIcon className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
+      return <CustomIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
     }
 
     if (typeof category.icon === "string" && (category.icon.startsWith("http") || category.icon.startsWith("/"))) {
-      return <img src={category.icon} alt={category.name} className="w-6 h-6 mb-1 object-contain shrink-0" />;
+      return <img src={category.icon} alt={category.name} className="w-4 h-4 mb-0.5 object-contain shrink-0" />;
     }
 
-    return <Newspaper className="w-6 h-6 mb-1 text-purple-400 shrink-0" />;
+    return <Newspaper className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
   };
 
   return (
@@ -246,14 +207,6 @@ export function Header({
                 <span>0.01 Pi 후원</span>
               </button>
 
-              {/* 상단 우측 파이 지갑/ID 표시 영역 */}
-              {displayId && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-950/60 rounded-full border border-purple-500/40 text-[11px] font-mono text-purple-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{displayId}</span>
-                </div>
-              )}
-
               {/* 메뉴 토글 */}
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
@@ -263,6 +216,14 @@ export function Header({
               >
                 <Menu className="w-5 h-5 text-slate-200" />
               </button>
+
+              {/* 상단 우측 파이 지갑/ID 표시 영역 */}
+              {displayId && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-950/60 rounded-full border border-purple-500/40 text-[11px] font-mono text-purple-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{displayId}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -271,22 +232,65 @@ export function Header({
       {/* 런처 모달 */}
       {isLauncherOpen && (
         <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 999999,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '12px'
+          }}
           onClick={() => setIsLauncherOpen(false)}
         >
           <div
-            className="w-full max-w-md bg-[#131528] border border-purple-500/30 rounded-3xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto"
+            style={{
+              width: '85%',
+              maxWidth: '300px',
+              maxHeight: '75vh',
+              overflowY: 'auto',
+              backgroundColor: '#131528',
+              border: '1px solid rgba(168, 85, 247, 0.3)',
+              borderRadius: '20px',
+              padding: '12px',
+              paddingBottom: '80px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              position: 'relative'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setIsLauncherOpen(false)}
               type="button"
-              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors p-1"
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                color: '#94a3b8',
+                background: 'none',
+                border: 'none',
+                padding: '4px',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <div className="grid grid-cols-3 gap-3 mt-2">
+            {/* 4열 그리드 (NEWS_CATEGORIES 단일 매핑으로 중복 제거) */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                gap: '6px',
+                marginTop: '20px'
+              }}
+            >
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
                 const labelText =
@@ -302,40 +306,40 @@ export function Header({
                       if (onCategoryChange) onCategoryChange(category.id);
                       setIsLauncherOpen(false);
                     }}
-                    className={`flex flex-col items-center justify-center p-2 min-h-[88px] rounded-2xl transition-all border ${
-                      isSelected
-                        ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40 scale-105"
-                        : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
-                    }`}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '4px',
+                      minHeight: '48px',
+                      borderRadius: '8px',
+                      border: isSelected ? '1px solid #a855f7' : '1px solid rgba(30, 41, 59, 0.8)',
+                      backgroundColor: isSelected ? '#2d1b4e' : 'rgba(28, 30, 54, 0.8)',
+                      color: isSelected ? '#ffffff' : '#cbd5e1',
+                      cursor: 'pointer'
+                    }}
                   >
                     {renderCategoryIcon(category)}
-                    <span className="text-[11px] font-medium text-slate-200 text-center px-1 truncate w-full">
+                    <span
+                      style={{
+                        fontSize: '9px',
+                        fontWeight: 500,
+                        textAlign: 'center',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        width: '100%'
+                      }}
+                    >
                       {labelText}
                     </span>
                   </button>
                 );
               })}
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (onCategoryChange) onCategoryChange("calendar");
-                  setIsLauncherOpen(false);
-                }}
-                className={`flex flex-col items-center justify-center p-2 min-h-[88px] rounded-2xl transition-all border ${
-                  currentCategory === "calendar"
-                    ? "bg-[#2d1b4e] border-purple-500 text-white shadow-lg shadow-purple-900/40 scale-105"
-                    : "bg-[#1c1e36]/80 border-slate-800/80 text-slate-300 hover:bg-[#252846]"
-                }`}
-              >
-                <Calendar className="w-6 h-6 mb-1 text-rose-400 shrink-0" />
-                <span className="text-[11px] font-medium text-slate-200 text-center px-1 truncate w-full">
-                  {currentLang === "ko" ? "달력" : "Calendar"}
-                </span>
-              </button>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-slate-800/80 flex flex-col gap-2">
+            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <button
                 type="button"
                 onClick={() => {
@@ -350,16 +354,26 @@ export function Header({
                   );
                   setIsLauncherOpen(false);
                 }}
-                className="w-full py-2.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/50 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all text-center"
+                style={{
+                  width: '100%',
+                  padding: '6px 0',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(76, 5, 25, 0.4)',
+                  border: '1px solid rgba(244, 63, 94, 0.3)',
+                  color: '#fda4af',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
               >
-                Reset KYC ID
+                {currentLang === "ko" ? "KYC ID 재설정" : "Reset KYC ID"}
               </button>
 
               {isAuthenticated && (
-                <div className="flex items-center justify-between text-xs text-slate-400 px-1 pt-1">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', padding: '0 4px' }}>
                   <span>
-                    연결된 ID/지갑:{" "}
-                    <strong className="text-purple-300 font-mono">
+                    {currentLang === "ko" ? "연결된 ID/지갑: " : "Connected ID/Wallet: "}
+                    <strong style={{ color: '#d8b4fe', fontFamily: 'monospace' }}>
                       {displayId}
                     </strong>
                   </span>
@@ -369,9 +383,9 @@ export function Header({
                       logout();
                       setIsLauncherOpen(false);
                     }}
-                    className="text-rose-400 hover:underline text-[11px]"
+                    style={{ color: '#fb7185', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', fontSize: '10px' }}
                   >
-                    ID 변경
+                    {currentLang === "ko" ? "아이디 변경" : "Change ID"}
                   </button>
                 </div>
               )}
