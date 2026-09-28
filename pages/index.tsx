@@ -81,17 +81,13 @@ export default function Home() {
             const timeA = dateARaw ? new Date(dateARaw).getTime() : 0;
             const timeB = dateBRaw ? new Date(dateBRaw).getTime() : 0;
 
-            const validA = isNaN(timeA) ? 0 : timeA;
-            const validB = isNaN(timeB) ? 0 : timeB;
-
-            return validB - validA;
+            return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
           });
 
           const hotHeadlines = sortedNews
             .slice(0, 5)
             .map((item: any, idx: number) => {
-              const rawTitle = item.title || item.snippet || "";
-              const cleanedTitle = cleanText(rawTitle);
+              const cleanedTitle = cleanText(item.title || item.snippet || "");
               return `🔥 [실시간 핫이슈 ${idx + 1}] ${cleanedTitle}`;
             })
             .filter((headline: string) => headline.length > 15);
@@ -216,7 +212,7 @@ export default function Home() {
       : user.username
     : "";
 
-  // 🌟 카테고리 ID 문자열에 'calendar', '일정', 'schedule' 등이 포함되면 조건 없이 진짜 달력을 표시하도록 판단 강화
+  // 일정 탭 감지
   const isCalendarTab = 
     typeof activeCategory === "string" && (
       activeCategory.includes("calendar") || 
@@ -282,7 +278,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 🌟 일정 탭 선택 시 무조건 실제 달력 컴포넌트 출력 */}
+      {/* 🌟 구버전 하드코딩 텍스트 완전히 삭제 후 진짜 달력 렌더링 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-3">
         {isCalendarTab ? (
           <PiCalendar currentLang={currentLang} />
