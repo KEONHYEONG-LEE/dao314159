@@ -31,8 +31,19 @@ import {
   Loader2
 } from "lucide-react";
 
+// GPNR 로고용 카멜레온 네온 그라데이션 색상 팔레트
+const CHAMELEON_COLORS = [
+  "from-purple-400 via-pink-400 to-amber-300",
+  "from-emerald-400 via-teal-300 to-cyan-400",
+  "from-amber-300 via-rose-400 to-purple-400",
+  "from-blue-400 via-indigo-300 to-purple-400",
+  "from-fuchsia-400 via-purple-400 to-indigo-300",
+  "from-cyan-400 via-sky-300 to-blue-500",
+];
+
 const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
+  "top_news": Flame,
   "mainnet": Globe,
   "node": Tv,
   "mining": Zap,
@@ -45,9 +56,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "kyc": ShieldCheck,
   "developer": Code,
   "developers": Code,
+  "ecosystem": Building,
+  "real-estate": Building,
+  "real_estate": Building,
   "calendar": Calendar,
   "outlook": TrendingUp,
   "price-outlook": TrendingUp,
+  "price_outlook": TrendingUp,
   "price": DollarSign,
   "security": Shield,
   "legal": Gavel,
@@ -70,8 +85,18 @@ export function GpnrHeader({
   const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false);
   const [isPaying, setIsPaying] = useState<boolean>(false);
   const [currentLang, setCurrentLang] = useState<string>("ko");
+  const [logoColorIdx, setLogoColorIdx] = useState<number>(0);
 
   const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
+
+  // GPNR 로고 카멜레온 네온 그라데이션 전환 (2.5초 간격)
+  useEffect(() => {
+    const colorTimer = setInterval(() => {
+      setLogoColorIdx((prev) => (prev + 1) % CHAMELEON_COLORS.length);
+    }, 2500);
+
+    return () => clearInterval(colorTimer);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -194,10 +219,10 @@ export function GpnrHeader({
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-3">
           <div className="flex h-[48px] items-center justify-between">
-            {/* 로고 */}
+            {/* 카멜레온 로고 영역 */}
             <div className="flex items-center gap-2">
               <span
-                className="font-black text-xl tracking-wider text-purple-400 cursor-pointer select-none active:scale-95 transition-transform"
+                className={`font-black text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r ${CHAMELEON_COLORS[logoColorIdx]} transition-all duration-1000 ease-in-out cursor-pointer select-none active:scale-95 filter drop-shadow-[0_0_12px_rgba(168,85,247,0.45)]`}
                 onClick={() => onCategoryChange && onCategoryChange("top-news")}
               >
                 GPNR
@@ -210,7 +235,7 @@ export function GpnrHeader({
                 onClick={handleDonation}
                 disabled={isPaying}
                 type="button"
-                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 active:scale-95 text-[11px] font-bold transition-all disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 active:scale-95 text-[11px] font-bold transition-all disabled:opacity-50 cursor-pointer"
               >
                 {isPaying ? (
                   <Loader2 className="w-3 h-3 animate-spin text-purple-300" />
@@ -385,7 +410,7 @@ export function GpnrHeader({
               </button>
 
               {isAuthenticated && (
-                <div style={{ display: 'flex', itemsCenter: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', padding: '0 4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', padding: '0 4px' }}>
                   <span>
                     {currentLang === "ko" ? "연결: " : "Connected: "}
                     <strong style={{ color: '#d8b4fe', fontFamily: 'monospace' }}>
@@ -412,4 +437,6 @@ export function GpnrHeader({
   );
 }
 
+// 기존 Header/GpnrHeader 명칭 호환성 유지
+export { GpnrHeader as Header, GpnrHeader };
 export default GpnrHeader;
