@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-// 프로젝트 내부 컴포넌트 Import
+// 깃허브 실제 경로 매핑 (gpnr-header.tsx, pi-calendar.tsx)
 import { GpnrHeader } from "../components/gpnr-header";
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
-import { PiCalendar } from "../components/PiCalendar"; // 🌟 새로 만든 달력 컴포넌트 연동
+import { PiCalendar } from "../components/pi-calendar"; // 🌟 깃허브 소문자 파일 경로 정확히 연결
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { translations } from "../lib/translations";
 import { NEWS_CATEGORIES } from "../lib/categories";
@@ -29,7 +29,6 @@ export default function Home() {
     "📢 최신 생태계 핵심 소식 및 마이그레이션 모니터링 가동 중"
   ]);
 
-  // 언어 변경 및 로컬 스토리지 동기화
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("language") || localStorage.getItem("gpnr-language") || "ko";
@@ -218,7 +217,6 @@ export default function Home() {
       : user.username
     : "";
 
-  // 현재 탭이 일정 카테고리인지 다각도로 검증
   const isCalendarTab = 
     activeCategory === "calendar" || 
     activeCategory === "calendar-news" || 
@@ -283,7 +281,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 🌟 탭이 '일정'일 때 신규 PiCalendar 컴포넌트를 직접 호출 */}
+      {/* 🌟 일정 탭 클릭 시 pi-calendar.tsx 컴포넌트를 정확히 호출 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-3">
         {isCalendarTab ? (
           <PiCalendar currentLang={currentLang} />
@@ -292,7 +290,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* 우측 하단 플로팅 언어 선택 드롭다운 */}
       <div className="fixed bottom-4 right-4 z-[99]">
         <select
           value={currentLang}
