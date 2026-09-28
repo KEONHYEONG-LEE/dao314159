@@ -2,11 +2,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-// 깃허브 실제 경로 매핑 (gpnr-header.tsx, pi-calendar.tsx)
 import { GpnrHeader } from "../components/gpnr-header";
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
-import { PiCalendar } from "../components/pi-calendar"; // 🌟 깃허브 소문자 파일 경로 정확히 연결
+import { PiCalendar } from "../components/pi-calendar"; 
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { translations } from "../lib/translations";
 import { NEWS_CATEGORIES } from "../lib/categories";
@@ -217,11 +216,13 @@ export default function Home() {
       : user.username
     : "";
 
+  // 🌟 카테고리 ID 문자열에 'calendar', '일정', 'schedule' 등이 포함되면 조건 없이 진짜 달력을 표시하도록 판단 강화
   const isCalendarTab = 
-    activeCategory === "calendar" || 
-    activeCategory === "calendar-news" || 
-    activeCategory === "일정" || 
-    activeCategory === "schedule";
+    typeof activeCategory === "string" && (
+      activeCategory.includes("calendar") || 
+      activeCategory.includes("일정") || 
+      activeCategory.includes("schedule")
+    );
 
   return (
     <main 
@@ -281,7 +282,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 🌟 일정 탭 클릭 시 pi-calendar.tsx 컴포넌트를 정확히 호출 */}
+      {/* 🌟 일정 탭 선택 시 무조건 실제 달력 컴포넌트 출력 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-3">
         {isCalendarTab ? (
           <PiCalendar currentLang={currentLang} />
