@@ -31,16 +31,6 @@ import {
   Loader2
 } from "lucide-react";
 
-// GPNR 로고용 카멜레온 네온 그라데이션 색상 팔레트
-const CHAMELEON_COLORS = [
-  "from-purple-400 via-pink-400 to-amber-300",
-  "from-emerald-400 via-teal-300 to-cyan-400",
-  "from-amber-300 via-rose-400 to-purple-400",
-  "from-blue-400 via-indigo-300 to-purple-400",
-  "from-fuchsia-400 via-purple-400 to-indigo-300",
-  "from-cyan-400 via-sky-300 to-blue-500",
-];
-
 const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
   "top_news": Flame,
@@ -85,18 +75,8 @@ export function GpnrHeader({
   const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false);
   const [isPaying, setIsPaying] = useState<boolean>(false);
   const [currentLang, setCurrentLang] = useState<string>("ko");
-  const [logoColorIdx, setLogoColorIdx] = useState<number>(0);
 
   const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
-
-  // GPNR 로고 카멜레온 네온 그라데이션 전환 (2.5초 간격)
-  useEffect(() => {
-    const colorTimer = setInterval(() => {
-      setLogoColorIdx((prev) => (prev + 1) % CHAMELEON_COLORS.length);
-    }, 2500);
-
-    return () => clearInterval(colorTimer);
-  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -219,17 +199,17 @@ export function GpnrHeader({
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-3">
           <div className="flex h-[48px] items-center justify-between">
-            {/* 카멜레온 로고 영역 */}
+            {/* 카멜레온 순환 네온 로고 영역 */}
             <div className="flex items-center gap-2">
               <span
-                className={`font-black text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r ${CHAMELEON_COLORS[logoColorIdx]} transition-all duration-1000 ease-in-out cursor-pointer select-none active:scale-95 filter drop-shadow-[0_0_12px_rgba(168,85,247,0.45)]`}
+                className="font-black text-2xl tracking-wider cursor-pointer select-none active:scale-95 gpnr-chameleon-logo"
                 onClick={() => onCategoryChange && onCategoryChange("top-news")}
               >
                 GPNR
               </span>
             </div>
 
-            {/* 우측 액션 영역 */}
+            {/* 우측 액션 버튼 영역 */}
             <div className="flex items-center gap-2">
               <button
                 onClick={handleDonation}
@@ -265,7 +245,7 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 4열 모바일 최적화 카테고리 그리드 런처 모달 */}
+      {/* 4열 그리드 런처 모달 */}
       {isLauncherOpen && (
         <div
           style={{
@@ -319,7 +299,7 @@ export function GpnrHeader({
               <X className="w-4 h-4" />
             </button>
 
-            {/* 4열 그리드 매핑 */}
+            {/* 4열 카테고리 그리드 */}
             <div
               style={{
                 display: 'grid',
@@ -433,10 +413,48 @@ export function GpnrHeader({
           </div>
         </div>
       )}
+
+      {/* 카멜레온 네온 로고 CSS Keyframe 애니메이션 보장 */}
+      <style jsx global>{`
+        @keyframes gpnrChameleonGlow {
+          0% {
+            background-image: linear-gradient(to right, #c084fc, #f472b6, #fcd34d);
+            filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.6));
+          }
+          20% {
+            background-image: linear-gradient(to right, #34d399, #2dd4bf, #22d3ee);
+            filter: drop-shadow(0 0 10px rgba(52, 211, 153, 0.6));
+          }
+          40% {
+            background-image: linear-gradient(to right, #fcd34d, #fb7185, #c084fc);
+            filter: drop-shadow(0 0 10px rgba(252, 211, 77, 0.6));
+          }
+          60% {
+            background-image: linear-gradient(to right, #60a5fa, #a5b4fc, #c084fc);
+            filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.6));
+          }
+          80% {
+            background-image: linear-gradient(to right, #e879f9, #c084fc, #a5b4fc);
+            filter: drop-shadow(0 0 10px rgba(232, 121, 249, 0.6));
+          }
+          100% {
+            background-image: linear-gradient(to right, #c084fc, #f472b6, #fcd34d);
+            filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.6));
+          }
+        }
+
+        .gpnr-chameleon-logo {
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: gpnrChameleonGlow 12s ease-in-out infinite;
+          transition: transform 0.2s ease;
+        }
+      `}</style>
     </>
   );
 }
 
-// 기존 Header/GpnrHeader 명칭 호환성 유지
 export { GpnrHeader as Header, GpnrHeader };
 export default GpnrHeader;
