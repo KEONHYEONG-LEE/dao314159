@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-// 프로젝트 경로에 맞춘 Import
+// 프로젝트 내부 컴포넌트 Import
 import { GpnrHeader } from "../components/gpnr-header";
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
-import { PiCalendar } from "../components/PiCalendar"; // 🌟 새로 만든 PiCalendar 컴포넌트 연동
+import { PiCalendar } from "../components/PiCalendar"; // 🌟 새로 만든 달력 컴포넌트 연동
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { translations } from "../lib/translations";
 import { NEWS_CATEGORIES } from "../lib/categories";
@@ -218,6 +218,13 @@ export default function Home() {
       : user.username
     : "";
 
+  // 현재 탭이 일정 카테고리인지 다각도로 검증
+  const isCalendarTab = 
+    activeCategory === "calendar" || 
+    activeCategory === "calendar-news" || 
+    activeCategory === "일정" || 
+    activeCategory === "schedule";
+
   return (
     <main 
       className="min-h-screen bg-[#0f172a] text-slate-100 touch-pan-y relative pb-16"
@@ -276,9 +283,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* 🌟 activeCategory 가 'calendar' 또는 '일정'인 경우 고품질 PiCalendar 컴포넌트 출력 */}
+      {/* 🌟 탭이 '일정'일 때 신규 PiCalendar 컴포넌트를 직접 호출 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-3">
-        {activeCategory === "calendar" || activeCategory === "calendar-news" || activeCategory === "일정" ? (
+        {isCalendarTab ? (
           <PiCalendar currentLang={currentLang} />
         ) : (
           <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
