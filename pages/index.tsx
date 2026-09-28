@@ -2,10 +2,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-// 실제 프로젝트 경로에 맞춰 Import 유지
+// 프로젝트 경로에 맞춘 Import
 import { GpnrHeader } from "../components/gpnr-header";
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryNews } from "../components/category-news";
+import { PiCalendar } from "../components/PiCalendar"; // 🌟 새로 만든 PiCalendar 컴포넌트 연동
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { translations } from "../lib/translations";
 import { NEWS_CATEGORIES } from "../lib/categories";
@@ -230,7 +231,7 @@ export default function Home() {
         currentLanguage={currentLang}
       />
 
-      <div className="w-full bg-gradient-to-r from-slate-100 via-white to-slate-100 border-b border-slate-300 py-2.5 overflow-hidden sticky top-[60px] z-[55] shadow-md shadow-black/20">
+      <div className="w-full bg-gradient-to-r from-slate-100 via-white to-slate-100 border-b border-slate-300 py-2.5 overflow-hidden sticky top-[48px] z-[55] shadow-md shadow-black/20">
         <div className="flex whitespace-nowrap gap-16 text-[12px] font-bold text-slate-900 tracking-wide compliance-marquee">
           <div className="flex gap-16 shrink-0 justify-around min-w-full">
             {tickerStats.map((stat, idx) => (
@@ -245,7 +246,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="sticky top-[93px] z-50 bg-[#0f172a]/95 backdrop-blur-sm">
+      <div className="sticky top-[81px] z-50 bg-[#0f172a]/95 backdrop-blur-sm">
         <CategoryTabs 
           selectedCategory={activeCategory} 
           onCategoryChange={setActiveCategory} 
@@ -275,55 +276,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* activeCategory 가 'calendar' 인 경우 캘린더 화면 출력 (자연스러운 한국어 적용) */}
-      <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-2">
-        {activeCategory === "calendar" ? (
-          <div className="bg-[#1e293b] border border-purple-500/30 rounded-2xl p-5 shadow-xl text-center my-4">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <span className="text-2xl">📅</span>
-              <h2 className="text-base font-bold text-purple-300">
-                {currentLang === "ko" ? "Pi 네트워크 이벤트 일정" : "Pi Network Events Schedule"}
-              </h2>
-            </div>
-
-            <p className="text-xs text-slate-400 mb-6">
-              {currentLang === "ko"
-                ? "메인넷 마이그레이션, 해커톤 및 노드 업데이트 일정이 주요 일정으로 잡혔습니다."
-                : "Key Mainnet migration, Hackathon, and Node update schedule"}
-            </p>
-
-            <div className="bg-[#0f172a] rounded-xl p-4 border border-slate-700 text-left space-y-3">
-              <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-800">
-                <span className="text-purple-300 font-semibold flex items-center gap-1.5">
-                  <span>📍</span>
-                  <span>{currentLang === "ko" ? "메인넷 오픈 로드맵" : "Open Mainnet Roadmap"}</span>
-                </span>
-                <span className="text-[11px] bg-purple-900/80 text-purple-200 px-2.5 py-0.5 rounded font-bold">
-                  {currentLang === "ko" ? "진행 중" : "Ongoing"}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-800">
-                <span className="text-purple-300 font-semibold flex items-center gap-1.5">
-                  <span>📍</span>
-                  <span>{currentLang === "ko" ? "노드 버전 동기화" : "Node Version Syncing"}</span>
-                </span>
-                <span className="text-[11px] bg-blue-900/80 text-blue-200 px-2.5 py-0.5 rounded font-bold">
-                  {currentLang === "ko" ? "정상 작동" : "Active"}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-purple-300 font-semibold flex items-center gap-1.5">
-                  <span>📍</span>
-                  <span>{currentLang === "ko" ? "GPNR 실시간 동기화" : "GPNR Live Syncing"}</span>
-                </span>
-                <span className="text-[11px] bg-emerald-900/80 text-emerald-200 px-2.5 py-0.5 rounded font-bold">
-                  {currentLang === "ko" ? "실시간" : "Realtime"}
-                </span>
-              </div>
-            </div>
-          </div>
+      {/* 🌟 activeCategory 가 'calendar' 또는 '일정'인 경우 고품질 PiCalendar 컴포넌트 출력 */}
+      <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-3">
+        {activeCategory === "calendar" || activeCategory === "calendar-news" || activeCategory === "일정" ? (
+          <PiCalendar currentLang={currentLang} />
         ) : (
           <CategoryNews selectedCategory={activeCategory} currentLang={currentLang} />
         )}
