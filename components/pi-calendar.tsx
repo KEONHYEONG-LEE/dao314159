@@ -114,7 +114,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
   const [activeLang, setActiveLang] = useState<"ko" | "en">("en");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
-  // 현재 앱 언어 자동 감지
   const getAppLanguage = (): "ko" | "en" => {
     if (typeof window === "undefined") return "en";
     try {
@@ -168,14 +167,8 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
   const emptyDays = Array.from({ length: firstDay }, (_, i) => i);
 
   const monthNames = {
-    ko: [
-      "1월", "2월", "3월", "4월", "5월", "6월",
-      "7월", "8월", "9월", "10월", "11월", "12월"
-    ],
-    en: [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ],
+    ko: ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"],
+    en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
   };
 
   const weekDays = {
@@ -197,7 +190,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
     return `${year}-${m}-${d}`;
   };
 
-  // 선택된 날짜의 이벤트 필터링
   const selectedEvents = useMemo(() => {
     return EVENTS_DATA.filter((e) => {
       const matchDate = e.date === selectedDate;
@@ -209,7 +201,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
     });
   }, [selectedDate, selectedCategory]);
 
-  // 다가오는 가장 빠른 주요(Major/Important) 일정 찾기 (D-Day 계산)
   const upcomingMajorEvent = useMemo(() => {
     const todayStr = new Date().toISOString().split("T")[0];
     const sorted = [...EVENTS_DATA]
@@ -232,7 +223,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
     <section className="py-5 px-3 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 min-h-[600px] rounded-3xl border border-slate-800/80 shadow-2xl backdrop-blur-xl">
       <div className="max-w-md mx-auto space-y-4">
         
-        {/* 상단 찌라시/헤더 & D-Day 알림 카드 */}
         {upcomingMajorEvent && (
           <div className="relative overflow-hidden bg-gradient-to-r from-purple-900/40 via-amber-900/20 to-purple-900/40 border border-amber-500/30 rounded-2xl p-3.5 shadow-lg backdrop-blur-md">
             <div className="flex items-center justify-between">
@@ -260,7 +250,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
           </div>
         )}
 
-        {/* 카테고리 필터 칩 */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat.key;
@@ -280,9 +269,7 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
           })}
         </div>
 
-        {/* 메인 달력 카드 */}
         <div className="bg-slate-900/90 border border-purple-500/20 rounded-2xl p-4 shadow-2xl backdrop-blur-md">
-          {/* 달력 헤더 (월 이동) */}
           <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
             <button
               type="button"
@@ -310,7 +297,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
             </button>
           </div>
 
-          {/* 요일 헤더 */}
           <div className="grid grid-cols-7 gap-1 text-center text-xs font-extrabold text-slate-400 mb-2">
             {weekDays[activeLang].map((day, idx) => (
               <span
@@ -322,7 +308,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
             ))}
           </div>
 
-          {/* 날짜 그리드 */}
           <div className="grid grid-cols-7 gap-1 text-center text-xs">
             {emptyDays.map((_, i) => (
               <div key={`empty-${i}`} className="p-2.5" />
@@ -338,7 +323,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
 
               const isSelected = selectedDate === fullDateStr;
               
-              // 해당 날짜에 부합하는 이벤트 검색 (카테고리 필터 포함)
               const matchedEvents = EVENTS_DATA.filter((e) => {
                 const isDateMatch = e.date === fullDateStr;
                 const isCatMatch =
@@ -367,7 +351,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
                 >
                   <span className="text-xs">{day}</span>
 
-                  {/* 이벤트 인디케이터 Dot */}
                   {hasEvent && (
                     <div className="absolute bottom-1 flex gap-0.5 items-center">
                       <span
@@ -387,7 +370,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
           </div>
         </div>
 
-        {/* 선택한 날짜 세부 일정 상세 카드 */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-md">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
             <div className="flex items-center gap-2">
@@ -459,7 +441,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
                       </span>
                     </div>
 
-                    {/* 설명 텍스트 (있는 경우) */}
                     {(evt.descKo || evt.descEn) && (
                       <p className="text-[11px] text-slate-400 pl-4 leading-relaxed">
                         {activeLang === "ko" ? evt.descKo : evt.descEn}
@@ -477,4 +458,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
   );
 }
 
+// 대문자/소문자 import 명칭 충돌 전체 예방
+export { PiCalendar as piCalendar };
 export default PiCalendar;
