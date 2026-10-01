@@ -212,14 +212,13 @@ export default function Home() {
       : user.username
     : "";
 
-  // activeCategory가 'calendar', '일정', 'schedule'인 경우에만 캘린더 표시
+  // 모든 가능한 일정/달력 관련 카테고리 ID 패턴 매칭
+  const catLower = String(activeCategory || "").toLowerCase();
   const isCalendarTab = 
-    typeof activeCategory === "string" && (
-      activeCategory === "calendar" || 
-      activeCategory === "calendar-news" || 
-      activeCategory === "일정" || 
-      activeCategory === "schedule"
-    );
+    catLower.includes("calendar") || 
+    catLower.includes("schedule") || 
+    catLower.includes("event") || 
+    catLower === "일정";
 
   return (
     <main 
@@ -279,7 +278,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 일정 탭일 때만 PiCalendar, 그 외엔 정확한 activeCategory를 넘겨 CategoryNews 호출 */}
+      {/* 일정 탭 감지 시 PiCalendar를 강제 출력하도록 변경 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-3">
         {isCalendarTab ? (
           <PiCalendar currentLang={currentLang} />
