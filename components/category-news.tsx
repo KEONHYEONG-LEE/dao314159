@@ -60,8 +60,15 @@ export function CategoryNews({
   selectedCategory?: string; 
   currentLang?: string;
 }) {
-  // [핵심] 달력 카테고리가 선택되면 즉시 PiCalendar 컴포넌트를 렌더링
-  if (selectedCategory === "calendar") {
+  // [핵심] 일정/달력 관련 모든 키값(calendar, schedule, event, 일정)을 포함하면 즉시 PiCalendar 렌더링
+  const catLower = String(selectedCategory || "").toLowerCase();
+  const isCalendarCategory = 
+    catLower.includes("calendar") || 
+    catLower.includes("schedule") || 
+    catLower.includes("event") || 
+    catLower === "일정";
+
+  if (isCalendarCategory) {
     return <PiCalendar currentLang={currentLang} />;
   }
 
@@ -322,10 +329,8 @@ export function CategoryNews({
     ? (matchedCategory?.name || matchedCategory?.label || "주요뉴스") 
     : (matchedCategory?.enName || matchedCategory?.enLabel || "Top News");
 
-  // [핵심] "일정 일정" 중복 문구 정제 처리
-  const categoryTitle = rawCategoryTitle.includes("일정") && rawCategoryTitle.endsWith("일정 일정")
-    ? rawCategoryTitle.replace("일정 일정", "일정")
-    : rawCategoryTitle;
+  // "일정 일정" 중복 문구 정제 처리
+  const categoryTitle = rawCategoryTitle.replace(/\b일정\s+일정\b/g, "일정");
 
   if (loading) {
     return (
@@ -344,7 +349,6 @@ export function CategoryNews({
         <div className="flex items-center justify-between mb-3 border-b border-white/[0.08] pb-2">
           <div className="flex items-center gap-2">
             <span className="text-base">🔥</span>
-            {/* [핵심] notranslate 및 translate="no" 적용으로 자동 번역 오역 및 중복 방지 */}
             <h2 className="text-xs font-black text-slate-100 tracking-widest uppercase notranslate" translate="no">
               {categoryTitle}
             </h2>
