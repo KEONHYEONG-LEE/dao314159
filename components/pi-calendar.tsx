@@ -13,7 +13,7 @@ export interface CalendarEvent {
   categoryKo: string;
   categoryEn: string;
   type: "major" | "important" | "normal";
-  isAutoAI?: boolean; // AI 자동 선별 추출 여부
+  isAutoAI?: boolean;
 }
 
 // 기본 고정 일정 데이터베이스
@@ -114,28 +114,19 @@ interface ArticlePayload {
   publishedDate?: string;
 }
 
-// AI/Parser Engine: 뉴스에서 일정 추출
 const parseArticlesToEvents = (articles: ArticlePayload[]): CalendarEvent[] => {
   const extractedEvents: CalendarEvent[] = [];
 
   const monthMap: Record<string, string> = {
-    january: "01", jan: "01",
-    february: "02", feb: "02",
-    march: "03", mar: "03",
-    april: "04", apr: "04",
-    may: "05",
-    june: "06", jun: "06",
-    july: "07", jul: "07",
-    august: "08", aug: "08",
-    september: "09", sep: "09", sept: "09",
-    october: "10", oct: "10",
-    november: "11", nov: "11",
-    december: "12", dec: "12",
+    january: "01", jan: "01", february: "02", feb: "02",
+    march: "03", mar: "03", april: "04", apr: "04", may: "05",
+    june: "06", jun: "06", july: "07", jul: "07", august: "08", aug: "08",
+    september: "09", sep: "09", sept: "09", october: "10", oct: "10",
+    november: "11", nov: "11", december: "12", dec: "12",
   };
 
   articles.forEach((art, index) => {
     const text = `${art.title} ${art.snippet || ""}`;
-    
     const dateRegex = /(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,\s*(\d{4}))?/i;
     const match = text.match(dateRegex);
 
@@ -182,26 +173,24 @@ const parseArticlesToEvents = (articles: ArticlePayload[]): CalendarEvent[] => {
 export function PiCalendar({ currentLang }: { currentLang?: string }) {
   const [mounted, setMounted] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [selectedDate, setSelectedDate] = useState<string>(""); // 기본적으로 특정 날짜 선택 해제
-  const [activeLang, setActiveLang] = useState<"ko" | "en">("en");
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [activeLang, setActiveLang] = useState<"ko" | "en">("ko");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
   const [eventsData, setEventsData] = useState<CalendarEvent[]>(INITIAL_EVENTS_DATA);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   const getAppLanguage = (): "ko" | "en" => {
-    if (typeof window === "undefined") return "en";
+    if (typeof window === "undefined") return "ko";
     try {
       const savedLang =
         currentLang ||
         localStorage.getItem("language") ||
         localStorage.getItem("gpnr-language") ||
-        localStorage.getItem("gpnr_lang") ||
-        localStorage.getItem("pi_lang") ||
-        "en";
+        "ko";
       return savedLang.startsWith("ko") ? "ko" : "en";
     } catch {
-      return "en";
+      return "ko";
     }
   };
 
@@ -236,9 +225,7 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
     setMounted(true);
     const now = new Date();
     setCurrentDate(now);
-
-    // 초기 진입 시 특정 하루에 고정되지 않고 해당 월 전체 일정을 보여주기 위해 selectedDate를 비워둡니다.
-    setSelectedDate("");
+    setSelectedDate(""); // 특정 날짜 선택 안 함 -> 이번 달 전체 주요 일정 표시
 
     setActiveLang(getAppLanguage());
     fetchLiveNewsAndInjectEvents();
@@ -264,11 +251,11 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
 
   const prevMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1));
-    setSelectedDate(""); // 달 이동 시 날짜 선택 해제
+    setSelectedDate("");
   };
   const nextMonth = () => {
     setCurrentDate(new Date(year, month + 1, 1));
-    setSelectedDate(""); // 달 이동 시 날짜 선택 해제
+    setSelectedDate("");
   };
 
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -298,7 +285,6 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
     return `${year}-${m}-${d}`;
   };
 
-  // 선택된 날짜가 있으면 해당 날짜만, 없으면 현재 달(YYYY-MM) 또는 전체 일정을 노출합니다.
   const selectedEvents = useMemo(() => {
     const currentYearMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
 
@@ -337,69 +323,60 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
   if (!mounted) return null;
 
   return (
-    <section className="py-5 px-3 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 min-h-[600px] rounded-3xl border border-slate-800/80 shadow-2xl backdrop-blur-xl">
+    <section className="py-4 px-2 bg-slate-950 text-slate-100 min-h-[550px] rounded-2xl border border-slate-800 shadow-xl">
       <div className="max-w-md mx-auto space-y-4">
         
-        {/* 상단 동기화 헤더 */}
+        {/* 상단 헤더 */}
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold">
             <span className={`w-2 h-2 rounded-full bg-emerald-500 ${isSyncing ? "animate-ping" : ""}`} />
-            <span>{isSyncing ? "AI 동기화 진행 중..." : "GPNR AI Realtime Syncing"}</span>
+            <span>{isSyncing ? "AI 동기화 중..." : "GPNR AI Realtime Sync"}</span>
           </div>
           <button
+            type="button"
             onClick={fetchLiveNewsAndInjectEvents}
             disabled={isSyncing}
-            className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700 active:scale-95 transition-all"
+            className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700 transition-all cursor-pointer"
           >
-            🔄 {activeLang === "ko" ? "AI 일정 새로고침" : "Refresh AI Events"}
+            🔄 {activeLang === "ko" ? "새로고침" : "Refresh"}
           </button>
         </div>
 
-        {/* 핵심 일정 카운트다운 카드 */}
+        {/* 다가오는 핵심 일정 카드 (D-Day) */}
         {upcomingMajorEvent && (
-          <div className="relative overflow-hidden bg-gradient-to-r from-purple-900/40 via-amber-900/20 to-purple-900/40 border border-amber-500/30 rounded-2xl p-3.5 shadow-lg backdrop-blur-md">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="flex h-3 w-3 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-                </span>
-                <span className="text-[11px] font-bold tracking-wider uppercase text-amber-300/90 flex items-center gap-1">
-                  {activeLang === "ko" ? "다가오는 핵심 일정" : "Next Key Event"}
-                  {upcomingMajorEvent.isAutoAI && (
-                    <span className="bg-purple-600/80 text-[9px] text-white px-1.5 py-0.2 rounded-full font-normal">
-                      AI Auto
-                    </span>
-                  )}
-                </span>
-              </div>
-              <span className="px-2.5 py-0.5 text-xs font-black rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 shadow-sm">
+          <div className="bg-gradient-to-r from-purple-950/60 to-slate-900 border border-amber-500/40 rounded-xl p-3 shadow-md">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1">
+                🔥 {activeLang === "ko" ? "다가오는 핵심 일정" : "Next Key Event"}
+              </span>
+              <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40">
                 {calculateDDay(upcomingMajorEvent.date)}
               </span>
             </div>
-            <div className="mt-2 flex items-baseline justify-between">
-              <h4 className="text-sm font-extrabold text-slate-100 truncate max-w-[240px]">
+            <div className="flex items-baseline justify-between gap-2">
+              <h4 className="text-xs font-bold text-slate-100 truncate">
                 {activeLang === "ko" ? upcomingMajorEvent.titleKo : upcomingMajorEvent.titleEn}
               </h4>
-              <span className="text-[11px] text-slate-400 font-medium">
+              <span className="text-[10px] text-slate-400 whitespace-nowrap">
                 {upcomingMajorEvent.date}
               </span>
             </div>
           </div>
         )}
 
-        {/* 카테고리 필터 */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {/* 카테고리 필터 탭 */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat.key;
             return (
               <button
                 key={cat.key}
+                type="button"
                 onClick={() => setSelectedCategory(cat.key)}
-                className={`px-3 py-1 text-[11px] font-semibold rounded-full whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                className={`px-2.5 py-1 text-[11px] font-semibold rounded-full whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-900/40 border border-purple-400/30"
-                    : "bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-700/80 border border-slate-700/50"
+                    ? "bg-purple-600 text-white shadow-sm border border-purple-400"
+                    : "bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-700/60"
                 }`}
               >
                 {activeLang === "ko" ? cat.labelKo : cat.labelEn}
@@ -409,19 +386,18 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
         </div>
 
         {/* 달력 그리드 */}
-        <div className="bg-slate-900/90 border border-purple-500/20 rounded-2xl p-4 shadow-2xl backdrop-blur-md">
-          <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 shadow-md">
+          <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
             <button
               type="button"
               onClick={prevMonth}
-              className="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 rounded-xl text-xs font-bold text-purple-300 border border-purple-500/20 transition-all cursor-pointer flex items-center gap-1"
+              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold text-purple-300 border border-slate-700 cursor-pointer"
             >
-              <span>‹</span>
-              <span>{activeLang === "ko" ? "이전달" : "Prev"}</span>
+              ‹ {activeLang === "ko" ? "이전달" : "Prev"}
             </button>
 
-            <h2 className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-purple-100 to-amber-200 tracking-wide flex items-center gap-2">
-              <span className="text-lg">🗓️</span>
+            <h2 className="text-sm font-black text-purple-200 flex items-center gap-1.5">
+              <span>🗓️</span>
               {activeLang === "ko"
                 ? `${year}년 ${monthNames.ko[month]}`
                 : `${monthNames.en[month]} ${year}`}
@@ -430,14 +406,13 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
             <button
               type="button"
               onClick={nextMonth}
-              className="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 rounded-xl text-xs font-bold text-purple-300 border border-purple-500/20 transition-all cursor-pointer flex items-center gap-1"
+              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold text-purple-300 border border-slate-700 cursor-pointer"
             >
-              <span>{activeLang === "ko" ? "다음달" : "Next"}</span>
-              <span>›</span>
+              {activeLang === "ko" ? "다음달" : "Next"} ›
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-extrabold text-slate-400 mb-2">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 mb-1.5">
             {weekDays[activeLang].map((day, idx) => (
               <span
                 key={day}
@@ -450,7 +425,7 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
 
           <div className="grid grid-cols-7 gap-1 text-center text-xs">
             {emptyDays.map((_, i) => (
-              <div key={`empty-${i}`} className="p-2.5" />
+              <div key={`empty-${i}`} className="p-2" />
             ))}
 
             {days.map((day) => {
@@ -481,31 +456,30 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
                   type="button"
                   key={day}
                   onClick={() => {
-                    // 이미 선택된 날짜를 누르면 선택 해제(토글)
                     if (selectedDate === fullDateStr) {
                       setSelectedDate("");
                     } else {
                       setSelectedDate(fullDateStr);
                     }
                   }}
-                  className={`relative py-3 rounded-xl font-bold transition-all duration-150 cursor-pointer flex flex-col items-center justify-center ${
+                  className={`relative py-2.5 rounded-lg font-bold transition-all cursor-pointer flex flex-col items-center justify-center ${
                     isSelected
-                      ? "bg-gradient-to-tr from-purple-600 to-indigo-500 text-white shadow-lg shadow-purple-600/40 ring-2 ring-purple-300 scale-105 z-10"
+                      ? "bg-purple-600 text-white shadow-md ring-2 ring-purple-300 scale-105 z-10"
                       : isToday
-                      ? "bg-slate-800 text-amber-300 font-black border border-amber-400/50"
-                      : "bg-slate-800/40 text-slate-300 hover:bg-slate-700/60 hover:text-white"
+                      ? "bg-slate-800 text-amber-300 font-black border border-amber-400/60"
+                      : "bg-slate-800/40 text-slate-300 hover:bg-slate-700/60"
                   }`}
                 >
-                  <span className="text-xs">{day}</span>
+                  <span>{day}</span>
 
                   {hasEvent && (
                     <div className="absolute bottom-1 flex gap-0.5 items-center">
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
                           hasMajor
-                            ? "bg-amber-400 shadow-[0_0_6px_#f59e0b]"
+                            ? "bg-amber-400 shadow-[0_0_4px_#f59e0b]"
                             : hasImportant
-                            ? "bg-purple-400 shadow-[0_0_6px_#c084fc]"
+                            ? "bg-purple-400"
                             : "bg-cyan-400"
                         }`}
                       />
@@ -517,15 +491,15 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
           </div>
         </div>
 
-        {/* 선택된 일자 또는 이번 달 전체 이벤트 리스트 */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-base">📌</span>
-              <h3 className="text-xs font-black tracking-wide text-slate-200">
+        {/* 일정 리스트 */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 shadow-md">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm">📌</span>
+              <h3 className="text-xs font-black text-slate-200">
                 {selectedDate
                   ? `${selectedDate} ${activeLang === "ko" ? "일정" : "Scheduled Events"}`
-                  : `${year}년 ${month + 1}월 ${activeLang === "ko" ? "전체 주요 일정" : "Monthly Key Events"}`}
+                  : `${year}년 ${month + 1}월 ${activeLang === "ko" ? "주요 일정" : "Monthly Key Events"}`}
               </h3>
             </div>
             <div className="flex items-center gap-2">
@@ -533,32 +507,27 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
                 <button
                   type="button"
                   onClick={() => setSelectedDate("")}
-                  className="text-[10px] text-purple-400 hover:text-purple-300 underline font-semibold"
+                  className="text-[10px] text-purple-400 hover:underline font-semibold cursor-pointer"
                 >
                   {activeLang === "ko" ? "전체보기" : "Show All"}
                 </button>
               )}
-              <span className="text-[10px] text-purple-300 bg-purple-950/80 px-2.5 py-0.5 rounded-full border border-purple-700/50 font-extrabold">
+              <span className="text-[10px] text-purple-300 bg-purple-950 px-2 py-0.5 rounded-full border border-purple-800 font-extrabold">
                 {selectedEvents.length}{activeLang === "ko" ? "개 항목" : " item(s)"}
               </span>
             </div>
           </div>
 
           {selectedEvents.length === 0 ? (
-            <div className="text-center py-6 space-y-1">
+            <div className="text-center py-5 space-y-1">
               <p className="text-xs font-semibold text-slate-500">
                 {activeLang === "ko"
                   ? "해당 기간/날짜에 등록된 중요 일정이 없습니다."
                   : "No scheduled events for this period/date."}
               </p>
-              <p className="text-[11px] text-slate-600">
-                {activeLang === "ko"
-                  ? "다른 카테고리나 날짜를 선택해보세요."
-                  : "Try checking another date or category."}
-              </p>
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {selectedEvents.map((evt) => {
                 const isMajor = evt.type === "major";
                 const isImportant = evt.type === "important";
@@ -566,37 +535,28 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
                 return (
                   <div
                     key={evt.id}
-                    className={`p-3 rounded-xl border transition-all duration-200 space-y-1.5 ${
+                    className={`p-2.5 rounded-lg border transition-all space-y-1 ${
                       isMajor
-                        ? "bg-gradient-to-r from-amber-950/30 to-purple-950/30 border-amber-500/40 shadow-md shadow-amber-950/20"
+                        ? "bg-gradient-to-r from-amber-950/40 to-slate-900 border-amber-500/50"
                         : isImportant
                         ? "bg-slate-800/90 border-purple-500/40"
-                        : "bg-slate-800/50 border-slate-700/60"
+                        : "bg-slate-800/40 border-slate-700/60"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
                         <span
-                          className={`w-2 h-2 rounded-full ${
-                            isMajor
-                              ? "bg-amber-400 shadow-[0_0_8px_#f59e0b]"
-                              : isImportant
-                              ? "bg-purple-400"
-                              : "bg-cyan-400"
+                          className={`w-2 h-2 rounded-full shrink-0 ${
+                            isMajor ? "bg-amber-400" : isImportant ? "bg-purple-400" : "bg-cyan-400"
                           }`}
                         />
-                        <h4 className="text-xs font-extrabold text-slate-100 flex items-center gap-1.5">
+                        <h4 className="text-xs font-bold text-slate-100 truncate">
                           <span className="text-purple-300 font-mono text-[11px] mr-1">[{evt.date}]</span>
                           {activeLang === "ko" ? evt.titleKo : evt.titleEn}
-                          {evt.isAutoAI && (
-                            <span className="text-[9px] bg-purple-900/80 text-purple-200 border border-purple-500/40 px-1.5 py-0.2 rounded">
-                              AI Detected
-                            </span>
-                          )}
                         </h4>
                       </div>
                       <span
-                        className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${
+                        className={`text-[9px] px-1.5 py-0.5 rounded font-bold shrink-0 ${
                           isMajor
                             ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                             : isImportant
@@ -609,7 +569,7 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
                     </div>
 
                     {(evt.descKo || evt.descEn) && (
-                      <p className="text-[11px] text-slate-400 pl-4 leading-relaxed">
+                      <p className="text-[11px] text-slate-400 pl-3.5 leading-relaxed">
                         {activeLang === "ko" ? evt.descKo : evt.descEn}
                       </p>
                     )}
