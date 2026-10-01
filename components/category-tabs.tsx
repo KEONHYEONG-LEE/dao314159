@@ -28,7 +28,7 @@ import {
   LayoutGrid
 } from "lucide-react";
 
-// category.id 기준 완벽 아이콘 매핑 객체
+// category.id 기준 완벽 아이콘 매핑 객체 (schedule, events 추가)
 export const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
   "mainnet": Globe,
@@ -44,6 +44,9 @@ export const ICON_MAP: Record<string, React.ElementType> = {
   "developer": Code,
   "developers": Code,
   "calendar": Calendar,
+  "schedule": Calendar,
+  "events": Calendar,
+  "event": Calendar,
   "outlook": TrendingUp,
   "price-outlook": TrendingUp,
   "price": DollarSign,
@@ -55,7 +58,8 @@ export const ICON_MAP: Record<string, React.ElementType> = {
 
 // 타 컴포넌트(모달 등)에서 바로 불러와 쓸 수 있는 아이콘 컴포넌트
 export function CategoryIcon({ id, className = "w-4 h-4" }: { id: string; className?: string }) {
-  const IconComponent = ICON_MAP[id] || LayoutGrid;
+  const normalizedId = String(id || "").toLowerCase();
+  const IconComponent = ICON_MAP[normalizedId] || LayoutGrid;
   return <IconComponent className={className} />;
 }
 
@@ -174,9 +178,13 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
           className="flex gap-1.5 py-3 px-1 overflow-x-auto scroll-smooth notranslate [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
           {Array.isArray(NEWS_CATEGORIES) && NEWS_CATEGORIES.map((category) => {
+            const rawId = String(category.id || "");
+            const normalizedId = rawId.toLowerCase();
+            const normalizedSelected = String(selectedCategory || "").toLowerCase();
+
             const isSelected = 
-              selectedCategory === category.id || 
-              ((selectedCategory === "all" || !selectedCategory) && category.id === "top-news");
+              normalizedSelected === normalizedId || 
+              ((normalizedSelected === "all" || !normalizedSelected) && normalizedId === "top-news");
 
             // 한국어/영어 라벨 선택
             const labelText = currentLang === "ko" 
@@ -184,7 +192,7 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
               : (category.enName || category.enLabel || category.id);
 
             // 매핑 객체에서 아이콘 컴포넌트 조회
-            const IconComponent = ICON_MAP[category.id] || LayoutGrid;
+            const IconComponent = ICON_MAP[normalizedId] || LayoutGrid;
 
             return (
               <button
@@ -192,14 +200,14 @@ export function CategoryTabs({ selectedCategory, onCategoryChange, language }: C
                 data-id={category.id}
                 type="button"
                 onClick={() => onCategoryChange(category.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all duration-200 border cursor-pointer select-none ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all duration-200 border cursor-pointer select-none notranslate ${
                   isSelected
                     ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.4)] scale-105"
                     : "bg-slate-800/40 text-slate-400 border-white/[0.05] hover:border-slate-600 hover:text-slate-200 active:scale-95"
                 }`}
               >
                 <IconComponent className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{labelText}</span>
+                <span className="notranslate">{labelText}</span>
               </button>
             );
           })}
