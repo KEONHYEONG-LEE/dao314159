@@ -329,8 +329,10 @@ export function CategoryNews({
     ? (matchedCategory?.name || matchedCategory?.label || "주요뉴스") 
     : (matchedCategory?.enName || matchedCategory?.enLabel || "Top News");
 
-  // "일정 일정" 중복 문구 정제 처리
-  const categoryTitle = rawCategoryTitle.replace(/\b일정\s+일정\b/g, "일정");
+  // "일정 일정" 및 "Pi 일정 일정" 등 번역 찌꺼기 중복 문구 정제 처리
+  const categoryTitle = rawCategoryTitle
+    .replace(/Pi\s+일정\s+일정/g, "일정")
+    .replace(/\b일정\s+일정\b/g, "일정");
 
   if (loading) {
     return (
