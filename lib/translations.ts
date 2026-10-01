@@ -26,6 +26,10 @@ export interface TranslationKeys {
   node: string;
   mining: string;
   wallet: string;
+  // 📌 일정/달력 관련 필수 키 추가
+  schedule: string;
+  schedule_title: string;
+  schedule_desc: string;
 }
 
 const rawTranslations: Record<string, TranslationKeys> = {
@@ -54,7 +58,10 @@ const rawTranslations: Record<string, TranslationKeys> = {
     mainnet: "메인넷",
     node: "노드",
     mining: "채굴",
-    wallet: "지갑"
+    wallet: "지갑",
+    schedule: "일정",
+    schedule_title: "Pi 네트워크 이벤트 일정",
+    schedule_desc: "메인넷 마이그레이션, 해커톤 및 노드 업데이트 일정이 주요 일정으로 잡혔습니다."
   },
   en: {
     search: "Search Global Pi news...",
@@ -81,7 +88,10 @@ const rawTranslations: Record<string, TranslationKeys> = {
     mainnet: "Mainnet",
     node: "Node",
     mining: "Mining",
-    wallet: "Wallet"
+    wallet: "Wallet",
+    schedule: "Schedule",
+    schedule_title: "Pi Network Event Schedule",
+    schedule_desc: "Mainnet migration, hackathons, and node updates are scheduled as key events."
   },
   ja: {
     search: "グローバルPiニュースを検索...",
@@ -108,7 +118,10 @@ const rawTranslations: Record<string, TranslationKeys> = {
     mainnet: "メインネット",
     node: "ノード",
     mining: "マイニング",
-    wallet: "ウォレット"
+    wallet: "ウォレット",
+    schedule: "スケジュール",
+    schedule_title: "Pi ネットワークイベントスケジュール",
+    schedule_desc: "メインネット移行、ハッカソン、ノード更新が主なスケジュールです。"
   },
   zh: {
     search: "搜索全球派新闻...",
@@ -135,7 +148,10 @@ const rawTranslations: Record<string, TranslationKeys> = {
     mainnet: "主网",
     node: "节点",
     mining: "挖矿",
-    wallet: "钱包"
+    wallet: "钱包",
+    schedule: "日程",
+    schedule_title: "Pi 网络活动日程",
+    schedule_desc: "主网迁移、黑客松和节点更新已列为主要日程。"
   },
   es: {
     search: "Buscar noticias globales de Pi...",
@@ -162,7 +178,10 @@ const rawTranslations: Record<string, TranslationKeys> = {
     mainnet: "Red Principal",
     node: "Nodo",
     mining: "Minería",
-    wallet: "Billetera"
+    wallet: "Billetera",
+    schedule: "Calendario",
+    schedule_title: "Calendario de Eventos de Pi Network",
+    schedule_desc: "La migración a la red principal, los hackatones y las actualizaciones de nodos están programados."
   },
   vi: {
     search: "Tìm kiếm tin tức Pi toàn cầu...",
@@ -189,7 +208,10 @@ const rawTranslations: Record<string, TranslationKeys> = {
     mainnet: "Mạng Chính",
     node: "Nút Node",
     mining: "Khai Thác",
-    wallet: "Ví"
+    wallet: "Ví",
+    schedule: "Lịch trình",
+    schedule_title: "Lịch Sự Kiện Pi Network",
+    schedule_desc: "Di chuyển Mainnet, cuộc thi hackathon và cập nhật nút là các sự kiện chính."
   }
 };
 
