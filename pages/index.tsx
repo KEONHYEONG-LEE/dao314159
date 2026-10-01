@@ -114,6 +114,7 @@ export default function Home() {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    e.targetTouches[0].clientX;
     eXRef.current = e.targetTouches[0].clientX;
   };
 
@@ -212,12 +213,15 @@ export default function Home() {
       : user.username
     : "";
 
+  // 📌 GPNR Schedule/Calendar/Event/일정 n'izindi nzira zose zirebana n'ingengabihe
   const catLower = String(activeCategory || "").toLowerCase();
   const isCalendarTab = 
     catLower.includes("calendar") || 
     catLower.includes("schedule") || 
     catLower.includes("event") || 
-    catLower === "일정";
+    catLower.includes("일정") ||
+    activeCategory === "schedule" ||
+    activeCategory === "calendar";
 
   return (
     <main 
@@ -277,7 +281,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 일정 선택 시 PiCalendar, 일반 카테고리 선택 시 CategoryNews 출력 */}
+      {/* 📌 PiCalendar n'ubundi ibaho neza cyane */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-3">
         {isCalendarTab ? (
           <PiCalendar currentLang={currentLang} />
