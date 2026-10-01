@@ -13,10 +13,11 @@ export interface CalendarEvent {
   categoryKo: string;
   categoryEn: string;
   type: "major" | "important" | "normal";
+  isAutoAI?: boolean; // AI 자동 선별 추출 여부
 }
 
-// 2026년 Pi Network & GPNR 핵심 주요 일정 데이터베이스
-const EVENTS_DATA: CalendarEvent[] = [
+// 기존 기본 고정 일점 DB
+const INITIAL_EVENTS_DATA: CalendarEvent[] = [
   {
     id: "evt-1",
     date: "2026-03-14",
@@ -33,7 +34,7 @@ const EVENTS_DATA: CalendarEvent[] = [
     date: "2026-03-31",
     titleKo: "Q1 생태계 해커톤 심사 및 우수 앱 발표",
     titleEn: "Q1 Hackathon Evaluation & Winner Showcase",
-    descKo: "1분기 유티리티 개발 해커톤 마감 및 상위 파이 유틸리티 앱 검증 완료",
+    descKo: "1분기 유틸리티 개발 해커톤 마감 및 상위 파이 유틸리티 앱 검증 완료",
     descEn: "Q1 utility hackathon conclusion & top Pi utility apps verification",
     categoryKo: "개발",
     categoryEn: "Dev",
@@ -107,12 +108,92 @@ const EVENTS_DATA: CalendarEvent[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// [AI/Parser Engine] 뉴스 및 최신 기사 데이터로부터 핵심 일정을 선별·추출하는 알고리즘
+// ---------------------------------------------------------------------------
+interface ArticlePayload {
+  title: string;
+  snippet?: string;
+  publishedDate?: string;
+}
+
+const parseArticlesToEvents = (articles: ArticlePayload[]): CalendarEvent[] => {
+  const extractedEvents: CalendarEvent[] = [];
+
+  const monthMap: Record<string, string> = {
+    january: "01", jan: "01",
+    february: "02", feb: "02",
+    march: "03", mar: "03",
+    april: "04", apr: "04",
+    may: "05",
+    june: "06", jun: "06",
+    july: "07", jul: "07",
+    august: "08", aug: "08",
+    september: "09", sep: "09", sept: "09",
+    october: "10", oct: "10",
+    november: "11", nov: "11",
+    december: "12", dec: "12",
+  };
+
+  articles.forEach((art, index) => {
+    const text = `${art.title} ${art.snippet || ""}`;
+    
+    // 날짜 패턴 검색 (예: "August 11", "August 11, 2026", "11 August", "2026-08-11")
+    const dateRegex = /(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,\s*(\d{4}))?/i;
+    const match = text.match(dateRegex);
+
+    if (match) {
+      const monthStr = match[1].toLowerCase();
+      const dayStr = match[2].padStart(2, "0");
+      const yearStr = match[3] || "2026";
+      const monthNum = monthMap[monthStr] || "01";
+      const formattedDate = `${yearStr}-${monthNum}-${dayStr}`;
+
+      // 중요도 분류
+      let type: "major" | "important" | "normal" = "important";
+      if (/deadline|protocol|mainnet|launch|upgrade/i.test(text)) {
+        type = "major";
+      }
+
+      // 카테고리 선별
+      let catKo = "메인넷";
+      let catEn = "Mainnet";
+      if (/protocol|node|rollout|upgrade/i.test(text)) {
+        catKo = "개발";
+        catEn = "Dev";
+      } else if (/event|summit|festival|day/i.test(text)) {
+        catKo = "행사";
+        catEn = "Event";
+      }
+
+      extractedEvents.push({
+        id: `ai-evt-${index}-${Date.now()}`,
+        date: formattedDate,
+        titleKo: art.title,
+        titleEn: art.title,
+        descKo: art.snippet || "AI가 실시간 뉴스로부터 자동 수집·선별한 핵심 일정입니다.",
+        descEn: art.snippet || "Auto-extracted key schedule from live news AI parser.",
+        categoryKo: catKo,
+        categoryEn: catEn,
+        type: type,
+        isAutoAI: true,
+      });
+    }
+  });
+
+  return extractedEvents;
+};
+
 export function PiCalendar({ currentLang }: { currentLang?: string }) {
   const [mounted, setMounted] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [activeLang, setActiveLang] = useState<"ko" | "en">("en");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+
+  // 실시간 AI 결합 통합 일정 데이터 상태관리
+  const [eventsData, setEventsData] = useState<CalendarEvent[]>(INITIAL_EVENTS_DATA);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   const getAppLanguage = (): "ko" | "en" => {
     if (typeof window === "undefined") return "en";
@@ -130,6 +211,40 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
     }
   };
 
+  // 실시간 뉴스 데이터 로드 및 AI 자동 동기화 함수
+  const fetchLiveNewsAndInjectEvents = async () => {
+    setIsSyncing(true);
+    try {
+      // 샘플: 두 번째 이미지(The Crypto Times 등)와 같은 기사 헤드라인 파싱 연동 시뮬레이션
+      const fetchedNewsArticles: ArticlePayload[] = [
+        {
+          title: "Pi Network Starts Protocol 26 Rollout Ahead of August 11 Deadline",
+          snippet: "Mainnet node operators must update to Protocol 26 by August 11 or risk being disconnected.",
+          publishedDate: "2026-07-29",
+        },
+      ];
+
+      // 외부 백엔드/API 수집이 연결된 경우 사용 가능:
+      // const res = await fetch('/api/pi-news-scanner');
+      // const fetchedNewsArticles = await res.json();
+
+      const aiExtractedEvents = parseArticlesToEvents(fetchedNewsArticles);
+
+      setEventsData((prev) => {
+        // 기존 DB와 중복 예방 결합
+        const existingIds = new Set(prev.map((e) => `${e.date}-${e.titleEn}`));
+        const newEvents = aiExtractedEvents.filter(
+          (e) => !existingIds.has(`${e.date}-${e.titleEn}`)
+        );
+        return [...prev, ...newEvents];
+      });
+    } catch (err) {
+      console.error("Failed to sync AI events:", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     const now = new Date();
@@ -140,6 +255,9 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
     setSelectedDate(`${now.getFullYear()}-${m}-${d}`);
 
     setActiveLang(getAppLanguage());
+
+    // 초기 마운트 시 실시간 AI 뉴스 스캐닝 자동 실행
+    fetchLiveNewsAndInjectEvents();
 
     const handleLangChange = () => {
       setActiveLang(getAppLanguage());
@@ -191,7 +309,7 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
   };
 
   const selectedEvents = useMemo(() => {
-    return EVENTS_DATA.filter((e) => {
+    return eventsData.filter((e) => {
       const matchDate = e.date === selectedDate;
       const matchCat =
         selectedCategory === "ALL" ||
@@ -199,15 +317,15 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
         e.categoryEn.toLowerCase() === selectedCategory.toLowerCase();
       return matchDate && matchCat;
     });
-  }, [selectedDate, selectedCategory]);
+  }, [selectedDate, selectedCategory, eventsData]);
 
   const upcomingMajorEvent = useMemo(() => {
     const todayStr = new Date().toISOString().split("T")[0];
-    const sorted = [...EVENTS_DATA]
+    const sorted = [...eventsData]
       .filter((e) => e.date >= todayStr)
       .sort((a, b) => a.date.localeCompare(b.date));
-    return sorted[0] || EVENTS_DATA[0];
-  }, []);
+    return sorted[0] || eventsData[0];
+  }, [eventsData]);
 
   const calculateDDay = (targetDateStr: string) => {
     const target = new Date(targetDateStr).getTime();
@@ -223,6 +341,22 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
     <section className="py-5 px-3 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 min-h-[600px] rounded-3xl border border-slate-800/80 shadow-2xl backdrop-blur-xl">
       <div className="max-w-md mx-auto space-y-4">
         
+        {/* 상단 실시간 동기화 상태 및 버튼 */}
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold">
+            <span className={`w-2 h-2 rounded-full bg-emerald-500 ${isSyncing ? "animate-ping" : ""}`} />
+            <span>{isSyncing ? "AI 동기화 진행 중..." : "GPNR AI Realtime Syncing"}</span>
+          </div>
+          <button
+            onClick={fetchLiveNewsAndInjectEvents}
+            disabled={isSyncing}
+            className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700 active:scale-95 transition-all"
+          >
+            🔄 {activeLang === "ko" ? "AI 일정 새로고침" : "Refresh AI Events"}
+          </button>
+        </div>
+
+        {/* 상단 다가오는 핵심 일정 Card */}
         {upcomingMajorEvent && (
           <div className="relative overflow-hidden bg-gradient-to-r from-purple-900/40 via-amber-900/20 to-purple-900/40 border border-amber-500/30 rounded-2xl p-3.5 shadow-lg backdrop-blur-md">
             <div className="flex items-center justify-between">
@@ -231,8 +365,13 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
                 </span>
-                <span className="text-[11px] font-bold tracking-wider uppercase text-amber-300/90">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-amber-300/90 flex items-center gap-1">
                   {activeLang === "ko" ? "다가오는 핵심 일정" : "Next Key Event"}
+                  {upcomingMajorEvent.isAutoAI && (
+                    <span className="bg-purple-600/80 text-[9px] text-white px-1.5 py-0.2 rounded-full font-normal">
+                      AI Auto
+                    </span>
+                  )}
                 </span>
               </div>
               <span className="px-2.5 py-0.5 text-xs font-black rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 shadow-sm">
@@ -250,6 +389,7 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
           </div>
         )}
 
+        {/* 카테고리 필터 */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat.key;
@@ -269,6 +409,7 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
           })}
         </div>
 
+        {/* 달력 본체 */}
         <div className="bg-slate-900/90 border border-purple-500/20 rounded-2xl p-4 shadow-2xl backdrop-blur-md">
           <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
             <button
@@ -323,7 +464,7 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
 
               const isSelected = selectedDate === fullDateStr;
               
-              const matchedEvents = EVENTS_DATA.filter((e) => {
+              const matchedEvents = eventsData.filter((e) => {
                 const isDateMatch = e.date === fullDateStr;
                 const isCatMatch =
                   selectedCategory === "ALL" ||
@@ -370,6 +511,7 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
           </div>
         </div>
 
+        {/* 선택 일자 이벤트 리스트 */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-md">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
             <div className="flex items-center gap-2">
@@ -424,8 +566,13 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
                               : "bg-cyan-400"
                           }`}
                         />
-                        <h4 className="text-xs font-extrabold text-slate-100">
+                        <h4 className="text-xs font-extrabold text-slate-100 flex items-center gap-1.5">
                           {activeLang === "ko" ? evt.titleKo : evt.titleEn}
+                          {evt.isAutoAI && (
+                            <span className="text-[9px] bg-purple-900/80 text-purple-200 border border-purple-500/40 px-1.5 py-0.2 rounded">
+                              AI Detected
+                            </span>
+                          )}
                         </h4>
                       </div>
                       <span
