@@ -212,7 +212,6 @@ export default function Home() {
       : user.username
     : "";
 
-  // 모든 일정/달력 관련 카테고리 키값 통합 판별
   const catLower = String(activeCategory || "").toLowerCase();
   const isCalendarTab = 
     catLower.includes("calendar") || 
