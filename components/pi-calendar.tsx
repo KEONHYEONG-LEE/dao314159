@@ -182,7 +182,7 @@ const parseArticlesToEvents = (articles: ArticlePayload[]): CalendarEvent[] => {
 export function PiCalendar({ currentLang }: { currentLang?: string }) {
   const [mounted, setMounted] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<string>(""); // 기본적으로 특정 날짜 선택 해제
   const [activeLang, setActiveLang] = useState<"ko" | "en">("en");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
@@ -237,9 +237,8 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
     const now = new Date();
     setCurrentDate(now);
 
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const d = String(now.getDate()).padStart(2, "0");
-    setSelectedDate(`${now.getFullYear()}-${m}-${d}`);
+    // 초기 진입 시 특정 하루에 고정되지 않고 해당 월 전체 일정을 보여주기 위해 selectedDate를 비워둡니다.
+    setSelectedDate("");
 
     setActiveLang(getAppLanguage());
     fetchLiveNewsAndInjectEvents();
@@ -263,8 +262,14 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+  const prevMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1));
+    setSelectedDate(""); // 달 이동 시 날짜 선택 해제
+  };
+  const nextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1));
+    setSelectedDate(""); // 달 이동 시 날짜 선택 해제
+  };
 
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const emptyDays = Array.from({ length: firstDay }, (_, i) => i);
@@ -293,16 +298,25 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
     return `${year}-${m}-${d}`;
   };
 
+  // 선택된 날짜가 있으면 해당 날짜만, 없으면 현재 달(YYYY-MM) 또는 전체 일정을 노출합니다.
   const selectedEvents = useMemo(() => {
-    return eventsData.filter((e) => {
-      const matchDate = e.date === selectedDate;
-      const matchCat =
-        selectedCategory === "ALL" ||
-        e.categoryKo === selectedCategory ||
-        e.categoryEn.toLowerCase() === selectedCategory.toLowerCase();
-      return matchDate && matchCat;
-    });
-  }, [selectedDate, selectedCategory, eventsData]);
+    const currentYearMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
+
+    return eventsData
+      .filter((e) => {
+        const matchDate = selectedDate
+          ? e.date === selectedDate
+          : e.date.startsWith(currentYearMonth);
+
+        const matchCat =
+          selectedCategory === "ALL" ||
+          e.categoryKo === selectedCategory ||
+          e.categoryEn.toLowerCase() === selectedCategory.toLowerCase();
+
+        return matchDate && matchCat;
+      })
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [selectedDate, selectedCategory, eventsData, year, month]);
 
   const upcomingMajorEvent = useMemo(() => {
     const todayStr = new Date().toISOString().split("T")[0];
@@ -466,7 +480,14 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
                 <button
                   type="button"
                   key={day}
-                  onClick={() => setSelectedDate(fullDateStr)}
+                  onClick={() => {
+                    // 이미 선택된 날짜를 누르면 선택 해제(토글)
+                    if (selectedDate === fullDateStr) {
+                      setSelectedDate("");
+                    } else {
+                      setSelectedDate(fullDateStr);
+                    }
+                  }}
                   className={`relative py-3 rounded-xl font-bold transition-all duration-150 cursor-pointer flex flex-col items-center justify-center ${
                     isSelected
                       ? "bg-gradient-to-tr from-purple-600 to-indigo-500 text-white shadow-lg shadow-purple-600/40 ring-2 ring-purple-300 scale-105 z-10"
@@ -496,26 +517,39 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
           </div>
         </div>
 
-        {/* 선택된 일자의 이벤트 리스트 */}
+        {/* 선택된 일자 또는 이번 달 전체 이벤트 리스트 */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-md">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
             <div className="flex items-center gap-2">
               <span className="text-base">📌</span>
               <h3 className="text-xs font-black tracking-wide text-slate-200">
-                {selectedDate} {activeLang === "ko" ? "일정" : "Scheduled Events"}
+                {selectedDate
+                  ? `${selectedDate} ${activeLang === "ko" ? "일정" : "Scheduled Events"}`
+                  : `${year}년 ${month + 1}월 ${activeLang === "ko" ? "전체 주요 일정" : "Monthly Key Events"}`}
               </h3>
             </div>
-            <span className="text-[10px] text-purple-300 bg-purple-950/80 px-2.5 py-0.5 rounded-full border border-purple-700/50 font-extrabold">
-              {selectedEvents.length}{activeLang === "ko" ? "개 항목" : " item(s)"}
-            </span>
+            <div className="flex items-center gap-2">
+              {selectedDate && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate("")}
+                  className="text-[10px] text-purple-400 hover:text-purple-300 underline font-semibold"
+                >
+                  {activeLang === "ko" ? "전체보기" : "Show All"}
+                </button>
+              )}
+              <span className="text-[10px] text-purple-300 bg-purple-950/80 px-2.5 py-0.5 rounded-full border border-purple-700/50 font-extrabold">
+                {selectedEvents.length}{activeLang === "ko" ? "개 항목" : " item(s)"}
+              </span>
+            </div>
           </div>
 
           {selectedEvents.length === 0 ? (
             <div className="text-center py-6 space-y-1">
               <p className="text-xs font-semibold text-slate-500">
                 {activeLang === "ko"
-                  ? "해당 날짜에 등록된 중요 일정이 없습니다."
-                  : "No scheduled events for this date."}
+                  ? "해당 기간/날짜에 등록된 중요 일정이 없습니다."
+                  : "No scheduled events for this period/date."}
               </p>
               <p className="text-[11px] text-slate-600">
                 {activeLang === "ko"
@@ -552,6 +586,7 @@ export function PiCalendar({ currentLang }: { currentLang?: string }) {
                           }`}
                         />
                         <h4 className="text-xs font-extrabold text-slate-100 flex items-center gap-1.5">
+                          <span className="text-purple-300 font-mono text-[11px] mr-1">[{evt.date}]</span>
                           {activeLang === "ko" ? evt.titleKo : evt.titleEn}
                           {evt.isAutoAI && (
                             <span className="text-[9px] bg-purple-900/80 text-purple-200 border border-purple-500/40 px-1.5 py-0.2 rounded">
