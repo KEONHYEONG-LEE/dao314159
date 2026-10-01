@@ -49,8 +49,8 @@ export const NEWS_CATEGORIES: Category[] = [
   { id: "kyc", name: "KYC", label: "KYC", enName: "KYC", enLabel: "KYC", iconName: "ShieldCheck", Icon: ShieldCheck, group: "ecosystem" },
   { id: "developer", name: "개발자", label: "개발자", enName: "Developers", enLabel: "Developers", iconName: "Code", Icon: Code, group: "ecosystem" },
   
-  // 📌 Calendar -> Schedule / 일정 으로 용어 변경
-  { id: "calendar", name: "일정", label: "일정", enName: "Schedule", enLabel: "Schedule", iconName: "Calendar", Icon: Calendar, group: "ecosystem" },
+  // 📌 Calendar / Schedule 동시 대처 (id: 'schedule'로 통일하여 사용)
+  { id: "schedule", name: "일정", label: "일정", enName: "Schedule", enLabel: "Schedule", iconName: "Calendar", Icon: Calendar, group: "ecosystem" },
 
   // 3. 마켓 및 보안 (Market & Legal)
   { id: "outlook", name: "가격 전망", label: "가격 전망", enName: "Price Outlook", enLabel: "Price Outlook", iconName: "TrendingUp", Icon: TrendingUp, group: "market_legal" },
