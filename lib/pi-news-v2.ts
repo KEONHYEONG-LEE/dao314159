@@ -72,6 +72,13 @@ export const FALLBACK_NEWS_DATA: Record<string, NewsItem[]> = {
 
 // 카테고리별 뉴스를 불러온 후 최신순(내림차순)으로 정렬하여 반환하는 함수
 export function getFallbackNews(category: string): NewsItem[] {
+  const catLower = String(category || '').toLowerCase();
+  
+  // 만약 카테고리가 일정/달력인 경우 빈 배열을 반환하여 CategoryNews의 임시 UI 출력을 방지합니다.
+  if (catLower.includes('schedule') || catLower.includes('calendar') || catLower.includes('event')) {
+    return [];
+  }
+
   const news = FALLBACK_NEWS_DATA[category] || FALLBACK_NEWS_DATA['top-news'] || [];
 
   // publishedAt 날짜 기준 내림차순(최신순) 정렬
