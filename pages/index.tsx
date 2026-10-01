@@ -10,7 +10,7 @@ import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authenticati
 import { translations } from "../lib/translations";
 import { NEWS_CATEGORIES } from "../lib/categories";
 
-const CATEGORIES = NEWS_CATEGORIES.map(c => c.id);
+const CATEGORIES = Array.isArray(NEWS_CATEGORIES) ? NEWS_CATEGORIES.map(c => c.id) : [];
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState('top-news');
@@ -212,7 +212,7 @@ export default function Home() {
       : user.username
     : "";
 
-  // 모든 가능한 일정/달력 관련 카테고리 ID 패턴 매칭
+  // 모든 일정/달력 관련 카테고리 키값 통합 판별
   const catLower = String(activeCategory || "").toLowerCase();
   const isCalendarTab = 
     catLower.includes("calendar") || 
@@ -278,7 +278,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 일정 탭 감지 시 PiCalendar를 강제 출력하도록 변경 */}
+      {/* 일정 선택 시 PiCalendar, 일반 카테고리 선택 시 CategoryNews 출력 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-3">
         {isCalendarTab ? (
           <PiCalendar currentLang={currentLang} />
@@ -302,20 +302,18 @@ export default function Home() {
         </select>
       </div>
 
-      <span dangerouslySetInnerHTML={{ __html: `
-        <style>
-          @keyframes gpnrMarquee {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-100%); }
-          }
-          .compliance-marquee {
-            animation: gpnrMarquee 40s linear infinite !important;
-          }
-          .compliance-marquee:active, .compliance-marquee:hover {
-            animation-play-state: paused !important;
-          }
-        </style>
-      `}} />
+      <style jsx global>{`
+        @keyframes gpnrMarquee {
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(-100%); }
+        }
+        .compliance-marquee {
+          animation: gpnrMarquee 40s linear infinite !important;
+        }
+        .compliance-marquee:active, .compliance-marquee:hover {
+          animation-play-state: paused !important;
+        }
+      `}</style>
     </main>
   );
 }
