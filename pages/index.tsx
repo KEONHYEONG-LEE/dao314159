@@ -213,13 +213,15 @@ export default function Home() {
       : user.username
     : "";
 
-  // 📌 GPNR Schedule/Calendar/Event/일정 n'izindi nzira zose zirebana n'ingengabihe
+  // 📌 달력/일정 탭 조건 판별 (events, calendar, schedule, 일정 등 완벽 지원)
   const catLower = String(activeCategory || "").toLowerCase();
   const isCalendarTab = 
     catLower.includes("calendar") || 
     catLower.includes("schedule") || 
     catLower.includes("event") || 
     catLower.includes("일정") ||
+    catLower.includes("pi-calendar") ||
+    activeCategory === "events" ||
     activeCategory === "schedule" ||
     activeCategory === "calendar";
 
@@ -281,7 +283,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 📌 PiCalendar n'ubundi ibaho neza cyane */}
+      {/* 📌 달력 탭 선택 시 PiCalendar 컴포넌트 출력 */}
       <div className="max-w-3xl mx-auto px-4 transition-opacity duration-300 mt-3">
         {isCalendarTab ? (
           <PiCalendar currentLang={currentLang} />
