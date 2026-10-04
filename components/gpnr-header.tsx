@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { NEWS_CATEGORIES } from "../lib/categories";
 import { UsageModal } from "./usage-modal";
@@ -29,8 +29,8 @@ import {
   Menu,
   X,
   Newspaper,
-  Loader2,
-  HelpCircle
+  HelpCircle,
+  UserCheck
 } from "lucide-react";
 
 const NEON_PALETTE = [
@@ -43,6 +43,7 @@ const NEON_PALETTE = [
 
 const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
+  "top_news": Flame,
   "mainnet": Globe,
   "node": Tv,
   "mining": Zap,
@@ -54,12 +55,19 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "commerce": ShoppingCart,
   "kyc": ShieldCheck,
   "developer": Code,
-  "calendar": Calendar,
-  "schedule": Calendar,
+  "developers": Code,
+  "ecosystem": Building,
+  "real-estate": Building,
+  "real_estate": Building,
   "outlook": TrendingUp,
+  "price-outlook": TrendingUp,
+  "price_outlook": TrendingUp,
   "price": DollarSign,
   "security": Shield,
   "legal": Gavel,
+  "regulations": Gavel,
+  "calendar": Calendar,
+  "schedule": Calendar,
   "defi": Coins,
   "usage": HelpCircle,
 };
@@ -78,11 +86,10 @@ export function GpnrHeader({
   const [mounted, setMounted] = useState<boolean>(false);
   const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false);
   const [isUsageOpen, setIsUsageOpen] = useState<boolean>(false); // 이용방법 팝업 상태
-  const [isPaying, setIsPaying] = useState<boolean>(false);
   const [currentLang, setCurrentLang] = useState<string>("ko");
   const [colorIdx, setColorIdx] = useState<number>(0);
 
-  const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
+  const { user, logout } = usePiNetworkAuthentication();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -116,14 +123,25 @@ export function GpnrHeader({
     ? user.username.length > 10
       ? `${user.username.substring(0, 4)}...${user.username.substring(user.username.length - 4)}`
       : user.username
-    : "";
+    : "11177";
 
   const renderCategoryIcon = (category: any) => {
-    const FoundIcon = ICON_MAP[category.id] || category.Icon || Newspaper;
+    const rawId = category.id ? String(category.id).toLowerCase() : "";
+    const FoundIcon = ICON_MAP[rawId] || category.Icon || Newspaper;
     return <FoundIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
   };
 
   const activeNeon = NEON_PALETTE[colorIdx];
+
+  // 이용방법 버튼 항목을 포함하도록 카테고리 목록 강제 점검
+  const categoriesList = [...NEWS_CATEGORIES];
+  if (!categoriesList.some((c) => c.id === "usage")) {
+    categoriesList.unshift({
+      id: "usage",
+      name: "이용방법",
+      enName: "Usage Guide",
+    });
+  }
 
   return (
     <>
@@ -180,31 +198,57 @@ export function GpnrHeader({
           <div
             style={{
               width: '90%',
-              maxWidth: '320px',
-              maxHeight: '80vh',
+              maxWidth: '340px',
+              maxHeight: '82vh',
               overflowY: 'auto',
               backgroundColor: '#131528',
               border: '1px solid rgba(168, 85, 247, 0.3)',
               borderRadius: '20px',
               padding: '14px',
-              paddingBottom: '20px',
               position: 'relative'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setIsLauncherOpen(false)}
-              type="button"
-              style={{ position: 'absolute', top: '10px', right: '10px', color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              <X className="w-4 h-4" />
-            </button>
+            {/* 상단 이용방법 상단 바로가기 및 닫기 버튼 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLauncherOpen(false);
+                  setIsUsageOpen(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 10px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(58, 23, 92, 0.8)',
+                  border: '1px solid rgba(168, 85, 247, 0.5)',
+                  color: '#d8b4fe',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
+                <span>이용방법</span>
+              </button>
+
+              <button
+                onClick={() => setIsLauncherOpen(false)}
+                type="button"
+                style={{ color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto' }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
             {/* 카테고리 4열 그리드 */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px', marginTop: '16px' }}>
-              {NEWS_CATEGORIES.map((category) => {
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px' }}>
+              {categoriesList.map((category) => {
                 const isSelected = currentCategory === category.id;
-                const labelText = currentLang === "ko" ? category.name : category.enName;
+                const labelText = currentLang === "ko" ? category.name : (category.enName || category.name);
 
                 return (
                   <button
@@ -213,7 +257,7 @@ export function GpnrHeader({
                     onClick={() => {
                       if (category.id === 'usage') {
                         setIsLauncherOpen(false);
-                        setIsUsageOpen(true); // 이용방법 클릭 시 모달 팝업 열기
+                        setIsUsageOpen(true);
                       } else {
                         if (onCategoryChange) onCategoryChange(category.id);
                         setIsLauncherOpen(false);
@@ -240,6 +284,46 @@ export function GpnrHeader({
                   </button>
                 );
               })}
+            </div>
+
+            {/* 하단 KYC 및 연결 정보 */}
+            <div style={{ marginTop: '12px', pt: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem("gpnr_kyc_id");
+                  alert("KYC ID 정보가 재설정되었습니다.");
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(76, 5, 25, 0.6)',
+                  border: '1px solid rgba(244, 63, 94, 0.3)',
+                  color: '#fca5a5',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                KYC ID 포함
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', padding: '0 4px' }}>
+                <span>
+                  연결: <strong style={{ color: '#c084fc' }}>{displayId}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (logout) logout();
+                    setIsLauncherOpen(false);
+                  }}
+                  style={{ color: '#fb7185', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  로그아웃/변경
+                </button>
+              </div>
             </div>
           </div>
         </div>
