@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { NEWS_CATEGORIES } from "../lib/categories";
+import { UsageModal } from "./usage-modal";
 
 import {
   Flame,
@@ -28,36 +29,20 @@ import {
   Menu,
   X,
   Newspaper,
-  Loader2
+  Loader2,
+  HelpCircle
 } from "lucide-react";
 
-// 카멜레온 네온 그라데이션 & 발광 색상 팔레트 (2.5초 간격 순환)
 const NEON_PALETTE = [
-  {
-    gradient: "linear-gradient(90deg, #c084fc 0%, #f472b6 50%, #fcd34d 100%)",
-    glow: "0 0 14px rgba(192, 132, 252, 0.85)"
-  },
-  {
-    gradient: "linear-gradient(90deg, #34d399 0%, #2dd4bf 50%, #22d3ee 100%)",
-    glow: "0 0 14px rgba(52, 211, 153, 0.85)"
-  },
-  {
-    gradient: "linear-gradient(90deg, #fcd34d 0%, #fb7185 50%, #c084fc 100%)",
-    glow: "0 0 14px rgba(252, 211, 77, 0.85)"
-  },
-  {
-    gradient: "linear-gradient(90deg, #60a5fa 0%, #a5b4fc 50%, #c084fc 100%)",
-    glow: "0 0 14px rgba(96, 165, 250, 0.85)"
-  },
-  {
-    gradient: "linear-gradient(90deg, #e879f9 0%, #c084fc 50%, #a5b4fc 100%)",
-    glow: "0 0 14px rgba(232, 121, 249, 0.85)"
-  }
+  { gradient: "linear-gradient(90deg, #c084fc 0%, #f472b6 50%, #fcd34d 100%)", glow: "0 0 14px rgba(192, 132, 252, 0.85)" },
+  { gradient: "linear-gradient(90deg, #34d399 0%, #2dd4bf 50%, #22d3ee 100%)", glow: "0 0 14px rgba(52, 211, 153, 0.85)" },
+  { gradient: "linear-gradient(90deg, #fcd34d 0%, #fb7185 50%, #c084fc 100%)", glow: "0 0 14px rgba(252, 211, 77, 0.85)" },
+  { gradient: "linear-gradient(90deg, #60a5fa 0%, #a5b4fc 50%, #c084fc 100%)", glow: "0 0 14px rgba(96, 165, 250, 0.85)" },
+  { gradient: "linear-gradient(90deg, #e879f9 0%, #c084fc 50%, #a5b4fc 100%)", glow: "0 0 14px rgba(232, 121, 249, 0.85)" }
 ];
 
 const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
-  "top_news": Flame,
   "mainnet": Globe,
   "node": Tv,
   "mining": Zap,
@@ -69,19 +54,14 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "commerce": ShoppingCart,
   "kyc": ShieldCheck,
   "developer": Code,
-  "developers": Code,
-  "ecosystem": Building,
-  "real-estate": Building,
-  "real_estate": Building,
   "calendar": Calendar,
+  "schedule": Calendar,
   "outlook": TrendingUp,
-  "price-outlook": TrendingUp,
-  "price_outlook": TrendingUp,
   "price": DollarSign,
   "security": Shield,
   "legal": Gavel,
-  "regulations": Gavel,
   "defi": Coins,
+  "usage": HelpCircle,
 };
 
 interface GpnrHeaderProps {
@@ -97,18 +77,17 @@ export function GpnrHeader({
 }: GpnrHeaderProps) {
   const [mounted, setMounted] = useState<boolean>(false);
   const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false);
+  const [isUsageOpen, setIsUsageOpen] = useState<boolean>(false); // 이용방법 팝업 상태
   const [isPaying, setIsPaying] = useState<boolean>(false);
   const [currentLang, setCurrentLang] = useState<string>("ko");
   const [colorIdx, setColorIdx] = useState<number>(0);
 
   const { user, isAuthenticated, logout } = usePiNetworkAuthentication();
 
-  // 2.5초마다 네온 색상 자동 전환
   useEffect(() => {
     const timer = setInterval(() => {
       setColorIdx((prev) => (prev + 1) % NEON_PALETTE.length);
     }, 2500);
-
     return () => clearInterval(timer);
   }, []);
 
@@ -121,7 +100,6 @@ export function GpnrHeader({
             currentLanguage ||
             localStorage.getItem("gpnr_lang") ||
             localStorage.getItem("language") ||
-            localStorage.getItem("gpnr-language") ||
             "ko";
           setCurrentLang(targetLang);
         }
@@ -129,72 +107,8 @@ export function GpnrHeader({
         console.error("Language sync error:", e);
       }
     };
-
     syncLanguage();
-    window.addEventListener("storage", syncLanguage);
-    window.addEventListener("languageChange", syncLanguage);
-    return () => {
-      window.removeEventListener("storage", syncLanguage);
-      window.removeEventListener("languageChange", syncLanguage);
-    };
   }, [currentLanguage]);
-
-  const handleDonation = useCallback(async () => {
-    if (isPaying) return;
-
-    if (typeof window !== "undefined" && (window as any).Pi) {
-      try {
-        setIsPaying(true);
-        const origin = window.location.origin;
-        await (window as any).Pi.createPayment(
-          {
-            amount: 0.01,
-            memo: currentLang === "ko" ? "GPNR 서비스 후원" : "GPNR Service Donation",
-            metadata: { type: "one-time-donation", app: "GPNR" }
-          },
-          {
-            onReadyForServerApproval: async (paymentId: string) => {
-              await fetch(`${origin}/api/payments/approve`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ paymentId })
-              });
-            },
-            onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-              await fetch(`${origin}/api/payments/complete`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ paymentId, txid })
-              });
-              setIsPaying(false);
-              alert(
-                currentLang === "ko"
-                  ? "0.01 Pi 후원이 완료되었습니다. 감사합니다!"
-                  : "0.01 Pi donation completed. Thank you!"
-              );
-            },
-            onCancel: (paymentId: string) => {
-              console.log("[Pi Payment] 취소:", paymentId);
-              setIsPaying(false);
-            },
-            onError: (error: Error) => {
-              console.error("[Pi Payment] 에러:", error);
-              setIsPaying(false);
-            }
-          }
-        );
-      } catch (err) {
-        console.error("Pi SDK payment failed:", err);
-        setIsPaying(false);
-      }
-    } else {
-      alert(
-        currentLang === "ko"
-          ? "Pi Browser에서 접속해 주세요."
-          : "Please access through Pi Browser."
-      );
-    }
-  }, [currentLang, isPaying]);
 
   if (!mounted) return null;
 
@@ -205,27 +119,8 @@ export function GpnrHeader({
     : "";
 
   const renderCategoryIcon = (category: any) => {
-    const FoundIcon =
-      ICON_MAP[category.id] ||
-      ICON_MAP[category.name] ||
-      ICON_MAP[category.enName] ||
-      (category.iconName ? ICON_MAP[category.iconName] : null) ||
-      (typeof category.icon === "string" ? ICON_MAP[category.icon] : null);
-
-    if (FoundIcon) {
-      return <FoundIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
-    }
-
-    if (typeof category.icon === "function" || typeof category.Icon === "function") {
-      const CustomIcon = category.icon || category.Icon;
-      return <CustomIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
-    }
-
-    if (typeof category.icon === "string" && (category.icon.startsWith("http") || category.icon.startsWith("/"))) {
-      return <img src={category.icon} alt={category.name || "icon"} className="w-4 h-4 mb-0.5 object-contain shrink-0" />;
-    }
-
-    return <Newspaper className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
+    const FoundIcon = ICON_MAP[category.id] || category.Icon || Newspaper;
+    return <FoundIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
   };
 
   const activeNeon = NEON_PALETTE[colorIdx];
@@ -235,7 +130,6 @@ export function GpnrHeader({
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-3">
           <div className="flex h-[48px] items-center justify-between">
-            {/* 카멜레온 순환 네온 로고 영역 */}
             <div className="flex items-center gap-2">
               <span
                 className="font-black text-2xl tracking-wider cursor-pointer select-none active:scale-95 transition-all duration-1000 ease-in-out"
@@ -251,37 +145,14 @@ export function GpnrHeader({
               </span>
             </div>
 
-            {/* 우측 액션 버튼 영역 */}
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleDonation}
-                disabled={isPaying}
-                type="button"
-                className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2.5 py-1 rounded-full border border-purple-500/30 hover:bg-purple-800/50 active:scale-95 text-[11px] font-bold transition-all disabled:opacity-50 cursor-pointer"
-              >
-                {isPaying ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-purple-300" />
-                ) : (
-                  <span>🪙</span>
-                )}
-                <span>{currentLang === "ko" ? "0.01 Pi 후원" : "0.01 Pi Donate"}</span>
-              </button>
-
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 type="button"
                 className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 active:scale-95 transition-all border border-slate-700/50 flex items-center justify-center cursor-pointer"
-                aria-label="Toggle Category Launcher"
               >
                 <Menu className="w-5 h-5 text-slate-200" />
               </button>
-
-              {displayId && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-900/60 rounded-full border border-purple-500/50 text-[11px] font-mono text-purple-200 shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{displayId}</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -317,7 +188,6 @@ export function GpnrHeader({
               borderRadius: '20px',
               padding: '14px',
               paddingBottom: '20px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
               position: 'relative'
             }}
             onClick={(e) => e.stopPropagation()}
@@ -325,45 +195,29 @@ export function GpnrHeader({
             <button
               onClick={() => setIsLauncherOpen(false)}
               type="button"
-              style={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                color: '#94a3b8',
-                background: 'none',
-                border: 'none',
-                padding: '4px',
-                cursor: 'pointer',
-                zIndex: 10
-              }}
-              aria-label="Close"
+              style={{ position: 'absolute', top: '10px', right: '10px', color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <X className="w-4 h-4" />
             </button>
 
-            {/* 4열 카테고리 그리드 */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                gap: '6px',
-                marginTop: '16px'
-              }}
-            >
+            {/* 카테고리 4열 그리드 */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px', marginTop: '16px' }}>
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
-                const labelText =
-                  currentLang === "ko"
-                    ? category.name || category.label || category.id
-                    : category.enName || category.enLabel || category.id;
+                const labelText = currentLang === "ko" ? category.name : category.enName;
 
                 return (
                   <button
                     key={category.id}
                     type="button"
                     onClick={() => {
-                      if (onCategoryChange) onCategoryChange(category.id);
-                      setIsLauncherOpen(false);
+                      if (category.id === 'usage') {
+                        setIsLauncherOpen(false);
+                        setIsUsageOpen(true); // 이용방법 클릭 시 모달 팝업 열기
+                      } else {
+                        if (onCategoryChange) onCategoryChange(category.id);
+                        setIsLauncherOpen(false);
+                      }
                     }}
                     style={{
                       display: 'flex',
@@ -376,89 +230,30 @@ export function GpnrHeader({
                       border: isSelected ? '1px solid #a855f7' : '1px solid rgba(30, 41, 59, 0.8)',
                       backgroundColor: isSelected ? '#2d1b4e' : 'rgba(28, 30, 54, 0.8)',
                       color: isSelected ? '#ffffff' : '#cbd5e1',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
+                      cursor: 'pointer'
                     }}
                   >
                     {renderCategoryIcon(category)}
-                    <span
-                      style={{
-                        fontSize: '9px',
-                        fontWeight: 500,
-                        textAlign: 'center',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: '100%',
-                        paddingLeft: '2px',
-                        paddingRight: '2px'
-                      }}
-                    >
+                    <span style={{ fontSize: '9px', fontWeight: 500, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                       {labelText}
                     </span>
                   </button>
                 );
               })}
             </div>
-
-            <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  if (typeof window !== "undefined") {
-                    localStorage.removeItem("gpnr_kyc_id");
-                    localStorage.removeItem("gpnr_wallet_address");
-                  }
-                  alert(
-                    currentLang === "ko"
-                      ? "KYC ID 인증 정보가 재설정되었습니다."
-                      : "Reset KYC ID completed."
-                  );
-                  setIsLauncherOpen(false);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '7px 0',
-                  borderRadius: '8px',
-                  backgroundColor: 'rgba(76, 5, 25, 0.4)',
-                  border: '1px solid rgba(244, 63, 94, 0.3)',
-                  color: '#fda4af',
-                  fontSize: '10px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-              >
-                {currentLang === "ko" ? "KYC ID 재설정" : "Reset KYC ID"}
-              </button>
-
-              {isAuthenticated && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', padding: '0 4px' }}>
-                  <span>
-                    {currentLang === "ko" ? "연결: " : "Connected: "}
-                    <strong style={{ color: '#d8b4fe', fontFamily: 'monospace' }}>
-                      {displayId}
-                    </strong>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      logout();
-                      setIsLauncherOpen(false);
-                    }}
-                    style={{ color: '#fb7185', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', fontSize: '10px' }}
-                  >
-                    {currentLang === "ko" ? "로그아웃/변경" : "Change ID"}
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       )}
+
+      {/* 이용방법 별도 팝업창 */}
+      <UsageModal
+        isOpen={isUsageOpen}
+        onClose={() => setIsUsageOpen(false)}
+        lang={currentLang}
+      />
     </>
   );
 }
 
-// 명칭 호환성 유지
 export { GpnrHeader as Header, GpnrHeader };
 export default GpnrHeader;
