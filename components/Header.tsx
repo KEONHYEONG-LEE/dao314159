@@ -324,6 +324,17 @@ export function Header({
     return <Newspaper className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
   };
 
+  // '이용방법' 카테고리를 포함한 전체 그리드 목록 생성
+  const allCategories = [...NEWS_CATEGORIES];
+  if (!allCategories.some(cat => cat.id === "usage")) {
+    allCategories.push({
+      id: "usage",
+      name: "이용방법",
+      enName: "Guide",
+      icon: "HelpCircle"
+    });
+  }
+
   const usageGuideList = currentLang === "ko" ? USAGE_GUIDE_KO : USAGE_GUIDE_EN;
 
   return (
@@ -451,7 +462,7 @@ export function Header({
               </div>
             </div>
 
-            {/* 4열 그리드 카테고리 매핑 */}
+            {/* 4열 그리드 카테고리 매핑 (이용방법 포함) */}
             <div
               style={{
                 display: 'grid',
@@ -460,7 +471,7 @@ export function Header({
                 marginTop: '10px'
               }}
             >
-              {NEWS_CATEGORIES.map((category) => {
+              {allCategories.map((category) => {
                 const isSelected = currentCategory === category.id;
                 const labelText =
                   currentLang === "ko"
@@ -549,7 +560,7 @@ export function Header({
               </button>
 
               {isAuthenticated && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10.5px', color: '#94a3b8', padding: '0 4px' }}>
+                <div style={{ display: 'flex', itemsCenter: 'center', justifyContent: 'space-between', fontSize: '10.5px', color: '#94a3b8', padding: '0 4px' }}>
                   <span>
                     {currentLang === "ko" ? "연결된 ID/지갑: " : "Connected ID/Wallet: "}
                     <strong style={{ color: '#d8b4fe', fontFamily: 'monospace' }}>
@@ -751,6 +762,5 @@ export function Header({
   );
 }
 
-// named export 및 default export 모두 지원
 export { Header as GpnrHeader };
 export default Header;
