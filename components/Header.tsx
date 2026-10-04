@@ -29,7 +29,9 @@ import {
   X,
   Newspaper,
   HelpCircle,
-  CheckCircle2
+  CheckCircle2,
+  ExternalLink,
+  MessageSquare
 } from "lucide-react";
 
 // GPNR 로고용 카멜레온 네온 그라데이션 색상 팔레트
@@ -69,25 +71,26 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "regulations": Gavel,
   "calendar": Calendar,
   "defi": Coins,
+  "usage": HelpCircle,
 };
 
-// GPNR 앱 이용방법 안내 문구 데이터 (8가지)
+// GPNR 앱 이용방법 안내 문구 데이터 (10가지)
 const USAGE_GUIDE_KO = [
   {
     title: "무료 이용 및 자율 후원",
-    desc: "GPNR 앱은 모든 파이오니어 분들이 무료로 이용 가능합니다. 후원은 자율이며, 상단 '0.01 파이 기부' 버튼을 통해 1회당 0.01 Pi씩 후원하실 수 있습니다.",
+    desc: "GPNR 앱은 모든 파이오니어 분들이 무료로 이용 가능합니다. 상단 '0.01 파이 기부' 버튼을 통해 1회당 0.01 Pi씩 자율 후원하실 수 있습니다.",
   },
   {
     title: "실시간 최신 주요 뉴스 제공",
-    desc: "Web2 및 Web3의 Pi 관련 공신력 있는 매체의 뉴스를 실시간으로 수집하여 제공하며, 최신 소식을 최상단에 배치합니다.",
+    desc: "Web2 및 Web3의 Pi 관련 공신력 있는 매체의 뉴스를 실시간으로 수집하여 최신 소식을 최상단에 배치합니다.",
   },
   {
     title: "카테고리별 뉴스 탐색",
-    desc: "상단 카테고리 바(Top News, Mainnet, Node, Mining 등)를 터치하거나 좌우 화살표(<, >) 버튼을 이용해 다양한 주제로 빠르게 이동할 수 있습니다.",
+    desc: "상단 카테고리 바를 터치하거나 좌우 화살표(<, >) 버튼을 이용해 다양한 주제로 빠르게 이동할 수 있습니다.",
   },
   {
     title: "Pi 네트워크 지갑 연동 상태 확인 및 변경",
-    desc: "상단 및 뉴스 리스트 위에 현재 연결된 Pi 네트워크 지갑(ID) 상태가 표시되며, 우측 'ID 변경' 버튼을 눌러 연동 지갑을 재설정하실 수 있습니다.",
+    desc: "상단 및 메뉴 내에서 현재 연결된 Pi 네트워크 지갑(ID) 상태가 표시되며, 'ID 변경' 버튼을 눌러 연동 지갑을 재설정할 수 있습니다.",
   },
   {
     title: "다국어 (한국어 / 영어) 지원",
@@ -99,18 +102,26 @@ const USAGE_GUIDE_KO = [
   },
   {
     title: "전체 메뉴 Navigation 런처",
-    desc: "우측 상단 햄버거 메뉴(≡) 버튼을 누르면 GPNR 전체 카테고리 런처 모달이 열려 원하시는 항목으로 즉시 이동이 가능합니다.",
+    desc: "우측 상단 햄버거 메뉴(≡) 버튼을 누르면 GPNR 전체 카테고리 런처 모달이 열려 원하는 항목으로 즉시 이동이 가능합니다.",
   },
   {
     title: "원문 뉴스 출처 확인 및 반응",
     desc: "각 기사 카드 하단에서 해당 뉴스의 출처 매체명과 발행일을 확인할 수 있으며, 관심 있는 기사에 반응을 남기실 수 있습니다.",
+  },
+  {
+    title: "글로벌 커뮤니티 채널 연동",
+    desc: "메뉴 내 '커뮤니티' 항목을 통해 글로벌 파이오니어 분들과 소통할 수 있는 공식 오픈채팅 및 소통 채널로 바로 이동할 수 있습니다.",
+  },
+  {
+    title: "안전한 KYC ID 관리 및 리셋",
+    desc: "메뉴 하단의 'KYC ID 재설정' 버튼을 통해 기기에 저장된 인증 정보를 안전하게 초기화하고 재설정할 수 있습니다.",
   },
 ];
 
 const USAGE_GUIDE_EN = [
   {
     title: "Free Access & Voluntary Donation",
-    desc: "GPNR app is free for all Pioneers. Donations are voluntary (0.01 Pi per transaction via top donation button).",
+    desc: "GPNR app is free for all Pioneers. Voluntary donations of 0.01 Pi per transaction are available via top donation button.",
   },
   {
     title: "Real-time Major Pi News",
@@ -140,6 +151,14 @@ const USAGE_GUIDE_EN = [
     title: "Source Verification & News Interactions",
     desc: "Check news source domains, publication dates, and interact with articles directly.",
   },
+  {
+    title: "Global Community Channels",
+    desc: "Access official open chats and communication channels to engage with Pioneers worldwide via the 'Community' menu.",
+  },
+  {
+    title: "Safe KYC ID Management & Reset",
+    desc: "Safely clear and reconfigure your cached authorization credentials using the 'Reset KYC ID' button.",
+  },
 ];
 
 interface HeaderProps {
@@ -156,6 +175,7 @@ export function Header({
   const [mounted, setMounted] = useState<boolean>(false);
   const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false);
   const [isUsageModalOpen, setIsUsageModalOpen] = useState<boolean>(false);
+  const [isCommunityModalOpen, setIsCommunityModalOpen] = useState<boolean>(false);
   const [currentLang, setCurrentLang] = useState<string>("ko");
   const [logoColorIdx, setLogoColorIdx] = useState<number>(0);
 
@@ -200,12 +220,13 @@ export function Header({
 
   // 모달 제어 시 배경 스크롤 방지 및 ESC 키 처리
   useEffect(() => {
-    if (!isLauncherOpen && !isUsageModalOpen) return;
+    if (!isLauncherOpen && !isUsageModalOpen && !isCommunityModalOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsLauncherOpen(false);
         setIsUsageModalOpen(false);
+        setIsCommunityModalOpen(false);
       }
     };
 
@@ -216,7 +237,7 @@ export function Header({
       document.body.style.overflow = "unset";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isLauncherOpen, isUsageModalOpen]);
+  }, [isLauncherOpen, isUsageModalOpen, isCommunityModalOpen]);
 
   // 0.01 Pi 후원 결제
   const handleDonation = useCallback(async () => {
@@ -451,8 +472,16 @@ export function Header({
                     key={category.id}
                     type="button"
                     onClick={() => {
-                      if (onCategoryChange) onCategoryChange(category.id);
-                      setIsLauncherOpen(false);
+                      if (category.id === "community") {
+                        setIsLauncherOpen(false);
+                        setIsCommunityModalOpen(true);
+                      } else if (category.id === "usage") {
+                        setIsLauncherOpen(false);
+                        setIsUsageModalOpen(true);
+                      } else {
+                        if (onCategoryChange) onCategoryChange(category.id);
+                        setIsLauncherOpen(false);
+                      }
                     }}
                     style={{
                       display: 'flex',
@@ -544,7 +573,7 @@ export function Header({
         </div>
       )}
 
-      {/* GPNR 앱 이용방법 모달 (8가지 팝업) */}
+      {/* GPNR 앱 이용방법 모달 (10가지 팝업) */}
       {isUsageModalOpen && (
         <div
           style={{
@@ -596,7 +625,7 @@ export function Header({
               </button>
             </div>
 
-            {/* 이용방법 안내 리스트 (8가지) */}
+            {/* 이용방법 안내 리스트 (10가지) */}
             <div className="flex flex-col gap-3.5">
               {usageGuideList.map((item, idx) => (
                 <div
@@ -626,6 +655,93 @@ export function Header({
                 className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-colors shadow-lg shadow-purple-900/40"
               >
                 {currentLang === "ko" ? "확인 및 닫기" : "Confirm & Close"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GPNR 커뮤니티 팝업 모달 */}
+      {isCommunityModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 999999,
+            backgroundColor: 'rgba(0, 0, 0, 0.82)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '14px'
+          }}
+          onClick={() => setIsCommunityModalOpen(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '380px',
+              backgroundColor: '#111326',
+              border: '1px solid rgba(168, 85, 247, 0.4)',
+              borderRadius: '20px',
+              padding: '20px',
+              boxShadow: '0 25px 50px -12px rgba(168, 85, 247, 0.25)',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 상단 타이틀 바 */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-400" />
+                <span className="text-sm font-bold text-slate-100">
+                  {currentLang === "ko" ? "GPNR 커뮤니티 소통 채널" : "GPNR Community Channel"}
+                </span>
+              </div>
+              <button
+                onClick={() => setIsCommunityModalOpen(false)}
+                type="button"
+                className="text-slate-400 hover:text-slate-200 p-1 cursor-pointer"
+                aria-label="Close Community"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed mb-4">
+              {currentLang === "ko"
+                ? "전 세계 파이오니어 분들과 Pi Network 소식, 기술 정보, 의견을 자유롭게 나누세요."
+                : "Connect with global Pioneers to share Pi Network news, technical updates, and insights."}
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <a
+                href="https://open.kakao.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 transition-colors group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <MessageSquare className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-bold text-amber-200">
+                    {currentLang === "ko" ? "공식 카카오톡 오픈채팅" : "Official KakaoTalk OpenChat"}
+                  </span>
+                </div>
+                <ExternalLink className="w-4 h-4 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+              </a>
+            </div>
+
+            {/* 하단 닫기 버튼 */}
+            <div className="mt-5 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsCommunityModalOpen(false)}
+                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-colors"
+              >
+                {currentLang === "ko" ? "닫기" : "Close"}
               </button>
             </div>
           </div>
