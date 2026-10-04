@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { NEWS_CATEGORIES } from "../lib/categories";
-import { UsageModal } from "./usage-modal";
+import { UsageModal, CommunityModal } from "./usage-modal";
 
 import {
   Flame,
@@ -29,8 +29,7 @@ import {
   Menu,
   X,
   Newspaper,
-  HelpCircle,
-  UserCheck
+  HelpCircle
 } from "lucide-react";
 
 const NEON_PALETTE = [
@@ -43,7 +42,6 @@ const NEON_PALETTE = [
 
 const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
-  "top_news": Flame,
   "mainnet": Globe,
   "node": Tv,
   "mining": Zap,
@@ -55,18 +53,10 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "commerce": ShoppingCart,
   "kyc": ShieldCheck,
   "developer": Code,
-  "developers": Code,
-  "ecosystem": Building,
-  "real-estate": Building,
-  "real_estate": Building,
   "outlook": TrendingUp,
-  "price-outlook": TrendingUp,
-  "price_outlook": TrendingUp,
   "price": DollarSign,
   "security": Shield,
   "legal": Gavel,
-  "regulations": Gavel,
-  "calendar": Calendar,
   "schedule": Calendar,
   "defi": Coins,
   "usage": HelpCircle,
@@ -85,7 +75,8 @@ export function GpnrHeader({
 }: GpnrHeaderProps) {
   const [mounted, setMounted] = useState<boolean>(false);
   const [isLauncherOpen, setIsLauncherOpen] = useState<boolean>(false);
-  const [isUsageOpen, setIsUsageOpen] = useState<boolean>(false); // 이용방법 팝업 상태
+  const [isUsageOpen, setIsUsageOpen] = useState<boolean>(false);
+  const [isCommunityOpen, setIsCommunityOpen] = useState<boolean>(false);
   const [currentLang, setCurrentLang] = useState<string>("ko");
   const [colorIdx, setColorIdx] = useState<number>(0);
 
@@ -133,16 +124,6 @@ export function GpnrHeader({
 
   const activeNeon = NEON_PALETTE[colorIdx];
 
-  // 이용방법 버튼 항목을 포함하도록 카테고리 목록 강제 점검
-  const categoriesList = [...NEWS_CATEGORIES];
-  if (!categoriesList.some((c) => c.id === "usage")) {
-    categoriesList.unshift({
-      id: "usage",
-      name: "이용방법",
-      enName: "Usage Guide",
-    });
-  }
-
   return (
     <>
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
@@ -176,7 +157,7 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 4열 그리드 런처 모달 */}
+      {/* 4열 그리드 모달 (순서: 보안 -> 일정 -> 커뮤니티 -> 이용방법 고정) */}
       {isLauncherOpen && (
         <div
           style={{
@@ -209,8 +190,8 @@ export function GpnrHeader({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 상단 이용방법 상단 바로가기 및 닫기 버튼 */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
+            {/* 상단 이용방법 버튼 & 닫기 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
               <button
                 type="button"
                 onClick={() => {
@@ -238,7 +219,7 @@ export function GpnrHeader({
               <button
                 onClick={() => setIsLauncherOpen(false)}
                 type="button"
-                style={{ color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto' }}
+                style={{ color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -246,7 +227,7 @@ export function GpnrHeader({
 
             {/* 카테고리 4열 그리드 */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px' }}>
-              {categoriesList.map((category) => {
+              {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
                 const labelText = currentLang === "ko" ? category.name : (category.enName || category.name);
 
@@ -258,6 +239,9 @@ export function GpnrHeader({
                       if (category.id === 'usage') {
                         setIsLauncherOpen(false);
                         setIsUsageOpen(true);
+                      } else if (category.id === 'community') {
+                        setIsLauncherOpen(false);
+                        setIsCommunityOpen(true);
                       } else {
                         if (onCategoryChange) onCategoryChange(category.id);
                         setIsLauncherOpen(false);
@@ -287,7 +271,7 @@ export function GpnrHeader({
             </div>
 
             {/* 하단 KYC 및 연결 정보 */}
-            <div style={{ marginTop: '12px', pt: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
                 type="button"
                 onClick={() => {
@@ -329,11 +313,17 @@ export function GpnrHeader({
         </div>
       )}
 
-      {/* 이용방법 별도 팝업창 */}
+      {/* 이용방법 독립 팝업창 */}
       <UsageModal
         isOpen={isUsageOpen}
         onClose={() => setIsUsageOpen(false)}
         lang={currentLang}
+      />
+
+      {/* 커뮤니티 신규 미려한 모달 */}
+      <CommunityModal
+        isOpen={isCommunityOpen}
+        onClose={() => setIsCommunityOpen(false)}
       />
     </>
   );
