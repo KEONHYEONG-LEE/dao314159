@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
-import { NEWS_CATEGORIES } from "../lib/categories";
+import { NEWS_CATEGORIES, Category } from "../lib/categories";
 
 import {
   Flame,
@@ -96,32 +96,52 @@ export function Header({
     return () => clearInterval(colorTimer);
   }, []);
 
+  // 언어 상태 동기화
+  const syncLanguage = useCallback(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const targetLang =
+          currentLanguage ||
+          localStorage.getItem("language") ||
+          localStorage.getItem("gpnr-language") ||
+          "ko";
+        setCurrentLang(targetLang);
+      }
+    } catch (e) {
+      console.error("Language sync error:", e);
+    }
+  }, [currentLanguage]);
+
   useEffect(() => {
     setMounted(true);
-    const syncLanguage = () => {
-      try {
-        if (typeof window !== "undefined") {
-          const targetLang =
-            currentLanguage ||
-            localStorage.getItem("language") ||
-            localStorage.getItem("gpnr-language") ||
-            "ko";
-          setCurrentLang(targetLang);
-        }
-      } catch (e) {
-        console.error("Language sync error:", e);
-      }
-    };
-
     syncLanguage();
+
     window.addEventListener("storage", syncLanguage);
     window.addEventListener("languageChange", syncLanguage);
     return () => {
       window.removeEventListener("storage", syncLanguage);
       window.removeEventListener("languageChange", syncLanguage);
     };
-  }, [currentLanguage]);
+  }, [syncLanguage]);
 
+  // 런처 모달 오픈 시 스크롤 방지 및 ESC 키 닫기 이벤트 등록
+  useEffect(() => {
+    if (!isLauncherOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsLauncherOpen(false);
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = "unset";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isLauncherOpen]);
+
+  // 0.01 Pi 후원 결제 처리
   const handleDonation = useCallback(async () => {
     if (typeof window !== "undefined" && (window as any).Pi) {
       try {
@@ -177,13 +197,18 @@ export function Header({
       : user.username
     : "";
 
+  // 카테고리 아이콘 렌더링 함수 (동적 키 정규화 보완)
   const renderCategoryIcon = (category: any) => {
+    const rawId = category.id ? String(category.id).toLowerCase() : "";
+    const normalizedId = rawId.replace(/_/g, "-");
+
     const FoundIcon =
-      ICON_MAP[category.id] ||
-      ICON_MAP[category.name] ||
-      ICON_MAP[category.enName] ||
-      (category.iconName ? ICON_MAP[category.iconName] : null) ||
-      (typeof category.icon === "string" ? ICON_MAP[category.icon] : null);
+      ICON_MAP[rawId] ||
+      ICON_MAP[normalizedId] ||
+      (category.name && ICON_MAP[category.name.toLowerCase()]) ||
+      (category.enName && ICON_MAP[category.enName.toLowerCase()]) ||
+      (category.iconName && ICON_MAP[category.iconName.toLowerCase()]) ||
+      (typeof category.icon === "string" && ICON_MAP[category.icon.toLowerCase()]);
 
     if (FoundIcon) {
       return <FoundIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
@@ -195,7 +220,7 @@ export function Header({
     }
 
     if (typeof category.icon === "string" && (category.icon.startsWith("http") || category.icon.startsWith("/"))) {
-      return <img src={category.icon} alt={category.name} className="w-4 h-4 mb-0.5 object-contain shrink-0" />;
+      return <img src={category.icon} alt={category.name || category.id} className="w-4 h-4 mb-0.5 object-contain shrink-0" />;
     }
 
     return <Newspaper className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
@@ -295,6 +320,7 @@ export function Header({
                   padding: '4px',
                   cursor: 'pointer'
                 }}
+                aria-label="Close Menu"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -390,7 +416,7 @@ export function Header({
               </button>
 
               {isAuthenticated && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10.5px', color: '#94a3b8', padding: '0 4px' }}>
+                <div style={{ display: 'flex', items: 'center', justifyContent: 'space-between', fontSize: '10.5px', color: '#94a3b8', padding: '0 4px' }}>
                   <span>
                     {currentLang === "ko" ? "연결된 ID/지갑: " : "Connected ID/Wallet: "}
                     <strong style={{ color: '#d8b4fe', fontFamily: 'monospace' }}>
