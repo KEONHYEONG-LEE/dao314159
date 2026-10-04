@@ -35,7 +35,7 @@ export interface Category {
 }
 
 export const NEWS_CATEGORIES: Category[] = [
-  // 1. 코어 네트워크 (Core Network)
+  // 1. 코어 네트워크
   { id: "top-news", name: "주요뉴스", label: "주요뉴스", enName: "Top News", enLabel: "Top News", iconName: "Flame", Icon: Flame, group: "core" }, 
   { id: "mainnet", name: "메인넷", label: "메인넷", enName: "Mainnet", enLabel: "Mainnet", iconName: "Globe", Icon: Globe, group: "core" },
   { id: "node", name: "노드", label: "노드", enName: "Node", enLabel: "Node", iconName: "Tv", Icon: Tv, group: "core" },
@@ -45,7 +45,7 @@ export const NEWS_CATEGORIES: Category[] = [
   { id: "roadmap", name: "로드맵", label: "로드맵", enName: "Roadmap", enLabel: "Roadmap", iconName: "Map", Icon: Map, group: "core" },
   { id: "whitepaper", name: "백서", label: "백서", enName: "Whitepaper", enLabel: "Whitepaper", iconName: "FileText", Icon: FileText, group: "core" },
 
-  // 2. 생태계 및 시장 (Ecosystem & Market)
+  // 2. 생태계 및 시장
   { id: "commerce", name: "커머스", label: "커머스", enName: "Commerce", enLabel: "Commerce", iconName: "ShoppingCart", Icon: ShoppingCart, group: "ecosystem" },
   { id: "kyc", name: "KYC", label: "KYC", enName: "KYC", enLabel: "KYC", iconName: "ShieldCheck", Icon: ShieldCheck, group: "ecosystem" },
   { id: "developer", name: "개발자", label: "개발자", enName: "Developers", enLabel: "Developers", iconName: "Code", Icon: Code, group: "ecosystem" },
@@ -54,7 +54,7 @@ export const NEWS_CATEGORIES: Category[] = [
   { id: "legal", name: "규정", label: "규정", enName: "Regulations", enLabel: "Regulations", iconName: "Gavel", Icon: Gavel, group: "market_legal" },
   { id: "defi", name: "디파이", label: "디파이", enName: "DeFi", enLabel: "DeFi", iconName: "Coins", Icon: Coins, group: "market_legal" },
 
-  // 📌 요청사항: 드롭다운 제일 마지막 순서 배열 [보안, 일정, 커뮤니티, 이용방법]
+  // 📌 요청 하단 4개 고정 순서 [보안 -> 일정 -> 커뮤니티 -> 이용방법]
   { id: "security", name: "보안", label: "보안", enName: "Security", enLabel: "Security", iconName: "Shield", Icon: Shield, group: "market_legal" },
   { id: "schedule", name: "일정", label: "일정", enName: "Schedule", enLabel: "Schedule", iconName: "Calendar", Icon: Calendar, group: "ecosystem" },
   { id: "community", name: "커뮤니티", label: "커뮤니티", enName: "Community", enLabel: "Community", iconName: "Users", Icon: Users, group: "ecosystem" },
