@@ -18,6 +18,7 @@ import {
   Shield,
   Gavel,
   Coins,
+  HelpCircle,
   type LucideIcon
 } from "lucide-react";
 
@@ -30,6 +31,7 @@ export interface Category {
   iconName: string;  // 문자열 명칭
   Icon: LucideIcon;  // Lucide 아이콘 컴포넌트 객체
   group: 'core' | 'ecosystem' | 'market_legal';
+  isModal?: boolean; // 이용방법 등 팝업 전용 여부
 }
 
 export const NEWS_CATEGORIES: Category[] = [
@@ -43,21 +45,20 @@ export const NEWS_CATEGORIES: Category[] = [
   { id: "roadmap", name: "로드맵", label: "로드맵", enName: "Roadmap", enLabel: "Roadmap", iconName: "Map", Icon: Map, group: "core" },
   { id: "whitepaper", name: "백서", label: "백서", enName: "Whitepaper", enLabel: "Whitepaper", iconName: "FileText", Icon: FileText, group: "core" },
 
-  // 2. 생태계 (Ecosystem)
-  { id: "community", name: "커뮤니티", label: "커뮤니티", enName: "Community", enLabel: "Community", iconName: "Users", Icon: Users, group: "ecosystem" },
+  // 2. 생태계 및 시장 (Ecosystem & Market)
   { id: "commerce", name: "커머스", label: "커머스", enName: "Commerce", enLabel: "Commerce", iconName: "ShoppingCart", Icon: ShoppingCart, group: "ecosystem" },
   { id: "kyc", name: "KYC", label: "KYC", enName: "KYC", enLabel: "KYC", iconName: "ShieldCheck", Icon: ShieldCheck, group: "ecosystem" },
   { id: "developer", name: "개발자", label: "개발자", enName: "Developers", enLabel: "Developers", iconName: "Code", Icon: Code, group: "ecosystem" },
-  
-  // 📌 Calendar / Schedule 동시 대처 (id: 'schedule'로 통일하여 사용)
-  { id: "schedule", name: "일정", label: "일정", enName: "Schedule", enLabel: "Schedule", iconName: "Calendar", Icon: Calendar, group: "ecosystem" },
-
-  // 3. 마켓 및 보안 (Market & Legal)
   { id: "outlook", name: "가격 전망", label: "가격 전망", enName: "Price Outlook", enLabel: "Price Outlook", iconName: "TrendingUp", Icon: TrendingUp, group: "market_legal" },
   { id: "price", name: "가격", label: "가격", enName: "Price", enLabel: "Price", iconName: "DollarSign", Icon: DollarSign, group: "market_legal" },
-  { id: "security", name: "보안", label: "보안", enName: "Security", enLabel: "Security", iconName: "Shield", Icon: Shield, group: "market_legal" },
   { id: "legal", name: "규정", label: "규정", enName: "Regulations", enLabel: "Regulations", iconName: "Gavel", Icon: Gavel, group: "market_legal" },
-  { id: "defi", name: "디파이", label: "디파이", enName: "DeFi", enLabel: "DeFi", iconName: "Coins", Icon: Coins, group: "market_legal" }
+  { id: "defi", name: "디파이", label: "디파이", enName: "DeFi", enLabel: "DeFi", iconName: "Coins", Icon: Coins, group: "market_legal" },
+
+  // 📌 요청사항: 드롭다운 제일 마지막 순서 배열 [보안, 일정, 커뮤니티, 이용방법]
+  { id: "security", name: "보안", label: "보안", enName: "Security", enLabel: "Security", iconName: "Shield", Icon: Shield, group: "market_legal" },
+  { id: "schedule", name: "일정", label: "일정", enName: "Schedule", enLabel: "Schedule", iconName: "Calendar", Icon: Calendar, group: "ecosystem" },
+  { id: "community", name: "커뮤니티", label: "커뮤니티", enName: "Community", enLabel: "Community", iconName: "Users", Icon: Users, group: "ecosystem" },
+  { id: "usage", name: "이용방법", label: "이용방법", enName: "How to Use", enLabel: "How to Use", iconName: "HelpCircle", Icon: HelpCircle, group: "ecosystem", isModal: true }
 ];
 
 export default NEWS_CATEGORIES;
