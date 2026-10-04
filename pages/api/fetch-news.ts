@@ -1,28 +1,47 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// 카테고리별 구글 뉴스 검색 쿼리 맵
+// 18개 표준 카테고리 슬러그(slug) 및 대문자 키 완벽 대응 쿼리 맵
 const SEARCH_QUERIES: { [key: string]: string } = {
-  ALL: 'Pi Network OR cryptocurrency OR Web3 news',
-  MAINNET: 'Pi Network mainnet OR blockchain mainnet',
-  NODE: 'Pi Network node OR blockchain node validator',
-  MINING: 'Pi Network mining OR crypto mining',
-  WALLET: 'Pi Network wallet OR crypto wallet security',
-  COMMUNITY: 'Pi Network community OR Web3 community',
-  COMMERCE: 'Pi Network payment OR crypto merchant commerce',
-  BROWSER: 'Web3 browser OR Pi Network ecosystem',
-  KYC: 'Pi Network KYC OR crypto identity verification',
-  DEVELOPER: 'Pi Network developer OR Web3 dApp SDK',
-  ECOSYSTEM: 'Pi Network ecosystem OR Web3 ecosystem',
-  LISTING: 'crypto exchange listing OR Pi Network exchange',
-  PRICE: 'Pi Network value OR crypto market price',
-  SECURITY: 'blockchain security OR crypto regulation',
-  EVENT: 'crypto conference OR Pi Network news',
-  ROADMAP: 'Pi Network roadmap OR Web3 roadmap',
-  WHITEPAPER: 'crypto whitepaper OR Pi Network whitepaper',
-  LEGAL: 'crypto regulation OR SEC crypto lawsuit'
+  // 슬러그 & 대문자 규격 동시 지원
+  'ALL': 'Pi Network OR cryptocurrency OR Web3 news',
+  'TOP-NEWS': 'Pi Network OR cryptocurrency OR Web3 news',
+  'top-news': 'Pi Network OR cryptocurrency OR Web3 news',
+  'MAINNET': 'Pi Network mainnet OR blockchain mainnet',
+  'mainnet': 'Pi Network mainnet OR blockchain mainnet',
+  'NODE': 'Pi Network node OR blockchain node validator',
+  'node': 'Pi Network node OR blockchain node validator',
+  'MINING': 'Pi Network mining OR crypto mining',
+  'mining': 'Pi Network mining OR crypto mining',
+  'WALLET': 'Pi Network wallet OR crypto wallet security',
+  'wallet': 'Pi Network wallet OR crypto wallet security',
+  'COMMUNITY': 'Pi Network community OR Web3 community',
+  'community': 'Pi Network community OR Web3 community',
+  'COMMERCE': 'Pi Network payment OR crypto merchant commerce',
+  'commerce': 'Pi Network payment OR crypto merchant commerce',
+  'BROWSER': 'Web3 browser OR Pi Network ecosystem',
+  'browser': 'Web3 browser OR Pi Network ecosystem',
+  'KYC': 'Pi Network KYC OR crypto identity verification',
+  'kyc': 'Pi Network KYC OR crypto identity verification',
+  'DEVELOPER': 'Pi Network developer OR Web3 dApp SDK',
+  'developer': 'Pi Network developer OR Web3 dApp SDK',
+  'ECOSYSTEM': 'Pi Network ecosystem OR Web3 ecosystem',
+  'ecosystem': 'Pi Network ecosystem OR Web3 ecosystem',
+  'LISTING': 'crypto exchange listing OR Pi Network exchange',
+  'listing': 'crypto exchange listing OR Pi Network exchange',
+  'PRICE': 'Pi Network value OR crypto market price',
+  'price': 'Pi Network value OR crypto market price',
+  'SECURITY': 'blockchain security OR crypto regulation',
+  'security': 'blockchain security OR crypto regulation',
+  'EVENT': 'crypto conference OR Pi Network news',
+  'event': 'crypto conference OR Pi Network news',
+  'ROADMAP': 'Pi Network roadmap OR Web3 roadmap',
+  'roadmap': 'Pi Network roadmap OR Web3 roadmap',
+  'WHITEPAPER': 'crypto whitepaper OR Pi Network whitepaper',
+  'whitepaper': 'crypto whitepaper OR Pi Network whitepaper',
+  'LEGAL': 'crypto regulation OR SEC crypto lawsuit',
+  'legal': 'crypto regulation OR SEC crypto lawsuit',
 };
 
-// HTML 엔티티 정제 및 태그 제거 함수
 function cleanHtml(str: string): string {
   return str
     .replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1')
@@ -40,14 +59,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: '허용되지 않는 요청 메서드입니다.' });
   }
 
-  const { category = 'ALL' } = req.query;
-  const currentCat = (category as string).toUpperCase();
-
-  // 요청받은 카테고리 쿼리 선정 (없으면 기본값 사용)
-  const query = SEARCH_QUERIES[currentCat] || SEARCH_QUERIES['ALL'];
+  const { category = 'top-news' } = req.query;
+  const rawCat = String(category).trim();
+  
+  // 카테고리 매핑 (소문자/대문자 모두 검색)
+  const query = SEARCH_QUERIES[rawCat] || SEARCH_QUERIES[rawCat.toUpperCase()] || SEARCH_QUERIES['ALL'];
 
   try {
-    // 1차 구글 뉴스 RSS 호출
     let rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
     
     let response = await fetch(rssUrl, {
@@ -59,8 +77,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let xmlData = await response.text();
     let items = xmlData.match(/<item>([\s\S]*?)<\/item>/g) || [];
 
-    // 2차 Fallback: 카테고리 검색 결과가 0건일 경우 대표 키워드('Pi Network crypto')로 재요청
-    if (items.length === 0 && currentCat !== 'ALL') {
+    // Fallback: 쿼리 결과가 없을 경우 기본 검색어로 재시도
+    if (items.length === 0 && rawCat !== 'ALL' && rawCat !== 'top-news') {
       const fallbackQuery = 'Pi Network crypto';
       rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(fallbackQuery)}&hl=en-US&gl=US&ceid=US:en`;
       response = await fetch(rssUrl, {
@@ -81,15 +99,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const cleanTitleStr = cleanHtml(titleRaw);
       const cleanDescStr = cleanHtml(descRaw).split('&nbsp;')[0].trim();
 
-      // 출처 분리 ("기사 제목 - 언론사 이름")
       const titleParts = cleanTitleStr.split(' - ');
       const sourceName = titleParts.length > 1 ? titleParts.pop() : 'Web2 News';
       const englishTitle = titleParts.join(' - ');
 
-      const generatedId = `google-${currentCat.toLowerCase()}-${index}-${Date.now()}`;
+      const generatedId = `google-${rawCat}-${index}-${Date.now()}`;
       const imageId = (index % 30) + 10;
 
-      // 💡 [수정 포인트 1] 날짜에서 T[0] 분할을 제거하고 원본 ISO 타임스탬프 전체 보존 (시/분/초 포함)
       let formattedDate = new Date().toISOString();
       if (pubDate) {
         const parsedTime = new Date(pubDate);
@@ -98,66 +114,56 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      const contentText = cleanDescStr || `${englishTitle}. Read the full article on ${sourceName}.`;
+      const contentText = cleanDescStr || `${englishTitle}. Read full article on ${sourceName}.`;
 
       return {
         id: generatedId,
-        category: currentCat,
-        // 단순 문자열을 찾는 프론트엔드(전광판/Index)와 객체 형태를 찾는 컴포넌트 모두 호환
-        title: englishTitle, 
-        content: contentText,
-        titleObj: {
+        category: rawCat,
+        // 프론트엔드 getParsedText 호환 구조 ({ ko, en } 객체 형태 지원)
+        title: {
           ko: englishTitle,
           en: englishTitle
         },
-        contentObj: {
+        content: {
           ko: contentText,
           en: contentText
         },
         author: sourceName,
+        source: sourceName,
         sourceUrl: link,
-        publishedAt: formattedDate, // ISO 8601 원본 유지 (예: 2026-07-31T08:30:00.000Z)
+        url: link,
+        publishedAt: formattedDate,
+        date: formattedDate,
         imageUrl: `https://picsum.photos/id/${imageId}/600/400`,
-        tags: ['Web2News', currentCat, 'Crypto'],
-        readCount: Math.floor(Math.random() * 100) + 10,
-        starCount: 0,
-        likeCount: 0
+        image: `https://picsum.photos/id/${imageId}/600/400`
       };
     });
 
-    // 💡 [수정 포인트 2] 서버에서 클라이언트로 넘겨주기 전, 정확한 타임스탬프 기준 최신순(내림차순) 정렬 수행
     newsList.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
-    // Vercel Edge/Serverless 캐싱 (60초간 캐시, 120초간 백그라운드 갱신)
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
     return res.status(200).json(newsList);
 
   } catch (error) {
     console.error('Google RSS Fetch Error:', error);
 
-    // 에러 발생 시 서번트 백업 데이터 (문자열 및 객체 호환)
     const fallbackNews = [
       {
         id: `fb-${Date.now()}`,
-        category: currentCat,
-        title: 'Pi Network Mainnet & Web3 Updates',
-        content: 'Latest updates on Pi Network ecosystem and global Web3 trends.',
-        titleObj: {
+        category: rawCat,
+        title: {
           ko: 'Pi Network Mainnet & Web3 Updates',
           en: 'Pi Network Mainnet & Web3 Updates'
         },
-        contentObj: {
+        content: {
           ko: 'Latest updates on Pi Network ecosystem and global Web3 trends.',
           en: 'Latest updates on Pi Network ecosystem and global Web3 trends.'
         },
         author: 'GPNR Global',
         sourceUrl: 'https://minepi.com',
+        url: 'https://minepi.com',
         publishedAt: new Date().toISOString(),
-        imageUrl: 'https://picsum.photos/id/11/600/400',
-        tags: ['PiNetwork', 'Web3'],
-        readCount: 1,
-        starCount: 0,
-        likeCount: 0
+        imageUrl: 'https://picsum.photos/id/11/600/400'
       }
     ];
 
