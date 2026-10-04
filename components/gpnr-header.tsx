@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { usePiNetworkAuthentication } from "../hooks/use-pi-network-authentication";
 import { NEWS_CATEGORIES } from "../lib/categories";
+import { UsageModal, CommunityModal } from "./usage-modal";
 
 import {
   Flame,
@@ -27,11 +28,7 @@ import {
   Menu,
   X,
   Newspaper,
-  HelpCircle,
-  CheckCircle2,
-  MessageCircle,
-  Share2,
-  ExternalLink
+  HelpCircle
 } from "lucide-react";
 
 const NEON_PALETTE = [
@@ -51,31 +48,15 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "browser": Compass,
   "roadmap": Map,
   "whitepaper": FileText,
-  "community": Users,
   "commerce": ShoppingCart,
   "kyc": ShieldCheck,
   "developer": Code,
   "outlook": TrendingUp,
-  "price": DollarSign,
   "security": Shield,
-  "legal": Gavel,
   "schedule": Calendar,
-  "defi": Coins,
+  "community": Users,
   "usage": HelpCircle,
 };
-
-const USAGE_GUIDE_KO = [
-  { title: "무료 이용 및 자율 후원", desc: "GPNR app은 파이오니어 누구나 무료로 이용 가능합니다. 후원은 자율이며 한번에 0.01pi만 가능합니다." },
-  { title: "실시간 최신 주요 뉴스 제공", desc: "Web2, web3의 Pi 관련 공신력 있는 싸이트의 실시간 주요 뉴스를 각 주제별로 제공하며, 최신 소식을 제일 최상단으로 배치했습니다." },
-  { title: "보안, 일정 및 커뮤니티 통합 모니터링", desc: "네트워크 보안 가이드라인, 마이그레이션 일정 및 글로벌 파이오니어 커뮤니티 채널을 한눈에 파악하고 접근할 수 있습니다." },
-  { title: "주제별 카테고리 퀵 선택", desc: "상단 메뉴 런처(4열 그리드)를 통하여 메인넷, 노드, 채굴, 지갑, 백서, 커머스 등 원하시는 주제로 즉시 이동이 가능합니다." },
-  { title: "Pi 네트워크 지갑 및 ID 상태 연동", desc: "현재 연결된 파이오니어 계정 및 지갑 ID가 상단/하단에 실시간 연동되며, 필요 시 '로그아웃/변경'을 통해 손쉽게 관리합니다." },
-  { title: "다국어 (한국어 / 영어) 즉시 번역 지원", desc: "글로벌 뉴스 및 가이드를 한글 및 영문으로 원클릭 전환하여 글로벌 소식을 지연 없이 확인하실 수 있습니다." },
-  { title: "실시간 핫이슈 티커 바", desc: "상단 헤더 하단의 티커 릴을 통해 Pi 생태계 주요 변동사항 및 마이그레이션 이슈를 빠르게 체크할 수 있습니다." },
-  { title: "KYC 인증 ID 관리 기능", desc: "하단 'KYC ID 포함' 버튼을 클릭하여 파이오니어 본인 인증 상태 및 ID 보존 설정을 간편하게 재설정할 수 있습니다." },
-  { title: "파이오니어 커뮤니티 연결 모달", desc: "텔레그램, 디스코드, 공식 포럼 등 미려한 디자인의 커뮤니티 카드를 통해 세계 곳곳의 파이오니어들과 소통할 수 있습니다." },
-  { title: "안전한 Web3 환경 최적화", desc: "비밀구절이나 개인키를 절대 요청하지 않으며, 안심하고 사용할 수 있는 안전한 웹3 환경을 최우선으로 제공합니다." }
-];
 
 interface GpnrHeaderProps {
   currentCategory?: string;
@@ -205,8 +186,8 @@ export function GpnrHeader({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 상단 닫기 */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
+            {/* 상단 Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
               <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#f1f5f9' }}>카테고리 메뉴</span>
               <button
                 onClick={() => setIsLauncherOpen(false)}
@@ -282,12 +263,12 @@ export function GpnrHeader({
                   cursor: 'pointer'
                 }}
               >
-                KYC ID 재설정
+                Reset KYC ID
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', padding: '0 4px' }}>
                 <span>
-                  연결: <strong style={{ color: '#c084fc' }}>{displayId}</strong>
+                  Connected: <strong style={{ color: '#c084fc' }}>{displayId}</strong>
                 </span>
                 <button
                   type="button"
@@ -297,7 +278,7 @@ export function GpnrHeader({
                   }}
                   style={{ color: '#fb7185', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                  로그아웃/변경
+                  Change ID
                 </button>
               </div>
             </div>
@@ -305,171 +286,11 @@ export function GpnrHeader({
         </div>
       )}
 
-      {/* 이용방법 10가지 가이드 팝업 모달 */}
-      {isUsageOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            zIndex: 1000000,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '12px'
-          }}
-          onClick={() => setIsUsageOpen(false)}
-        >
-          <div
-            style={{
-              width: '90%',
-              maxWidth: '350px',
-              maxHeight: '82vh',
-              overflowY: 'auto',
-              backgroundColor: '#111326',
-              border: '1px solid rgba(168, 85, 247, 0.4)',
-              borderRadius: '20px',
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1e293b', paddingBottom: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <HelpCircle className="w-5 h-5 text-purple-400" />
-                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#f8fafc' }}>GPNR 앱 이용방법</span>
-              </div>
-              <button onClick={() => setIsUsageOpen(false)} type="button" style={{ color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      {/* 이용방법 팝업 모달 외부 컴포넌트 연결 */}
+      <UsageModal isOpen={isUsageOpen} onClose={() => setIsUsageOpen(false)} />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {USAGE_GUIDE_KO.map((item, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: '10px', padding: '10px', borderRadius: '12px', backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 41, 59, 0.8)' }}>
-                  <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" style={{ marginTop: '2px' }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#e9d5ff' }}>{idx + 1}. {item.title}</span>
-                    <span style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: '1.4' }}>{item.desc}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsUsageOpen(false)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '12px',
-                background: 'linear-gradient(90deg, #9333ea, #db2777)',
-                color: '#ffffff',
-                fontWeight: 'bold',
-                fontSize: '12px',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              확인 및 닫기
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 커뮤니티 카드 모달 */}
-      {isCommunityOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            zIndex: 1000000,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '12px'
-          }}
-          onClick={() => setIsCommunityOpen(false)}
-        >
-          <div
-            style={{
-              width: '90%',
-              maxWidth: '340px',
-              backgroundColor: '#131528',
-              border: '1px solid rgba(168, 85, 247, 0.5)',
-              borderRadius: '20px',
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1e293b', paddingBottom: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Users className="w-5 h-5 text-purple-400" />
-                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#ffffff' }}>파이오니어 커뮤니티</span>
-              </div>
-              <button onClick={() => setIsCommunityOpen(false)} type="button" style={{ color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {[
-                { title: "공식 파이오니어 포럼", desc: "글로벌 생태계 소식 & 토론", icon: MessageCircle },
-                { title: "GPNR 글로벌 오픈채팅", desc: "실시간 정보 공유 및 소통", icon: Share2 },
-                { title: "파이 노드 기술 채널", desc: "노드 설정 및 기술 지원", icon: Code }
-              ].map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    backgroundColor: 'rgba(58, 23, 92, 0.3)',
-                    border: '1px solid rgba(168, 85, 247, 0.3)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <item.icon className="w-4 h-4 text-purple-300" />
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#e2e8f0' }}>{item.title}</span>
-                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>{item.desc}</span>
-                    </div>
-                  </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsCommunityOpen(false)}
-              style={{
-                width: '100%',
-                padding: '8px',
-                borderRadius: '10px',
-                backgroundColor: '#1e293b',
-                color: '#cbd5e1',
-                fontSize: '12px',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
+      {/* 커뮤니티 팝업 모달 외부 컴포넌트 연결 */}
+      <CommunityModal isOpen={isCommunityOpen} onClose={() => setIsCommunityOpen(false)} />
     </>
   );
 }
