@@ -1,532 +1,190 @@
-// @ts-nocheck
-"use client";
-
-import React, { useEffect, useState, useRef } from "react";
-import { NEWS_CATEGORIES } from "../lib/categories";
-import { PiCalendar } from "./pi-calendar"; // 캘린더 컴포넌트 임포트
-
-interface NewsItem {
-  id?: string;
-  category?: string;
-  title: { ko: string; en: string } | string;
-  content?: { ko: string; en: string } | string;
-  author?: string;
-  source?: string;
-  sourceUrl?: string;
-  url?: string;
-  publishedAt?: string;
-  date?: string;
-  imageUrl?: string;
-  image?: string;
+export interface NewsCategory {
+  id: string;
+  name: string;        // 한국어 카테고리명
+  enName: string;      // 영어 카테고리명
+  label?: string;      // 호환용 라벨 (한국어)
+  enLabel?: string;    // 호환용 라벨 (영어)
+  icon?: string;       // 카테고리 아이콘/이모지
 }
 
-const MENU_TEXTS = {
-  ko: {
-    open_new_tab: "새 탭에서 열기",
-    open_group_tab: "탭 그룹에서 열기",
-    open_bg_tab: "백그라운드 탭에서 열기",
-    open_new_window: "다른 창에서 열기",
-    open_incognito: "비밀 모드에서 열기",
-    select_text: "텍스트 선택",
-    share_link: "링크 공유",
-    copy_link: "링크 복사",
-    save_link: "링크 저장",
-    text_copied: "기사 텍스트가 복사되었습니다.",
-    link_copied: "링크가 클립보드에 복사되었습니다.",
-    link_saved: "기사가 즐겨찾기에 저장되었습니다.",
+export const NEWS_CATEGORIES: NewsCategory[] = [
+  {
+    id: "top-news",
+    name: "주요뉴스",
+    enName: "Top News",
+    label: "주요뉴스",
+    enLabel: "Top News",
+    icon: "🔥",
   },
-  en: {
-    open_new_tab: "Open in new tab",
-    open_group_tab: "Open in tab group",
-    open_bg_tab: "Open in background tab",
-    open_new_window: "Open in new window",
-    open_incognito: "Open in incognito tab",
-    select_text: "Select text",
-    share_link: "Share link",
-    copy_link: "Copy link",
-    save_link: "Save link",
-    text_copied: "Article text copied to clipboard.",
-    link_copied: "Link copied to clipboard.",
-    link_saved: "Article saved.",
+  {
+    id: "mainnet",
+    name: "메인넷",
+    enName: "Mainnet",
+    label: "메인넷",
+    enLabel: "Mainnet",
+    icon: "🌐",
   },
-};
-
-const DEFAULT_IMAGE = "https://picsum.photos/id/10/200/200";
-
-export function CategoryNews({ 
-  selectedCategory = "top-news", 
-  currentLang = "ko" 
-}: { 
-  selectedCategory?: string; 
-  currentLang?: string;
-}) {
-  // [핵심] 일정/달력 관련 모든 키값(calendar, schedule, event, 일정)을 포함하면 즉시 PiCalendar 렌더링
-  const catLower = String(selectedCategory || "").toLowerCase();
-  const isCalendarCategory = 
-    catLower.includes("calendar") || 
-    catLower.includes("schedule") || 
-    catLower.includes("event") || 
-    catLower === "일정";
-
-  if (isCalendarCategory) {
-    return <PiCalendar currentLang={currentLang} />;
+  {
+    id: "node",
+    name: "노드",
+    enName: "Node",
+    label: "노드",
+    enLabel: "Node",
+    icon: "💻",
+  },
+  {
+    id: "mining",
+    name: "채굴",
+    enName: "Mining",
+    label: "채굴",
+    enLabel: "Mining",
+    icon: "⛏️️",
+  },
+  {
+    id: "wallet",
+    name: "지갑",
+    enName: "Wallet",
+    label: "지갑",
+    enLabel: "Wallet",
+    icon: "👛",
+  },
+  {
+    id: "community",
+    name: "커뮤니티",
+    enName: "Community",
+    label: "커뮤니티",
+    enLabel: "Community",
+    icon: "👥",
+  },
+  {
+    id: "commerce",
+    name: "결제/커머스",
+    enName: "Commerce",
+    label: "결제/커머스",
+    enLabel: "Commerce",
+    icon: "🛒",
+  },
+  {
+    id: "browser",
+    name: "파이브라우저",
+    enName: "Pi Browser",
+    label: "파이브라우저",
+    enLabel: "Pi Browser",
+    icon: "🧭",
+  },
+  {
+    id: "kyc",
+    name: "KYC 인증",
+    enName: "KYC",
+    label: "KYC 인증",
+    enLabel: "KYC",
+    icon: "🪪",
+  },
+  {
+    id: "developer",
+    name: "개발자/SDK",
+    enName: "Developer",
+    label: "개발자/SDK",
+    enLabel: "Developer",
+    icon: "🛠️",
+  },
+  {
+    id: "ecosystem",
+    name: "생태계 App",
+    enName: "Ecosystem",
+    label: "생태계 App",
+    enLabel: "Ecosystem",
+    icon: "🌱",
+  },
+  {
+    id: "listing",
+    name: "상장/거래소",
+    enName: "Exchange",
+    label: "상장/거래소",
+    enLabel: "Exchange",
+    icon: "📈",
+  },
+  {
+    id: "price",
+    name: "시세/가치",
+    enName: "Price/GCV",
+    label: "시세/가치",
+    enLabel: "Price/GCV",
+    icon: "💎",
+  },
+  {
+    id: "security",
+    name: "보안/스팸",
+    enName: "Security",
+    label: "보안/스팸",
+    enLabel: "Security",
+    icon: "🛡️",
+  },
+  {
+    id: "calendar",
+    name: "일정/캘린더",
+    enName: "Calendar",
+    label: "일정/캘린더",
+    enLabel: "Calendar",
+    icon: "📅",
+  },
+  {
+    id: "roadmap",
+    name: "로드맵",
+    enName: "Roadmap",
+    label: "로드맵",
+    enLabel: "Roadmap",
+    icon: "🗺️️",
+  },
+  {
+    id: "whitepaper",
+    name: "백서",
+    enName: "Whitepaper",
+    label: "백서",
+    enLabel: "Whitepaper",
+    icon: "📄",
+  },
+  {
+    id: "legal",
+    name: "법률/규제",
+    enName: "Legal/Reg",
+    label: "법률/규제",
+    enLabel: "Legal/Reg",
+    icon: "⚖️",
+  },
+  {
+    id: "global-market",
+    name: "글로벌 동향",
+    enName: "Global Market",
+    label: "글로벌 동향",
+    enLabel: "Global Market",
+    icon: "🌍",
+  },
+  {
+    id: "defi",
+    name: "DeFi / 금융",
+    enName: "DeFi & Finance",
+    label: "DeFi / 금융",
+    enLabel: "DeFi & Finance",
+    icon: "🏦",
+  },
+  {
+    id: "nft",
+    name: "NFT / 메타버스",
+    enName: "NFT & Metaverse",
+    label: "NFT / 메타버스",
+    enLabel: "NFT & Metaverse",
+    icon: "🖼️",
+  },
+  {
+    id: "tech",
+    name: "AI & 블록체인 기술",
+    enName: "Tech & AI",
+    label: "AI & 블록체인 기술",
+    enLabel: "Tech & AI",
+    icon: "🤖",
   }
+];
 
-  const [mounted, setMounted] = useState<boolean>(false);
-  const [newsList, setNewsList] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+export default NEWS_CATEGORIES;
 
-  // 반응 상태 (체크, 즐겨찾기, 좋아요)
-  const [checkedIds, setCheckedIds] = useState<{ [id: string]: boolean }>({});
-  const [starredIds, setStarredIds] = useState<{ [id: string]: boolean }>({});
-  const [likedIds, setLikedIds] = useState<{ [id: string]: boolean }>({});
-
-  const [contextMenu, setContextMenu] = useState<{
-    visible: boolean;
-    x: number;
-    y: number;
-    item: { id: string; url: string; title: string; content: string } | null;
-  }>({
-    visible: false,
-    x: 0,
-    y: 0,
-    item: null,
-  });
-
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const isLongPress = useRef(false);
-
-  const activeLang = currentLang === "ko" ? "ko" : "en";
-  const t = MENU_TEXTS[activeLang];
-
-  const formatDateOnly = (rawDate: string) => {
-    if (!rawDate) return "";
-    if (typeof rawDate === "string" && rawDate.includes("년")) {
-      const match = rawDate.match(/\d{4}년\s*\d{1,2}월\s*\d{1,2}일/);
-      if (match) return match[0];
-    }
-    const dateObj = new Date(rawDate);
-    if (!isNaN(dateObj.getTime())) {
-      const year = dateObj.getFullYear();
-      const month = dateObj.getMonth() + 1;
-      const day = dateObj.getDate();
-      return `${year}년 ${month}월 ${day}일`;
-    }
-    return String(rawDate).split("T")[0].split(" ")[0];
-  };
-
-  const getParsedText = (field: any) => {
-    if (!field) return "";
-    if (typeof field === "string") return field;
-    if (typeof field === "object") {
-      return field[currentLang] || field.en || field.ko || "";
-    }
-    return String(field);
-  };
-
-  // 브라우저/Pi Browser 메모리 데이터 최초 로드 및 Hydration 안정화
-  useEffect(() => {
-    setMounted(true);
-    try {
-      if (typeof window !== "undefined") {
-        const savedChecked = localStorage.getItem("gpnr_news_checked");
-        const savedStarred = localStorage.getItem("gpnr_news_starred");
-        const savedLiked = localStorage.getItem("gpnr_news_liked");
-
-        if (savedChecked) setCheckedIds(JSON.parse(savedChecked));
-        if (savedStarred) setStarredIds(JSON.parse(savedStarred));
-        if (savedLiked) setLikedIds(JSON.parse(savedLiked));
-      }
-    } catch (error) {
-      console.warn("메모리 읽기 중 예외 발생:", error);
-    }
-
-    const handleOutsideClick = () => closeContextMenu();
-    window.addEventListener("click", handleOutsideClick);
-    window.addEventListener("scroll", handleOutsideClick);
-
-    return () => {
-      window.removeEventListener("click", handleOutsideClick);
-      window.removeEventListener("scroll", handleOutsideClick);
-    };
-  }, []);
-
-  // 뉴스 Fetching
-  useEffect(() => {
-    async function fetchRealNews() {
-      setLoading(true);
-      try {
-        const targetCategory = selectedCategory === "all" || !selectedCategory ? "top-news" : selectedCategory;
-        const response = await fetch(`/api/fetch-news?category=${targetCategory}&t=${Date.now()}`);
-        if (!response.ok) throw new Error("Fetch failed");
-        
-        const data = await response.json();
-        
-        if (Array.isArray(data)) {
-          const sorted = [...data].sort((a, b) => {
-            const dateARaw = a.publishedAt || a.date || "";
-            const dateBRaw = b.publishedAt || b.date || "";
-
-            const timeA = dateARaw ? new Date(dateARaw).getTime() : 0;
-            const timeB = dateBRaw ? new Date(dateBRaw).getTime() : 0;
-
-            const validA = isNaN(timeA) ? 0 : timeA;
-            const validB = isNaN(timeB) ? 0 : timeB;
-
-            return validB - validA;
-          });
-
-          setNewsList(sorted);
-        } else {
-          setNewsList([]);
-        }
-      } catch (error) {
-        console.error("뉴스 데이터 수집 실패:", error);
-        setNewsList([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchRealNews();
-  }, [selectedCategory]);
-
-  const closeContextMenu = () => {
-    setContextMenu((prev) => ({ ...prev, visible: false }));
-  };
-
-  const openContextMenu = (
-    itemData: { id: string; url: string; title: string; content: string },
-    clientX: number,
-    clientY: number
-  ) => {
-    const menuWidth = 260;
-    const menuHeight = 380;
-    const x = Math.min(clientX, window.innerWidth - menuWidth - 16);
-    const y = Math.min(clientY, window.innerHeight - menuHeight - 16);
-
-    setContextMenu({
-      visible: true,
-      x: Math.max(16, x),
-      y: Math.max(16, y),
-      item: itemData,
-    });
-  };
-
-  const handleTouchStart = (
-    itemData: { id: string; url: string; title: string; content: string },
-    e: React.TouchEvent
-  ) => {
-    isLongPress.current = false;
-    const touch = e.touches[0];
-    const clientX = touch.clientX;
-    const clientY = touch.clientY;
-
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      openContextMenu(itemData, clientX, clientY);
-    }, 500);
-  };
-
-  const handleTouchEnd = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-    }
-  };
-
-  const handleContextMenu = (
-    itemData: { id: string; url: string; title: string; content: string },
-    e: React.MouseEvent
-  ) => {
-    e.preventDefault();
-    openContextMenu(itemData, e.clientX, e.clientY);
-  };
-
-  const handleMenuAction = (action: string) => {
-    if (!contextMenu.item) return;
-    const { id, url, title, content } = contextMenu.item;
-
-    switch (action) {
-      case "open_new_tab":
-      case "open_group_tab":
-      case "open_bg_tab":
-      case "open_new_window":
-      case "open_incognito":
-        if (url && url !== "#") window.open(url, "_blank");
-        break;
-      case "select_text":
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(`${title}\n${content}`);
-          alert(t.text_copied);
-        }
-        break;
-      case "share_link":
-        if (navigator.share) {
-          navigator.share({ title, url }).catch(() => {});
-        } else if (navigator.clipboard) {
-          navigator.clipboard.writeText(url);
-          alert(t.link_copied);
-        }
-        break;
-      case "copy_link":
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(url);
-          alert(t.link_copied);
-        }
-        break;
-      case "save_link":
-        setStarredIds((prev) => {
-          const updated = { ...prev, [id]: true };
-          try { localStorage.setItem("gpnr_news_starred", JSON.stringify(updated)); } catch (err) {}
-          return updated;
-        });
-        alert(t.link_saved);
-        break;
-      default:
-        break;
-    }
-    closeContextMenu();
-  };
-
-  // 반응 액션 및 localStorage 동기화
-  const toggleCheck = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCheckedIds((prev) => {
-      const updated = { ...prev, [id]: !prev[id] };
-      try { localStorage.setItem("gpnr_news_checked", JSON.stringify(updated)); } catch (err) {}
-      return updated;
-    });
-  };
-
-  const toggleStar = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setStarredIds((prev) => {
-      const updated = { ...prev, [id]: !prev[id] };
-      try { localStorage.setItem("gpnr_news_starred", JSON.stringify(updated)); } catch (err) {}
-      return updated;
-    });
-  };
-
-  const toggleLike = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setLikedIds((prev) => {
-      const updated = { ...prev, [id]: !prev[id] };
-      try { localStorage.setItem("gpnr_news_liked", JSON.stringify(updated)); } catch (err) {}
-      return updated;
-    });
-  };
-
-  if (!mounted) return null;
-
-  const activeCategoryId = (selectedCategory === "all" || !selectedCategory) ? "top-news" : selectedCategory;
-  const matchedCategory = Array.isArray(NEWS_CATEGORIES) ? NEWS_CATEGORIES.find(c => c.id === activeCategoryId) : null;
-  
-  // 카테고리 명칭 파싱
-  const rawCategoryTitle = currentLang === "ko" 
-    ? (matchedCategory?.name || matchedCategory?.label || "주요뉴스") 
-    : (matchedCategory?.enName || matchedCategory?.enLabel || "Top News");
-
-  // "일정 일정" 및 "Pi 일정 일정" 등 번역 찌꺼기 중복 문구 정제 처리
-  const categoryTitle = rawCategoryTitle
-    .replace(/Pi\s+일정\s+일정/g, "일정")
-    .replace(/\b일정\s+일정\b/g, "일정");
-
-  if (loading) {
-    return (
-      <section className="py-8 px-1 bg-[#0f172a] text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500 mb-2"></div>
-        <p className="text-xs text-slate-400 font-medium">
-          {currentLang === "ko" ? "최신 실시간 Web2/Web3 뉴스를 불러오는 중입니다..." : "Loading latest Web2/Web3 news..."}
-        </p>
-      </section>
-    );
-  }
-
-  return (
-    <section className="py-2 px-1 bg-[#0f172a] relative">
-      <div className="flex flex-col">
-        <div className="flex items-center justify-between mb-3 border-b border-white/[0.08] pb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-base">🔥</span>
-            <h2 className="text-xs font-black text-slate-100 tracking-widest uppercase notranslate" translate="no">
-              {categoryTitle}
-            </h2>
-          </div>
-        </div>
-
-        {newsList.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 text-xs">
-            {currentLang === "ko" ? "현재 카테고리에 뉴스가 없습니다." : "No news in this category."}
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            {newsList.map((article, index) => {
-              const titleStr = getParsedText(article.title);
-              const contentStr = getParsedText(article.content);
-              const targetUrl = article.sourceUrl || article.url || "";
-
-              let rawTitleKey = "";
-              if (typeof article.title === "object") {
-                rawTitleKey = article.title.en || article.title.ko || "";
-              } else {
-                rawTitleKey = article.title || "";
-              }
-
-              const articleId = article.id 
-                || (targetUrl && targetUrl !== "#" ? targetUrl : null) 
-                || `news-key-${rawTitleKey.replace(/\s+/g, "_").slice(0, 40)}-${index}`;
-
-              const sourceStr = article.author || article.source || "GPNR News";
-              const rawDateStr = article.publishedAt || article.date || "";
-              const dateStr = formatDateOnly(rawDateStr);
-              const imageSrc = article.imageUrl || article.image || DEFAULT_IMAGE;
-
-              const isChecked = !!checkedIds[articleId];
-              const isStarred = !!starredIds[articleId];
-              const isLiked = !!likedIds[articleId];
-
-              const itemData = { id: articleId, url: targetUrl || "#", title: titleStr, content: contentStr };
-
-              return (
-                <a
-                  key={articleId}
-                  href={targetUrl || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block border-b border-white/[0.05] last:border-0 select-none cursor-pointer"
-                  onTouchStart={(e) => handleTouchStart(itemData, e)}
-                  onTouchEnd={handleTouchEnd}
-                  onTouchMove={handleTouchEnd}
-                  onContextMenu={(e) => handleContextMenu(itemData, e)}
-                  onClick={(e) => {
-                    if (isLongPress.current) {
-                      e.preventDefault();
-                      isLongPress.current = false;
-                    }
-                  }}
-                >
-                  <article className="flex gap-4 py-4 items-center">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-[14px] font-semibold text-slate-200 leading-snug line-clamp-2 group-hover:text-blue-400 transition-colors mb-2">
-                        {titleStr}
-                      </h3>
-                      
-                      <div className="flex items-center justify-between gap-2 mt-3">
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 whitespace-nowrap">
-                          <span className="text-blue-500 font-bold">{sourceStr}</span>
-                          <span>•</span>
-                          <span>{dateStr}</span>
-                        </div>
-
-                        {/* 반응 아이콘 버튼 그룹 */}
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={(e) => toggleCheck(e, articleId)}
-                            title="체크 표시"
-                            className="p-0.5 transition-transform active:scale-125 cursor-pointer"
-                          >
-                            {isChecked ? (
-                              <span className="text-amber-500 font-bold text-xs">✓</span>
-                            ) : (
-                              <div className="w-3.5 h-3.5 rounded-full border border-slate-600 hover:border-slate-400" />
-                            )}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={(e) => toggleStar(e, articleId)}
-                            title="즐겨찾기"
-                            className="p-0.5 transition-transform active:scale-125 cursor-pointer"
-                          >
-                            <span className={isStarred ? "text-yellow-400 text-xs" : "text-slate-600 text-xs"}>★</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={(e) => toggleLike(e, articleId)}
-                            title="좋아요"
-                            className="p-0.5 transition-transform active:scale-125 cursor-pointer"
-                          >
-                            <span className={isLiked ? "text-rose-500 text-xs" : "text-slate-600 text-xs"}>♥</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-slate-800">
-                      <img
-                        src={imageSrc}
-                        alt={titleStr}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          if (target.src !== DEFAULT_IMAGE) {
-                            target.src = DEFAULT_IMAGE;
-                          }
-                        }}
-                      />
-                    </div>
-                  </article>
-                </a>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* 컨텍스트 메뉴 */}
-      {contextMenu.visible && contextMenu.item && (
-        <div 
-          className="fixed z-50 w-64 bg-gray-900/95 text-gray-200 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 py-2.5 text-sm overflow-hidden transition-all duration-150 animate-in fade-in zoom-in-95"
-          style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
-          <div className="px-4 py-2 border-b border-gray-700/60 text-xs text-gray-400 truncate">
-            {contextMenu.item.url}
-          </div>
-
-          <div className="py-1">
-            <button type="button" onClick={() => handleMenuAction("open_new_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              {t.open_new_tab}
-            </button>
-            <button type="button" onClick={() => handleMenuAction("open_group_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              {t.open_group_tab}
-            </button>
-            <button type="button" onClick={() => handleMenuAction("open_bg_tab")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              {t.open_bg_tab}
-            </button>
-            <button type="button" onClick={() => handleMenuAction("open_new_window")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              {t.open_new_window}
-            </button>
-            <button type="button" onClick={() => handleMenuAction("open_incognito")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
-              {t.open_incognito}
-            </button>
-
-            <button type="button" onClick={() => handleMenuAction("select_text")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors border-b border-gray-700/60 pb-2.5 mb-1">
-              {t.select_text}
-            </button>
-
-            <button type="button" onClick={() => handleMenuAction("share_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              {t.share_link}
-            </button>
-            <button type="button" onClick={() => handleMenuAction("copy_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              {t.copy_link}
-            </button>
-            <button type="button" onClick={() => handleMenuAction("save_link")} className="w-full text-left px-4 py-2 hover:bg-gray-800/80 active:bg-gray-700 transition-colors">
-              {t.save_link}
-            </button>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-export default CategoryNews;
