@@ -1,3 +1,4 @@
+// components/gpnr-header.tsx
 // @ts-nocheck
 "use client";
 
@@ -28,17 +29,11 @@ import {
   Menu,
   X,
   Newspaper,
-  HelpCircle
+  HelpCircle,
+  Cpu
 } from "lucide-react";
 
-const NEON_PALETTE = [
-  { gradient: "linear-gradient(90deg, #c084fc 0%, #f472b6 50%, #fcd34d 100%)", glow: "0 0 14px rgba(192, 132, 252, 0.85)" },
-  { gradient: "linear-gradient(90deg, #34d399 0%, #2dd4bf 50%, #22d3ee 100%)", glow: "0 0 14px rgba(52, 211, 153, 0.85)" },
-  { gradient: "linear-gradient(90deg, #fcd34d 0%, #fb7185 50%, #c084fc 100%)", glow: "0 0 14px rgba(252, 211, 77, 0.85)" },
-  { gradient: "linear-gradient(90deg, #60a5fa 0%, #a5b4fc 50%, #c084fc 100%)", glow: "0 0 14px rgba(96, 165, 250, 0.85)" },
-  { gradient: "linear-gradient(90deg, #e879f9 0%, #c084fc 50%, #a5b4fc 100%)", glow: "0 0 14px rgba(232, 121, 249, 0.85)" }
-];
-
+// 아이콘 매핑 객체
 const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
   "mainnet": Globe,
@@ -52,11 +47,23 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "kyc": ShieldCheck,
   "developer": Code,
   "outlook": TrendingUp,
+  "price": DollarSign,
+  "rules": Gavel,
+  "defi": Coins,
+  "tech": Cpu,
   "security": Shield,
   "schedule": Calendar,
   "community": Users,
   "usage": HelpCircle,
 };
+
+const NEON_PALETTE = [
+  { gradient: "linear-gradient(90deg, #c084fc 0%, #f472b6 50%, #fcd34d 100%)", glow: "0 0 14px rgba(192, 132, 252, 0.85)" },
+  { gradient: "linear-gradient(90deg, #34d399 0%, #2dd4bf 50%, #22d3ee 100%)", glow: "0 0 14px rgba(52, 211, 153, 0.85)" },
+  { gradient: "linear-gradient(90deg, #fcd34d 0%, #fb7185 50%, #c084fc 100%)", glow: "0 0 14px rgba(252, 211, 77, 0.85)" },
+  { gradient: "linear-gradient(90deg, #60a5fa 0%, #a5b4fc 50%, #c084fc 100%)", glow: "0 0 14px rgba(96, 165, 250, 0.85)" },
+  { gradient: "linear-gradient(90deg, #e879f9 0%, #c084fc 50%, #a5b4fc 100%)", glow: "0 0 14px rgba(232, 121, 249, 0.85)" }
+];
 
 interface GpnrHeaderProps {
   currentCategory?: string;
@@ -112,16 +119,12 @@ export function GpnrHeader({
       : user.username
     : "11177";
 
-  const renderCategoryIcon = (category: any) => {
-    const rawId = category.id ? String(category.id).toLowerCase() : "";
-    const FoundIcon = ICON_MAP[rawId] || category.Icon || Newspaper;
+  const renderCategoryIcon = (categoryId: string) => {
+    const FoundIcon = ICON_MAP[categoryId] || Newspaper;
     return <FoundIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
   };
 
   const activeNeon = NEON_PALETTE[colorIdx];
-
-  // 드롭다운 메뉴 아이콘 배열 필터링 및 재배치 (마지막을 보안, 일정, 커뮤니티로 보장)
-  const menuCategories = NEWS_CATEGORIES.filter((cat) => cat.id !== "usage");
 
   return (
     <>
@@ -144,6 +147,7 @@ export function GpnrHeader({
             </div>
 
             <div className="flex items-center gap-2">
+              {/* 상단 이용방법 버튼 */}
               <button
                 onClick={() => setIsUsageOpen(true)}
                 type="button"
@@ -153,6 +157,7 @@ export function GpnrHeader({
                 <span>이용방법</span>
               </button>
 
+              {/* 런처 메뉴 버튼 */}
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 type="button"
@@ -165,7 +170,7 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 4열 그리드 모달 (드롭다운 메뉴 제일 마지막: 보안 -> 일정 -> 커뮤니티) */}
+      {/* 4열 그리드 런처 팝업 */}
       {isLauncherOpen && (
         <div
           style={{
@@ -188,8 +193,6 @@ export function GpnrHeader({
             style={{
               width: '90%',
               maxWidth: '340px',
-              maxHeight: '82vh',
-              overflowY: 'auto',
               backgroundColor: '#131528',
               border: '1px solid rgba(168, 85, 247, 0.4)',
               borderRadius: '20px',
@@ -198,7 +201,7 @@ export function GpnrHeader({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 상단 Header */}
+            {/* 상단 헤더 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
               <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#f1f5f9' }}>카테고리 메뉴</span>
               <button
@@ -210,18 +213,21 @@ export function GpnrHeader({
               </button>
             </div>
 
-            {/* 카테고리 4열 그리드 */}
+            {/* 4열 그리드 카테고리 버튼들 */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px' }}>
-              {menuCategories.map((category) => {
+              {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
-                const labelText = currentLang === "ko" ? category.name : (category.enName || category.name);
+                const labelText = currentLang === "ko" ? category.name : category.enName;
 
                 return (
                   <button
                     key={category.id}
                     type="button"
                     onClick={() => {
-                      if (category.id === 'community') {
+                      if (category.id === 'usage') {
+                        setIsLauncherOpen(false);
+                        setIsUsageOpen(true);
+                      } else if (category.id === 'community') {
                         setIsLauncherOpen(false);
                         setIsCommunityOpen(true);
                       } else {
@@ -243,7 +249,7 @@ export function GpnrHeader({
                       cursor: 'pointer'
                     }}
                   >
-                    {renderCategoryIcon(category)}
+                    {renderCategoryIcon(category.id)}
                     <span style={{ fontSize: '9px', fontWeight: 500, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                       {labelText}
                     </span>
@@ -252,7 +258,7 @@ export function GpnrHeader({
               })}
             </div>
 
-            {/* 하단 KYC 및 연결 정보 */}
+            {/* 하단 KYC 및 계정 정보 */}
             <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
                 type="button"
@@ -272,12 +278,12 @@ export function GpnrHeader({
                   cursor: 'pointer'
                 }}
               >
-                Reset KYC ID
+                KYC ID 재설정
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', padding: '0 4px' }}>
                 <span>
-                  Connected: <strong style={{ color: '#c084fc' }}>{displayId}</strong>
+                  연결: <strong style={{ color: '#c084fc' }}>{displayId}</strong>
                 </span>
                 <button
                   type="button"
@@ -287,7 +293,7 @@ export function GpnrHeader({
                   }}
                   style={{ color: '#fb7185', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                  Change ID
+                  로그아웃/변경
                 </button>
               </div>
             </div>
@@ -295,10 +301,10 @@ export function GpnrHeader({
         </div>
       )}
 
-      {/* 이용방법 별도 팝업창 모달 */}
+      {/* 이용방법 모달 */}
       <UsageModal isOpen={isUsageOpen} onClose={() => setIsUsageOpen(false)} />
 
-      {/* 커뮤니티 팝업 모달 */}
+      {/* 커뮤니티 모달 */}
       <CommunityModal isOpen={isCommunityOpen} onClose={() => setIsCommunityOpen(false)} />
     </>
   );
