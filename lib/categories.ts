@@ -38,8 +38,8 @@ export const NEWS_CATEGORIES: Category[] = [
   // 1행 (1~4): 코어 네트워크 1
   { id: "top-news", name: "주요뉴스", label: "주요뉴스", enName: "Top News", enLabel: "Top News", iconName: "Flame", Icon: Flame, group: "core" }, 
   { id: "mainnet", name: "메인넷", label: "메인넷", enName: "Mainnet", enLabel: "Mainnet", iconName: "Globe", Icon: Globe, group: "core" },
-  { id: "node", name: "노드", label: "노드", enName: "Node", enLabel: "Node", iconName: "Tv", Icon: Tv, group: "core" },
-  { id: "mining", name: "채굴", label: "채굴", enName: "Mining", enLabel: "Mining", iconName: "Zap", Icon: Zap, group: "core" },
+  { id: "node", name: "구분", label: "구분", enName: "Node", enLabel: "Node", iconName: "Tv", Icon: Tv, group: "core" },
+  { id: "mining", name: "동글", label: "동글", enName: "Mining", enLabel: "Mining", iconName: "Zap", Icon: Zap, group: "core" },
 
   // 2행 (5~8): 코어 네트워크 2
   { id: "wallet", name: "지갑", label: "지갑", enName: "Wallet", enLabel: "Wallet", iconName: "Wallet", Icon: Wallet, group: "core" },
@@ -47,13 +47,18 @@ export const NEWS_CATEGORIES: Category[] = [
   { id: "roadmap", name: "로드맵", label: "로드맵", enName: "Roadmap", enLabel: "Roadmap", iconName: "Map", Icon: Map, group: "core" },
   { id: "whitepaper", name: "백서", label: "백서", enName: "Whitepaper", enLabel: "Whitepaper", iconName: "FileText", Icon: FileText, group: "core" },
 
-  // 3행 (9~12): 생태계 및 시장/규정
+  // 3행 (9~12): 생태계 및 서비스
   { id: "commerce", name: "커머스", label: "커머스", enName: "Commerce", enLabel: "Commerce", iconName: "ShoppingCart", Icon: ShoppingCart, group: "ecosystem" },
   { id: "kyc", name: "KYC", label: "KYC", enName: "KYC", enLabel: "KYC", iconName: "ShieldCheck", Icon: ShieldCheck, group: "ecosystem" },
   { id: "developer", name: "개발자", label: "개발자", enName: "Developers", enLabel: "Developers", iconName: "Code", Icon: Code, group: "ecosystem" },
-  { id: "outlook", name: "가격 전망", label: "가격 전망", enName: "Price Outlook", enLabel: "Price Outlook", iconName: "TrendingUp", Icon: TrendingUp, group: "market_legal" },
+  { id: "outlook", name: "전망", label: "전망", enName: "Outlook", enLabel: "Outlook", iconName: "TrendingUp", Icon: TrendingUp, group: "market_legal" },
 
-  // 4행 (13~16): 요청 고정 순서 [보안 -> 일정 -> 커뮤니티 -> 이용방법]
+  // 4행 (13~16): 시장 / 가격 / 규정 / 디파이
+  { id: "price", name: "가격", label: "가격", enName: "Price", enLabel: "Price", iconName: "DollarSign", Icon: DollarSign, group: "market_legal" },
+  { id: "rules", name: "규정", label: "규정", enName: "Rules", enLabel: "Rules", iconName: "Gavel", Icon: Gavel, group: "market_legal" },
+  { id: "defi", name: "디파이", label: "디파이", enName: "DeFi", enLabel: "DeFi", iconName: "Coins", Icon: Coins, group: "ecosystem" },
+
+  // 5행 (17~20): [요청 필수 고정 순서: 보안 -> 일정 -> 커뮤니티 -> 이용방법]
   { id: "security", name: "보안", label: "보안", enName: "Security", enLabel: "Security", iconName: "Shield", Icon: Shield, group: "market_legal" },
   { id: "schedule", name: "일정", label: "일정", enName: "Schedule", enLabel: "Schedule", iconName: "Calendar", Icon: Calendar, group: "ecosystem" },
   { id: "community", name: "커뮤니티", label: "커뮤니티", enName: "Community", enLabel: "Community", iconName: "Users", Icon: Users, group: "ecosystem" },
