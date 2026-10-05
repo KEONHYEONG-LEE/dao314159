@@ -37,6 +37,8 @@ export function UsageModal({ isOpen, onClose }: ModalProps) {
 
   return (
     <div
+      className="notranslate"
+      translate="no"
       style={{
         position: 'fixed',
         top: 0,
@@ -54,6 +56,8 @@ export function UsageModal({ isOpen, onClose }: ModalProps) {
       onClick={onClose}
     >
       <div
+        className="notranslate"
+        translate="no"
         style={{
           width: '100%',
           maxWidth: '420px',
@@ -127,6 +131,8 @@ export function CommunityModal({ isOpen, onClose }: ModalProps) {
 
   return (
     <div
+      className="notranslate"
+      translate="no"
       style={{
         position: 'fixed',
         top: 0,
@@ -144,6 +150,8 @@ export function CommunityModal({ isOpen, onClose }: ModalProps) {
       onClick={onClose}
     >
       <div
+        className="notranslate"
+        translate="no"
         style={{
           width: '100%',
           maxWidth: '380px',
