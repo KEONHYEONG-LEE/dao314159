@@ -2,12 +2,16 @@ import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import Script from 'next/script';
 import { ThemeProvider } from 'next-themes';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import '../globals.css';
 import { FloatingLanguageSwitcher } from '../components/FloatingLanguageSwitcher';
 
 export default function MyApp({ Component, pageProps }: AppProps) {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
+
     // 구글 번역 기본 상단 바 및 팝업 프레임 강제 제거
     const removeGoogleBar = () => {
       const selectors = [
@@ -28,7 +32,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
         });
       });
 
-      if (document.body.style.top !== '0px') {
+      if (document.body && document.body.style.top !== '0px') {
         document.body.style.setProperty('top', '0px', 'important');
       }
     };
@@ -110,7 +114,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
         <div id="google_translate_element" style={{ display: 'none', width: 0, height: 0, overflow: 'hidden' }} />
         
         {/* 커스텀 플로팅 언어 스위처 */}
-        <FloatingLanguageSwitcher />
+        {mounted && <FloatingLanguageSwitcher />}
       </div>
     </ThemeProvider>
   );
