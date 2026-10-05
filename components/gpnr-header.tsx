@@ -128,12 +128,13 @@ export function GpnrHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-3">
-          <div className="flex h-[48px] items-center justify-between">
-            <div className="flex items-center gap-2">
+      <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl notranslate" translate="no">
+        <div className="mx-auto max-w-7xl px-3 notranslate" translate="no">
+          <div className="flex h-[48px] items-center justify-between notranslate" translate="no">
+            <div className="flex items-center gap-2 notranslate" translate="no">
               <span
-                className="font-black text-2xl tracking-wider cursor-pointer select-none active:scale-95 transition-all duration-1000 ease-in-out"
+                className="font-black text-2xl tracking-wider cursor-pointer select-none active:scale-95 transition-all duration-1000 ease-in-out notranslate"
+                translate="no"
                 style={{
                   backgroundImage: activeNeon.gradient,
                   WebkitBackgroundClip: "text",
@@ -146,22 +147,24 @@ export function GpnrHeader({
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 notranslate" translate="no">
               {/* 상단 이용방법 버튼 */}
               <button
                 onClick={() => setIsUsageOpen(true)}
                 type="button"
-                className="px-2 py-1 rounded-lg bg-purple-900/40 text-purple-300 hover:bg-purple-800/50 active:scale-95 transition-all border border-purple-700/50 flex items-center gap-1 text-[11px] font-medium cursor-pointer"
+                className="px-2 py-1 rounded-lg bg-purple-900/40 text-purple-300 hover:bg-purple-800/50 active:scale-95 transition-all border border-purple-700/50 flex items-center gap-1 text-[11px] font-medium cursor-pointer notranslate"
+                translate="no"
               >
                 <HelpCircle className="w-3.5 h-3.5 text-purple-300" />
-                <span>이용방법</span>
+                <span className="notranslate" translate="no">이용방법</span>
               </button>
 
               {/* 런처 메뉴 버튼 */}
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 type="button"
-                className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 active:scale-95 transition-all border border-slate-700/50 flex items-center justify-center cursor-pointer"
+                className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 active:scale-95 transition-all border border-slate-700/50 flex items-center justify-center cursor-pointer notranslate"
+                translate="no"
               >
                 <Menu className="w-5 h-5 text-slate-200" />
               </button>
@@ -173,6 +176,8 @@ export function GpnrHeader({
       {/* 4열 그리드 런처 팝업 */}
       {isLauncherOpen && (
         <div
+          className="notranslate"
+          translate="no"
           style={{
             position: 'fixed',
             top: 0,
@@ -190,6 +195,8 @@ export function GpnrHeader({
           onClick={() => setIsLauncherOpen(false)}
         >
           <div
+            className="notranslate"
+            translate="no"
             style={{
               width: '90%',
               maxWidth: '340px',
@@ -202,11 +209,13 @@ export function GpnrHeader({
             onClick={(e) => e.stopPropagation()}
           >
             {/* 상단 헤더 */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#f1f5f9' }}>카테고리 메뉴</span>
+            <div className="notranslate" translate="no" style={{ display: 'flex', itemsAlign: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
+              <span className="notranslate" translate="no" style={{ fontSize: '13px', fontWeight: 'bold', color: '#f1f5f9' }}>카테고리 메뉴</span>
               <button
                 onClick={() => setIsLauncherOpen(false)}
                 type="button"
+                className="notranslate"
+                translate="no"
                 style={{ color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto' }}
               >
                 <X className="w-4 h-4" />
@@ -214,7 +223,7 @@ export function GpnrHeader({
             </div>
 
             {/* 4열 그리드 카테고리 버튼들 */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px' }}>
+            <div className="notranslate" translate="no" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px' }}>
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
                 const labelText = currentLang === "ko" ? category.name : category.enName;
@@ -223,6 +232,8 @@ export function GpnrHeader({
                   <button
                     key={category.id}
                     type="button"
+                    className="notranslate"
+                    translate="no"
                     onClick={() => {
                       if (category.id === 'usage') {
                         setIsLauncherOpen(false);
@@ -250,7 +261,7 @@ export function GpnrHeader({
                     }}
                   >
                     {renderCategoryIcon(category.id)}
-                    <span style={{ fontSize: '9px', fontWeight: 500, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
+                    <span className="notranslate" translate="no" style={{ fontSize: '9px', fontWeight: 500, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                       {labelText}
                     </span>
                   </button>
@@ -259,9 +270,11 @@ export function GpnrHeader({
             </div>
 
             {/* 하단 KYC 및 계정 정보 */}
-            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="notranslate" translate="no" style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
                 type="button"
+                className="notranslate"
+                translate="no"
                 onClick={() => {
                   localStorage.removeItem("gpnr_kyc_id");
                   alert("KYC ID 정보가 재설정되었습니다.");
@@ -281,12 +294,14 @@ export function GpnrHeader({
                 KYC ID 재설정
               </button>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', padding: '0 4px' }}>
-                <span>
-                  연결: <strong style={{ color: '#c084fc' }}>{displayId}</strong>
+              <div className="notranslate" translate="no" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', padding: '0 4px' }}>
+                <span className="notranslate" translate="no">
+                  연결: <strong className="notranslate" translate="no" style={{ color: '#c084fc' }}>{displayId}</strong>
                 </span>
                 <button
                   type="button"
+                  className="notranslate"
+                  translate="no"
                   onClick={() => {
                     if (logout) logout();
                     setIsLauncherOpen(false);
