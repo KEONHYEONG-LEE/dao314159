@@ -120,6 +120,9 @@ export function GpnrHeader({
 
   const activeNeon = NEON_PALETTE[colorIdx];
 
+  // 드롭다운 메뉴 아이콘 배열 필터링 및 재배치 (마지막을 보안, 일정, 커뮤니티로 보장)
+  const menuCategories = NEWS_CATEGORIES.filter((cat) => cat.id !== "usage");
+
   return (
     <>
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl">
@@ -142,6 +145,15 @@ export function GpnrHeader({
 
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setIsUsageOpen(true)}
+                type="button"
+                className="px-2 py-1 rounded-lg bg-purple-900/40 text-purple-300 hover:bg-purple-800/50 active:scale-95 transition-all border border-purple-700/50 flex items-center gap-1 text-[11px] font-medium cursor-pointer"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-purple-300" />
+                <span>이용방법</span>
+              </button>
+
+              <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 type="button"
                 className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 active:scale-95 transition-all border border-slate-700/50 flex items-center justify-center cursor-pointer"
@@ -153,7 +165,7 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 4열 그리드 모달 (순서: 보안 -> 일정 -> 커뮤니티 -> 이용방법 고정) */}
+      {/* 4열 그리드 모달 (드롭다운 메뉴 제일 마지막: 보안 -> 일정 -> 커뮤니티) */}
       {isLauncherOpen && (
         <div
           style={{
@@ -200,7 +212,7 @@ export function GpnrHeader({
 
             {/* 카테고리 4열 그리드 */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px' }}>
-              {NEWS_CATEGORIES.map((category) => {
+              {menuCategories.map((category) => {
                 const isSelected = currentCategory === category.id;
                 const labelText = currentLang === "ko" ? category.name : (category.enName || category.name);
 
@@ -209,10 +221,7 @@ export function GpnrHeader({
                     key={category.id}
                     type="button"
                     onClick={() => {
-                      if (category.id === 'usage') {
-                        setIsLauncherOpen(false);
-                        setIsUsageOpen(true);
-                      } else if (category.id === 'community') {
+                      if (category.id === 'community') {
                         setIsLauncherOpen(false);
                         setIsCommunityOpen(true);
                       } else {
@@ -286,10 +295,10 @@ export function GpnrHeader({
         </div>
       )}
 
-      {/* 이용방법 팝업 모달 외부 컴포넌트 연결 */}
+      {/* 이용방법 별도 팝업창 모달 */}
       <UsageModal isOpen={isUsageOpen} onClose={() => setIsUsageOpen(false)} />
 
-      {/* 커뮤니티 팝업 모달 외부 컴포넌트 연결 */}
+      {/* 커뮤니티 팝업 모달 */}
       <CommunityModal isOpen={isCommunityOpen} onClose={() => setIsCommunityOpen(false)} />
     </>
   );
