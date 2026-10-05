@@ -8,32 +8,12 @@ import { NEWS_CATEGORIES } from "../lib/categories";
 import { UsageModal, CommunityModal } from "./usage-modal";
 
 import {
-  Flame,
-  Globe,
-  Tv,
-  Zap,
-  Wallet,
-  Compass,
-  Map,
-  FileText,
-  Users,
-  ShoppingCart,
-  ShieldCheck,
-  Code,
-  TrendingUp,
-  DollarSign,
-  Shield,
-  Gavel,
-  Calendar,
-  Coins,
-  Menu,
-  X,
-  Newspaper,
-  HelpCircle,
-  Cpu
+  Flame, Globe, Tv, Zap, Wallet, Compass, Map, FileText,
+  Users, ShoppingCart, ShieldCheck, Code, TrendingUp, DollarSign,
+  Shield, Gavel, Calendar, Coins, Menu, X, Newspaper, HelpCircle, Cpu
 } from "lucide-react";
 
-// 아이콘 매핑 객체
+// 아이콘 매핑
 const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
   "mainnet": Globe,
@@ -55,6 +35,30 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "schedule": Calendar,
   "community": Users,
   "usage": HelpCircle,
+};
+
+// 💡 [핵심] 번역기 오류 및 데이터 오탈자 완전 방어용 한글 이름 매핑표
+const CATEGORY_KO_NAMES: Record<string, string> = {
+  "top-news": "주요뉴스",
+  "mainnet": "메인넷",
+  "node": "노드",
+  "mining": "채굴",
+  "wallet": "지갑",
+  "browser": "브라우저",
+  "roadmap": "로드맵",
+  "whitepaper": "백서",
+  "commerce": "커머스",
+  "kyc": "KYC",
+  "developer": "개발자",
+  "outlook": "전망",
+  "price": "가격",
+  "rules": "규정",
+  "defi": "디파이",
+  "tech": "기술",
+  "security": "보안",
+  "schedule": "일정",
+  "community": "커뮤니티",
+  "usage": "이용방법"
 };
 
 const NEON_PALETTE = [
@@ -148,7 +152,6 @@ export function GpnrHeader({
             </div>
 
             <div className="flex items-center gap-2 notranslate" translate="no">
-              {/* 상단 이용방법 버튼 */}
               <button
                 onClick={() => setIsUsageOpen(true)}
                 type="button"
@@ -159,7 +162,6 @@ export function GpnrHeader({
                 <span className="notranslate" translate="no">이용방법</span>
               </button>
 
-              {/* 런처 메뉴 버튼 */}
               <button
                 onClick={() => setIsLauncherOpen(!isLauncherOpen)}
                 type="button"
@@ -209,7 +211,7 @@ export function GpnrHeader({
             onClick={(e) => e.stopPropagation()}
           >
             {/* 상단 헤더 */}
-            <div className="notranslate" translate="no" style={{ display: 'flex', itemsAlign: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
+            <div className="notranslate" translate="no" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
               <span className="notranslate" translate="no" style={{ fontSize: '13px', fontWeight: 'bold', color: '#f1f5f9' }}>카테고리 메뉴</span>
               <button
                 onClick={() => setIsLauncherOpen(false)}
@@ -226,7 +228,11 @@ export function GpnrHeader({
             <div className="notranslate" translate="no" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px' }}>
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
-                const labelText = currentLang === "ko" ? category.name : category.enName;
+                
+                // 💡 [핵심] 매핑표에서 정확한 한글명을 우선 추출하여 번역 오작동 방지
+                const labelText = currentLang === "ko" 
+                  ? (CATEGORY_KO_NAMES[category.id] || category.name) 
+                  : (category.enName || category.name);
 
                 return (
                   <button
@@ -316,10 +322,7 @@ export function GpnrHeader({
         </div>
       )}
 
-      {/* 이용방법 모달 */}
       <UsageModal isOpen={isUsageOpen} onClose={() => setIsUsageOpen(false)} />
-
-      {/* 커뮤니티 모달 */}
       <CommunityModal isOpen={isCommunityOpen} onClose={() => setIsCommunityOpen(false)} />
     </>
   );
