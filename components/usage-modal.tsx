@@ -117,4 +117,167 @@ export function UsageModal({ isOpen, onClose }: ModalProps) {
         {/* 10가지 가이드 스크롤 영역 */}
         <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {usageSteps.map((step, idx) => (
-            <div key={idx} style={{ backgroundColor: 'rgba(30, 41, 59, 0.6)', border: '1px solid rgba(168, 85, 247, 0.2)', borderRadius: '12px', padding: '12px
+            <div key={idx} style={{ backgroundColor: 'rgba(30, 41, 59, 0.6)', border: '1px solid rgba(168, 85, 247, 0.2)', borderRadius: '12px', padding: '12px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#c084fc', marginBottom: '4px' }}>{step.title}</div>
+              <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: '1.5' }}>{step.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* 닫기 버튼 */}
+        <button
+          onClick={onClose}
+          type="button"
+          style={{
+            marginTop: '16px',
+            width: '100%',
+            padding: '11px',
+            borderRadius: '12px',
+            background: 'linear-gradient(90deg, #9333ea, #c084fc)',
+            color: '#ffffff',
+            fontWeight: 'bold',
+            fontSize: '13px',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          확인
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 2. 미려한 디자인의 커뮤니티 팝업
+export function CommunityModal({ isOpen, onClose }: ModalProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const communities = [
+    { title: "파이 네트워크 공식 홈페이지", desc: "MinePi Official Portal", icon: Globe, link: "https://minepi.com" },
+    { title: "글로벌 파이 커뮤니티", desc: "전 세계 개척자들의 통합 소통 채널", icon: Users, link: "https://minepi.com/blog/" },
+    { title: "개발자 및 DApp 포털", desc: "Pi Developer Platform & API", icon: Code, link: "https://developer.minepi.com" },
+    { title: "KYC & 보안 센터", desc: "계정 보안 및 인증 공식 가이드", icon: ShieldCheck, link: "https://minepi.com/kyc/" },
+  ];
+
+  return (
+    <div
+      className="notranslate"
+      translate="no"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 999999,
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px'
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="notranslate"
+        translate="no"
+        style={{
+          width: '100%',
+          maxWidth: '380px',
+          backgroundColor: '#131528',
+          border: '1px solid rgba(168, 85, 247, 0.5)',
+          borderRadius: '20px',
+          padding: '20px',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+          position: 'relative'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 헤더 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(51, 65, 85, 0.8)', paddingBottom: '12px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Users className="w-5 h-5 text-purple-400 pointer-events-none" />
+            <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#f8fafc' }}>파이 생태계 커뮤니티</span>
+          </div>
+          <button onClick={onClose} type="button" style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+            <X className="w-5 h-5 pointer-events-none" />
+          </button>
+        </div>
+
+        {/* 커뮤니티 카드 모듈 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {communities.map((item, idx) => {
+            const IconComp = item.icon;
+            return (
+              <a
+                key={idx}
+                href={item.link}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 14px',
+                  backgroundColor: 'rgba(30, 41, 59, 0.7)',
+                  border: '1px solid rgba(168, 85, 247, 0.25)',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <IconComp className="w-4 h-4 text-purple-300 pointer-events-none" />
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#f1f5f9' }}>{item.title}</div>
+                    <div style={{ fontSize: '10px', color: '#94a3b8' }}>{item.desc}</div>
+                  </div>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+              </a>
+            );
+          })}
+        </div>
+
+        {/* 하단 자율 후원 안내 박스 */}
+        <div style={{ marginTop: '14px', padding: '10px', borderRadius: '10px', backgroundColor: 'rgba(45, 27, 78, 0.5)', border: '1px solid rgba(168, 85, 247, 0.3)', textAlign: 'center' }}>
+          <div style={{ fontSize: '11px', color: '#e9d5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <Heart className="w-3 h-3 text-pink-400 fill-pink-400 pointer-events-none" />
+            <span>자율 후원: 1회 <strong>0.01 Pi</strong></span>
+          </div>
+        </div>
+
+        {/* 닫기 버튼 */}
+        <button
+          onClick={onClose}
+          type="button"
+          style={{
+            marginTop: '12px',
+            width: '100%',
+            padding: '10px',
+            borderRadius: '12px',
+            backgroundColor: '#1e293b',
+            color: '#cbd5e1',
+            fontWeight: 'bold',
+            fontSize: '12px',
+            border: '1px solid #334155',
+            cursor: 'pointer'
+          }}
+        >
+          닫기
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default UsageModal;
