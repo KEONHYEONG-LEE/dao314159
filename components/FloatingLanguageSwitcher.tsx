@@ -64,7 +64,7 @@ export function FloatingLanguageSwitcher() {
     if (currentLang && currentLang !== "en") {
       const timer = setTimeout(() => {
         const combo = document.querySelector(".goog-te-combo") as HTMLSelectElement;
-        if (combo) {
+        if (combo && combo.value !== currentLang) {
           combo.value = currentLang;
           combo.dispatchEvent(new Event("change"));
         }
@@ -74,21 +74,26 @@ export function FloatingLanguageSwitcher() {
   }, [currentLang, isLoaded, mounted]);
 
   const handleLanguageChange = (langCode: string) => {
-    // 파이 스토리지 및 LocalStorage 동시 업데이트
     setCurrentLang(langCode);
     
-    // 쿠키 제거
-    const domains = [window.location.hostname, "." + window.location.hostname, ""];
+    // 쿠키 제어 및 domains 안전하게 순회
+    const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+    const domains = [hostname, "." + hostname, ""];
+    
     domains.forEach(domain => {
       document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${domain ? ` domain=${domain};` : ""}`;
       document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/html;${domain ? ` domain=${domain};` : ""}`;
     });
 
     if (langCode === 'en') {
-      window.location.href = window.location.origin;
+      if (typeof window !== "undefined") {
+        window.location.href = window.location.origin;
+      }
     } else {
       document.cookie = `googtrans=/en/${langCode}; path=/;`;
-      document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname};`;
+      if (hostname) {
+        document.cookie = `googtrans=/en/${langCode}; path=/; domain=${hostname};`;
+      }
       
       const combo = document.querySelector(".goog-te-combo") as HTMLSelectElement;
       if (combo) {
@@ -96,7 +101,11 @@ export function FloatingLanguageSwitcher() {
         combo.dispatchEvent(new Event("change"));
       }
       
-      window.location.reload();
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.location.reload();
+        }
+      }, 100);
     }
     setIsOpen(false);
   };
@@ -106,30 +115,43 @@ export function FloatingLanguageSwitcher() {
   const currentLabel = LANGUAGES.find(l => l.code === currentLang)?.label || "한국어";
 
   return (
-    // 브라우저 기본 번역 버튼과 겹치지 않도록 bottom-20으로 위치 조정
-    <div className="fixed bottom-20 right-5 z-[99999] flex flex-col items-end isolate select-none">
+    <div className="fixed bottom-20 right-5 z-[99999] flex flex-col items-end isolate select-none notranslate" translate="no">
       {isOpen && (
-        <div className="mb-2 max-h-60 w-36 overflow-y-auto rounded-2xl border border-slate-700/80 bg-[#1e293b]/95 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95">
+        <div className="mb-2 max-h-60 w-36 overflow-y-auto rounded-2xl border border-slate-700/80 bg-[#1e293b]/95 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 notranslate" translate="no">
           {LANGUAGES.map((lang) => (
             <button
               key={lang.code}
-              onClick={() => handleLanguageChange(lang.code)}
-              className={`w-full rounded-xl px-3.5 py-2 text-left text-xs font-semibold transition-colors ${
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLanguageChange(lang.code);
+              }}
+              className={`w-full rounded-xl px-3.5 py-2 text-left text-xs font-semibold transition-colors notranslate ${
                 currentLang === lang.code ? 'bg-blue-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800'
               }`}
+              translate="no"
             >
-              {lang.label}
+              <span className="notranslate" translate="no" suppressHydrationWarning>
+                {lang.label}
+              </span>
             </button>
           ))}
         </div>
       )}
       
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative z-10 flex h-11 items-center gap-2 rounded-full bg-blue-600 px-4 text-xs font-bold text-white shadow-xl shadow-blue-950/50 hover:bg-blue-500 transition-all active:scale-95 border border-blue-400/30"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        type="button"
+        className="relative z-10 flex h-11 items-center gap-2 rounded-full bg-blue-600 px-4 text-xs font-bold text-white shadow-xl shadow-blue-950/50 hover:bg-blue-500 transition-all active:scale-95 border border-blue-400/30 notranslate"
+        translate="no"
       >
         <Globe size={16} />
-        <span>{currentLabel}</span>
+        <span className="notranslate" translate="no" suppressHydrationWarning>
+          {currentLabel}
+        </span>
         <ChevronUp size={15} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
     </div>
