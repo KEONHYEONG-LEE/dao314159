@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Flame,
   Globe,
@@ -32,7 +31,7 @@ export interface Category {
   iconName: string;  // 문자열 명칭
   Icon: LucideIcon;  // Lucide 아이콘 컴포넌트 객체
   group: 'core' | 'ecosystem' | 'market_legal';
-  isModal?: boolean; // 모달 전용
+  isModal?: boolean; // 모달/팝업 전용 여부
 }
 
 export const NEWS_CATEGORIES: Category[] = [
@@ -60,10 +59,10 @@ export const NEWS_CATEGORIES: Category[] = [
   { id: "defi", name: "디파이", label: "디파이", enName: "DeFi", enLabel: "DeFi", iconName: "Coins", Icon: Coins, group: "ecosystem" },
   { id: "tech", name: "기술/생태계", label: "기술/생태계", enName: "Ecosystem", enLabel: "Ecosystem", iconName: "Cpu", Icon: Cpu, group: "ecosystem" },
 
-  // 5행 (17~20) [고정: 보안 -> 일정 -> 커뮤니티 -> 이용방법]
+  // 5행 (17~20) [배치 순서: 보안 -> 일정 -> 커뮤니티 -> 이용방법]
   { id: "security", name: "보안", label: "보안", enName: "Security", enLabel: "Security", iconName: "Shield", Icon: Shield, group: "market_legal" },
   { id: "schedule", name: "일정", label: "일정", enName: "Schedule", enLabel: "Schedule", iconName: "Calendar", Icon: Calendar, group: "ecosystem" },
-  { id: "community", name: "커뮤니티", label: "커뮤니티", enName: "Community", enLabel: "Community", iconName: "Users", Icon: Users, group: "ecosystem", isModal: true },
+  { id: "community", name: "커뮤니티", label: "커뮤니티", enName: "Community", enLabel: "Community", iconName: "Users", Icon: Users, group: "ecosystem" },
   { id: "usage", name: "이용방법", label: "이용방법", enName: "How to Use", enLabel: "How to Use", iconName: "HelpCircle", Icon: HelpCircle, group: "ecosystem", isModal: true }
 ];
 
