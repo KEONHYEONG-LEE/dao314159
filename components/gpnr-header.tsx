@@ -13,7 +13,6 @@ import {
   Shield, Gavel, Calendar, Coins, Menu, X, Newspaper, HelpCircle, Cpu
 } from "lucide-react";
 
-// 아이콘 매핑
 const ICON_MAP: Record<string, React.ElementType> = {
   "top-news": Flame,
   "mainnet": Globe,
@@ -37,7 +36,6 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "usage": HelpCircle,
 };
 
-// 💡 [핵심] 번역기 오류 및 데이터 오탈자 완전 방어용 한글 이름 매핑표
 const CATEGORY_KO_NAMES: Record<string, string> = {
   "top-news": "주요뉴스",
   "mainnet": "메인넷",
@@ -125,24 +123,24 @@ export function GpnrHeader({
 
   const renderCategoryIcon = (categoryId: string) => {
     const FoundIcon = ICON_MAP[categoryId] || Newspaper;
-    return <FoundIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0" />;
+    return <FoundIcon className="w-4 h-4 mb-0.5 text-purple-400 shrink-0 pointer-events-none" />;
   };
 
   const activeNeon = NEON_PALETTE[colorIdx];
 
-  // 구글 번역기 DOM 충돌 방지용 비동기 카테고리 클릭 핸들러
+  // 터치/클릭 즉시 반응 처리
   const handleCategoryClick = (categoryId: string) => {
     setIsLauncherOpen(false);
 
-    setTimeout(() => {
-      if (categoryId === 'usage') {
-        setIsUsageOpen(true);
-      } else if (categoryId === 'community') {
-        setIsCommunityOpen(true);
-      } else {
-        if (onCategoryChange) onCategoryChange(categoryId);
+    if (categoryId === 'usage') {
+      setIsUsageOpen(true);
+    } else if (categoryId === 'community') {
+      setIsCommunityOpen(true);
+    } else {
+      if (onCategoryChange) {
+        onCategoryChange(categoryId);
       }
-    }, 50);
+    }
   };
 
   return (
@@ -199,7 +197,7 @@ export function GpnrHeader({
         </div>
       </header>
 
-      {/* 4열 그리드 런처 팝업 */}
+      {/* 모달 배경 및 런처 카테고리 메뉴 */}
       {isLauncherOpen && (
         <div
           className="notranslate"
@@ -237,7 +235,6 @@ export function GpnrHeader({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 상단 헤더 */}
             <div className="notranslate" translate="no" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
               <span className="notranslate" translate="no" suppressHydrationWarning style={{ fontSize: '13px', fontWeight: 'bold', color: '#f1f5f9' }}>카테고리 메뉴</span>
               <button
@@ -254,7 +251,7 @@ export function GpnrHeader({
               </button>
             </div>
 
-            {/* 4열 그리드 카테고리 버튼들 */}
+            {/* 터치 및 클릭 완벽 대응 카테고리 그리드 */}
             <div className="notranslate" translate="no" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px' }}>
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
@@ -269,6 +266,10 @@ export function GpnrHeader({
                     type="button"
                     className="notranslate"
                     translate="no"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      handleCategoryClick(category.id);
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCategoryClick(category.id);
@@ -284,12 +285,13 @@ export function GpnrHeader({
                       border: isSelected ? '1px solid #a855f7' : '1px solid rgba(30, 41, 59, 0.8)',
                       backgroundColor: isSelected ? '#2d1b4e' : 'rgba(28, 30, 54, 0.8)',
                       color: isSelected ? '#ffffff' : '#cbd5e1',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      touchAction: 'manipulation'
                     }}
                   >
                     {renderCategoryIcon(category.id)}
                     <span 
-                      className="notranslate" 
+                      className="notranslate pointer-events-none" 
                       translate="no" 
                       suppressHydrationWarning
                       style={{ fontSize: '9px', fontWeight: 500, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', display: 'inline-block' }}
@@ -301,7 +303,6 @@ export function GpnrHeader({
               })}
             </div>
 
-            {/* 하단 KYC 및 계정 정보 */}
             <div className="notranslate" translate="no" style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(30, 41, 59, 0.8)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
                 type="button"
