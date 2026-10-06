@@ -130,6 +130,21 @@ export function GpnrHeader({
 
   const activeNeon = NEON_PALETTE[colorIdx];
 
+  // 구글 번역기 DOM 충돌 방지용 비동기 카테고리 클릭 핸들러
+  const handleCategoryClick = (categoryId: string) => {
+    setIsLauncherOpen(false);
+
+    setTimeout(() => {
+      if (categoryId === 'usage') {
+        setIsUsageOpen(true);
+      } else if (categoryId === 'community') {
+        setIsCommunityOpen(true);
+      } else {
+        if (onCategoryChange) onCategoryChange(categoryId);
+      }
+    }, 50);
+  };
+
   return (
     <>
       <header className="sticky top-0 z-[60] w-full bg-[#0d0f1d] border-b border-slate-800/80 backdrop-blur-xl notranslate" translate="no">
@@ -145,7 +160,10 @@ export function GpnrHeader({
                   WebkitTextFillColor: "transparent",
                   filter: `drop-shadow(${activeNeon.glow})`,
                 }}
-                onClick={() => onCategoryChange && onCategoryChange("top-news")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onCategoryChange) onCategoryChange("top-news");
+                }}
               >
                 GPNR
               </span>
@@ -153,17 +171,23 @@ export function GpnrHeader({
 
             <div className="flex items-center gap-2 notranslate" translate="no">
               <button
-                onClick={() => setIsUsageOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsUsageOpen(true);
+                }}
                 type="button"
                 className="px-2 py-1 rounded-lg bg-purple-900/40 text-purple-300 hover:bg-purple-800/50 active:scale-95 transition-all border border-purple-700/50 flex items-center gap-1 text-[11px] font-medium cursor-pointer notranslate"
                 translate="no"
               >
                 <HelpCircle className="w-3.5 h-3.5 text-purple-300" />
-                <span className="notranslate" translate="no">이용방법</span>
+                <span className="notranslate" translate="no" suppressHydrationWarning>이용방법</span>
               </button>
 
               <button
-                onClick={() => setIsLauncherOpen(!isLauncherOpen)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsLauncherOpen(!isLauncherOpen);
+                }}
                 type="button"
                 className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 active:scale-95 transition-all border border-slate-700/50 flex items-center justify-center cursor-pointer notranslate"
                 translate="no"
@@ -194,7 +218,10 @@ export function GpnrHeader({
             justifyContent: 'center',
             padding: '12px'
           }}
-          onClick={() => setIsLauncherOpen(false)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsLauncherOpen(false);
+          }}
         >
           <div
             className="notranslate"
@@ -212,9 +239,12 @@ export function GpnrHeader({
           >
             {/* 상단 헤더 */}
             <div className="notranslate" translate="no" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(30, 41, 59, 0.8)', paddingBottom: '8px', marginBottom: '12px' }}>
-              <span className="notranslate" translate="no" style={{ fontSize: '13px', fontWeight: 'bold', color: '#f1f5f9' }}>카테고리 메뉴</span>
+              <span className="notranslate" translate="no" suppressHydrationWarning style={{ fontSize: '13px', fontWeight: 'bold', color: '#f1f5f9' }}>카테고리 메뉴</span>
               <button
-                onClick={() => setIsLauncherOpen(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsLauncherOpen(false);
+                }}
                 type="button"
                 className="notranslate"
                 translate="no"
@@ -229,7 +259,6 @@ export function GpnrHeader({
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
                 
-                // 💡 [핵심] 매핑표에서 정확한 한글명을 우선 추출하여 번역 오작동 방지
                 const labelText = currentLang === "ko" 
                   ? (CATEGORY_KO_NAMES[category.id] || category.name) 
                   : (category.enName || category.name);
@@ -240,17 +269,9 @@ export function GpnrHeader({
                     type="button"
                     className="notranslate"
                     translate="no"
-                    onClick={() => {
-                      if (category.id === 'usage') {
-                        setIsLauncherOpen(false);
-                        setIsUsageOpen(true);
-                      } else if (category.id === 'community') {
-                        setIsLauncherOpen(false);
-                        setIsCommunityOpen(true);
-                      } else {
-                        if (onCategoryChange) onCategoryChange(category.id);
-                        setIsLauncherOpen(false);
-                      }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCategoryClick(category.id);
                     }}
                     style={{
                       display: 'flex',
@@ -267,8 +288,13 @@ export function GpnrHeader({
                     }}
                   >
                     {renderCategoryIcon(category.id)}
-                    <span className="notranslate" translate="no" style={{ fontSize: '9px', fontWeight: 500, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
-                      {labelText}
+                    <span 
+                      className="notranslate" 
+                      translate="no" 
+                      suppressHydrationWarning
+                      style={{ fontSize: '9px', fontWeight: 500, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', display: 'inline-block' }}
+                    >
+                      {String(labelText)}
                     </span>
                   </button>
                 );
@@ -281,7 +307,8 @@ export function GpnrHeader({
                 type="button"
                 className="notranslate"
                 translate="no"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   localStorage.removeItem("gpnr_kyc_id");
                   alert("KYC ID 정보가 재설정되었습니다.");
                 }}
@@ -297,24 +324,25 @@ export function GpnrHeader({
                   cursor: 'pointer'
                 }}
               >
-                KYC ID 재설정
+                <span className="notranslate" translate="no" suppressHydrationWarning>KYC ID 재설정</span>
               </button>
 
               <div className="notranslate" translate="no" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', padding: '0 4px' }}>
-                <span className="notranslate" translate="no">
-                  연결: <strong className="notranslate" translate="no" style={{ color: '#c084fc' }}>{displayId}</strong>
+                <span className="notranslate" translate="no" suppressHydrationWarning>
+                  연결: <strong className="notranslate" translate="no" suppressHydrationWarning style={{ color: '#c084fc' }}>{displayId}</strong>
                 </span>
                 <button
                   type="button"
                   className="notranslate"
                   translate="no"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (logout) logout();
                     setIsLauncherOpen(false);
                   }}
                   style={{ color: '#fb7185', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                  로그아웃/변경
+                  <span className="notranslate" translate="no" suppressHydrationWarning>로그아웃/변경</span>
                 </button>
               </div>
             </div>
