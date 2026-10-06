@@ -48,7 +48,7 @@ const CATEGORY_KO_NAMES: Record<string, string> = {
   "commerce": "커머스",
   "kyc": "KYC",
   "developer": "개발자",
-  "outlook": "전망",
+  "outlook": "가격 전망",
   "price": "가격",
   "rules": "규정",
   "defi": "디파이",
@@ -128,7 +128,7 @@ export function GpnrHeader({
 
   const activeNeon = NEON_PALETTE[colorIdx];
 
-  // 터치/클릭 즉시 반응 처리
+  // 터치/클릭 즉시 반응 및 모달 제어
   const handleCategoryClick = (categoryId: string) => {
     setIsLauncherOpen(false);
 
@@ -174,11 +174,11 @@ export function GpnrHeader({
                   setIsUsageOpen(true);
                 }}
                 type="button"
-                className="px-2 py-1 rounded-lg bg-purple-900/40 text-purple-300 hover:bg-purple-800/50 active:scale-95 transition-all border border-purple-700/50 flex items-center gap-1 text-[11px] font-medium cursor-pointer notranslate"
+                className="px-2.5 py-1 rounded-lg bg-purple-900/40 text-purple-300 hover:bg-purple-800/50 active:scale-95 transition-all border border-purple-700/50 flex items-center gap-1 text-[11px] font-medium cursor-pointer notranslate"
                 translate="no"
               >
-                <HelpCircle className="w-3.5 h-3.5 text-purple-300" />
-                <span className="notranslate" translate="no" suppressHydrationWarning>이용방법</span>
+                <HelpCircle className="w-3.5 h-3.5 text-purple-300 pointer-events-none" />
+                <span className="notranslate pointer-events-none" translate="no" suppressHydrationWarning>이용방법</span>
               </button>
 
               <button
@@ -190,14 +190,14 @@ export function GpnrHeader({
                 className="p-1.5 rounded-xl bg-slate-800/80 text-slate-200 hover:bg-slate-700 active:scale-95 transition-all border border-slate-700/50 flex items-center justify-center cursor-pointer notranslate"
                 translate="no"
               >
-                <Menu className="w-5 h-5 text-slate-200" />
+                <Menu className="w-5 h-5 text-slate-200 pointer-events-none" />
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* 모달 배경 및 런처 카테고리 메뉴 */}
+      {/* 런처 드롭다운/모달 메인 메뉴 */}
       {isLauncherOpen && (
         <div
           className="notranslate"
@@ -247,11 +247,11 @@ export function GpnrHeader({
                 translate="no"
                 style={{ color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto' }}
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 pointer-events-none" />
               </button>
             </div>
 
-            {/* 터치 및 클릭 완벽 대응 카테고리 그리드 */}
+            {/* NEWS_CATEGORIES 정렬에 기반한 4열 그리드 */}
             <div className="notranslate" translate="no" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px' }}>
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
@@ -325,12 +325,12 @@ export function GpnrHeader({
                   cursor: 'pointer'
                 }}
               >
-                <span className="notranslate" translate="no" suppressHydrationWarning>KYC ID 재설정</span>
+                <span className="notranslate pointer-events-none" translate="no" suppressHydrationWarning>Reset KYC ID</span>
               </button>
 
-              <div className="notranslate" translate="no" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', padding: '0 4px' }}>
+              <div className="notranslate" translate="no" style={{ display: 'flex', itemsCenter: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', padding: '0 4px' }}>
                 <span className="notranslate" translate="no" suppressHydrationWarning>
-                  연결: <strong className="notranslate" translate="no" suppressHydrationWarning style={{ color: '#c084fc' }}>{displayId}</strong>
+                  Connected: <strong className="notranslate" translate="no" suppressHydrationWarning style={{ color: '#c084fc' }}>{displayId}</strong>
                 </span>
                 <button
                   type="button"
@@ -343,7 +343,7 @@ export function GpnrHeader({
                   }}
                   style={{ color: '#fb7185', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                  <span className="notranslate" translate="no" suppressHydrationWarning>로그아웃/변경</span>
+                  <span className="notranslate pointer-events-none" translate="no" suppressHydrationWarning>Change ID</span>
                 </button>
               </div>
             </div>
@@ -351,6 +351,7 @@ export function GpnrHeader({
         </div>
       )}
 
+      {/* 이용방법 팝업 모달 & 커뮤니티 모달 연결 */}
       <UsageModal isOpen={isUsageOpen} onClose={() => setIsUsageOpen(false)} />
       <CommunityModal isOpen={isCommunityOpen} onClose={() => setIsCommunityOpen(false)} />
     </>
