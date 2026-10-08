@@ -255,9 +255,9 @@ export function GpnrHeader({
             <div className="notranslate" translate="no" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px' }}>
               {NEWS_CATEGORIES.map((category) => {
                 const isSelected = currentCategory === category.id;
-                
-                const labelText = currentLang === "ko" 
-                  ? (CATEGORY_KO_NAMES[category.id] || category.name) 
+
+                const labelText = currentLang === "ko"
+                  ? (CATEGORY_KO_NAMES[category.id] || category.name)
                   : (category.enName || category.name);
 
                 return (
@@ -290,9 +290,9 @@ export function GpnrHeader({
                     }}
                   >
                     {renderCategoryIcon(category.id)}
-                    <span 
-                      className="notranslate pointer-events-none" 
-                      translate="no" 
+                    <span
+                      className="notranslate pointer-events-none"
+                      translate="no"
                       suppressHydrationWarning
                       style={{ fontSize: '9px', fontWeight: 500, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', display: 'inline-block' }}
                     >
@@ -328,7 +328,7 @@ export function GpnrHeader({
                 <span className="notranslate pointer-events-none" translate="no" suppressHydrationWarning>Reset KYC ID</span>
               </button>
 
-              <div className="notranslate" translate="no" style={{ display: 'flex', itemsCenter: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', padding: '0 4px' }}>
+              <div className="notranslate" translate="no" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', padding: '0 4px' }}>
                 <span className="notranslate" translate="no" suppressHydrationWarning>
                   Connected: <strong className="notranslate" translate="no" suppressHydrationWarning style={{ color: '#c084fc' }}>{displayId}</strong>
                 </span>
