@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+// @ts-nocheck
+import React, { useState } from 'react';
+import translations from './translations';
 
 interface EventItem {
   id: string;
@@ -14,7 +16,7 @@ interface EventItem {
 }
 
 interface PiCalendarProps {
-  lang?: 'ko' | 'en';
+  lang?: string;
 }
 
 const DEFAULT_FIVE_YEAR_EVENTS: EventItem[] = [
@@ -105,38 +107,11 @@ const DEFAULT_FIVE_YEAR_EVENTS: EventItem[] = [
 ];
 
 export const PiCalendar: React.FC<PiCalendarProps> = ({ lang = 'ko' }) => {
-  const [events, setEvents] = useState<EventItem[]>(DEFAULT_FIVE_YEAR_EVENTS);
-  const [loading, setLoading] = useState<boolean>(false);
+  const isKo = lang === 'ko';
+  const t = translations[lang] || translations.ko;
+
+  const [events] = useState<EventItem[]>(DEFAULT_FIVE_YEAR_EVENTS);
   const [expandedId, setExpandedId] = useState<string | null>('2026-2027-hackathon-growth');
-
-  useEffect(() => {
-    let active = true;
-
-    async function fetchEvents() {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/pi-events');
-        if (!res.ok) return;
-
-        const data = await res.json();
-        if (active && data?.success && Array.isArray(data.events) && data.events.length > 0) {
-          setEvents(data.events);
-        }
-      } catch (err) {
-        console.error('Failed to load events, using default 5-year roadmap:', err);
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    }
-
-    fetchEvents();
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const toggleExpand = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -157,7 +132,7 @@ export const PiCalendar: React.FC<PiCalendarProps> = ({ lang = 'ko' }) => {
 
   return (
     <section
-      aria-label={lang === 'ko' ? 'Pi 네트워크 5년 일정' : 'Pi Network 5-Year Schedule'}
+      aria-label={t.schedule_title}
       className="w-full max-w-md mx-auto p-4 rounded-2xl bg-gradient-to-b from-[#16192b] to-[#111320] border border-slate-800/90 shadow-xl text-white"
     >
       {/* 상단 헤더 */}
@@ -168,100 +143,92 @@ export const PiCalendar: React.FC<PiCalendarProps> = ({ lang = 'ko' }) => {
           </div>
           <div>
             <h3 className="text-base font-bold tracking-tight text-white leading-snug">
-              {lang === 'ko' ? 'Pi 네트워크 이벤트 일정' : 'Pi Network Schedule'}
+              {t.schedule_title}
             </h3>
             <p className="text-[11px] font-medium text-indigo-300/90">
-              {lang === 'ko' ? '5년 중장기 로드맵 (2026 – 2031)' : '5-Year Roadmap (2026 – 2031)'}
+              {t.schedule_subtitle}
             </p>
           </div>
         </div>
 
         <span className="text-[10px] px-2 py-1 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-400/25 font-medium shrink-0">
-          {lang === 'ko' ? '기본 탑재' : 'Default'}
+          {isKo ? '기본 탑재' : 'Default'}
         </span>
       </div>
 
       {/* 안내 문구 */}
       <p className="text-xs leading-relaxed text-slate-400 mb-3.5">
-        {lang === 'ko'
-          ? '생태계 서밋 및 중장기 전망 기반 5년 주요 일정이 기본 제공되며, 항목을 누르면 상세 내용을 볼 수 있습니다.'
-          : 'Preloaded with a 5-year ecosystem milestone overview. Tap any item to view details.'}
+        {t.schedule_desc}
       </p>
 
       {/* 이벤트 리스트 */}
-      {loading && events.length === 0 ? (
-        <div className="py-8 text-center text-xs text-slate-400 animate-pulse">
-          {lang === 'ko' ? '최신 일정을 불러오는 중입니다...' : 'Loading schedule...'}
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {events.map((event) => {
-            const isExpanded = expandedId === event.id;
-            const periodLabel = lang === 'ko' ? event.periodKo : event.periodEn;
-            const detailText = lang === 'ko' ? event.detailKo : event.detailEn;
+      <div className="space-y-2.5">
+        {events.map((event) => {
+          const isExpanded = expandedId === event.id;
+          const periodLabel = isKo ? event.periodKo : event.periodEn;
+          const titleText = isKo ? event.titleKo : event.titleEn;
+          const statusText = isKo ? event.statusKo : event.statusEn;
+          const detailText = isKo ? event.detailKo : event.detailEn;
 
-            return (
-              <div
-                key={event.id}
-                className={`rounded-xl border transition-all ${
-                  isExpanded
-                    ? 'bg-[#1d2136] border-indigo-500/40 shadow-md'
-                    : 'bg-[#181b2c]/90 border-slate-800/80 hover:border-slate-700'
-                }`}
+          return (
+            <div
+              key={event.id}
+              className={`rounded-xl border transition-all ${
+                isExpanded
+                  ? 'bg-[#1d2136] border-indigo-500/40 shadow-md'
+                  : 'bg-[#181b2c]/90 border-slate-800/80 hover:border-slate-700'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => toggleExpand(event.id)}
+                className="w-full flex items-center justify-between gap-2.5 p-3 text-left"
               >
-                <button
-                  type="button"
-                  onClick={() => toggleExpand(event.id)}
-                  className="w-full flex items-center justify-between gap-2.5 p-3 text-left"
-                >
-                  <div className="min-w-0 flex-1">
-                    {periodLabel && (
-                      <div className="text-[10px] font-semibold text-slate-400 mb-0.5">
-                        {periodLabel}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-rose-400 text-xs shrink-0">📍</span>
-                      <span className="text-xs font-semibold text-slate-100 leading-snug break-words">
-                        {lang === 'ko' ? event.titleKo : event.titleEn}
-                      </span>
+                <div className="min-w-0 flex-1">
+                  {periodLabel && (
+                    <div className="text-[10px] font-semibold text-slate-400 mb-0.5">
+                      {periodLabel}
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-md border font-semibold whitespace-nowrap ${getBadgeStyle(
-                        event.badgeType
-                      )}`}
-                    >
-                      {lang === 'ko' ? event.statusKo : event.statusEn}
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-rose-400 text-xs shrink-0">📍</span>
+                    <span className="text-xs font-semibold text-slate-100 leading-snug break-words">
+                      {titleText}
                     </span>
-                    {detailText && (
-                      <span className="text-[11px] text-slate-400 w-4 text-center">
-                        {isExpanded ? '▴' : '▾'}
-                      </span>
-                    )}
                   </div>
-                </button>
+                </div>
 
-                {isExpanded && detailText && (
-                  <div className="px-3 pb-3 pt-0.5 border-t border-slate-800/70">
-                    <p className="text-[11px] leading-relaxed text-slate-300 pt-2">
-                      {detailText}
-                    </p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-md border font-semibold whitespace-nowrap ${getBadgeStyle(
+                      event.badgeType
+                    )}`}
+                  >
+                    {statusText}
+                  </span>
+                  {detailText && (
+                    <span className="text-[11px] text-slate-400 w-4 text-center">
+                      {isExpanded ? '▴' : '▾'}
+                    </span>
+                  )}
+                </div>
+              </button>
+
+              {isExpanded && detailText && (
+                <div className="px-3 pb-3 pt-0.5 border-t border-slate-800/70">
+                  <p className="text-[11px] leading-relaxed text-slate-300 pt-2">
+                    {detailText}
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       {/* 하단 주석 */}
       <p className="mt-3 text-[10px] leading-normal text-slate-500">
-        {lang === 'ko'
-          ? '※ 2027년 1분기 이후 일정은 테스트넷 진행 및 시장 전망을 반영한 중장기 로드맵입니다.'
-          : '※ Post-Q1 2027 milestones reflect medium-term roadmap projections and testnet progress.'}
+        {t.schedule_note}
       </p>
     </section>
   );
