@@ -26,10 +26,12 @@ export interface TranslationKeys {
   node: string;
   mining: string;
   wallet: string;
-  // 📌 일정/달력 관련 필수 키 추가
+  // 📌 일정/달력 관련 필수 키 추가 (5년 중장기 로드맵 2026-2031 반영)
   schedule: string;
   schedule_title: string;
+  schedule_subtitle: string;
   schedule_desc: string;
+  schedule_note: string;
 }
 
 const rawTranslations: Record<string, TranslationKeys> = {
@@ -61,7 +63,9 @@ const rawTranslations: Record<string, TranslationKeys> = {
     wallet: "지갑",
     schedule: "일정",
     schedule_title: "Pi 네트워크 이벤트 일정",
-    schedule_desc: "메인넷 마이그레이션, 해커톤 및 노드 업데이트 일정이 주요 일정으로 잡혔습니다."
+    schedule_subtitle: "5년 중장기 로드맵 (2026 – 2031)",
+    schedule_desc: "생태계 서밋 및 중장기 전망 기반 5년 주요 일정이 기본 제공되며, 항목을 누르면 상세 내용을 볼 수 있습니다.",
+    schedule_note: "※ 2027년 1분기 이후 일정은 테스트넷 진행 및 시장 전망을 반영한 중장기 로드맵입니다."
   },
   en: {
     search: "Search Global Pi news...",
@@ -91,7 +95,9 @@ const rawTranslations: Record<string, TranslationKeys> = {
     wallet: "Wallet",
     schedule: "Schedule",
     schedule_title: "Pi Network Event Schedule",
-    schedule_desc: "Mainnet migration, hackathons, and node updates are scheduled as key events."
+    schedule_subtitle: "5-Year Roadmap (2026 – 2031)",
+    schedule_desc: "Preloaded with a 5-year ecosystem milestone overview. Tap any item to view details.",
+    schedule_note: "※ Post-Q1 2027 milestones reflect medium-term roadmap projections and testnet progress."
   },
   ja: {
     search: "グローバルPiニュースを検索...",
@@ -121,7 +127,9 @@ const rawTranslations: Record<string, TranslationKeys> = {
     wallet: "ウォレット",
     schedule: "スケジュール",
     schedule_title: "Pi ネットワークイベントスケジュール",
-    schedule_desc: "メインネット移行、ハッカソン、ノード更新が主なスケジュールです。"
+    schedule_subtitle: "5年中期ロードマップ (2026 – 2031)",
+    schedule_desc: "エコシステムサミットおよび中期見通しに基づく5年間の主要スケジュールが提供されます。タップで詳細を表示できます。",
+    schedule_note: "※ 2027年第1四半期以降の予定はテストネット進行および市場見通しを反映した中期ロードマップです。"
   },
   zh: {
     search: "搜索全球派新闻...",
@@ -151,7 +159,9 @@ const rawTranslations: Record<string, TranslationKeys> = {
     wallet: "钱包",
     schedule: "日程",
     schedule_title: "Pi 网络活动日程",
-    schedule_desc: "主网迁移、黑客松和节点更新已列为主要日程。"
+    schedule_subtitle: "5年中长期路线图 (2026 – 2031)",
+    schedule_desc: "默认提供基于生态峰会与中长期展望的5年主要日程，点击项目可查看详情。",
+    schedule_note: "※ 2027年第一季度之后的时间表为结合测试网进展与市场展望的中长期路线图。"
   },
   es: {
     search: "Buscar noticias globales de Pi...",
@@ -181,7 +191,9 @@ const rawTranslations: Record<string, TranslationKeys> = {
     wallet: "Billetera",
     schedule: "Calendario",
     schedule_title: "Calendario de Eventos de Pi Network",
-    schedule_desc: "La migración a la red principal, los hackatones y las actualizaciones de nodos están programados."
+    schedule_subtitle: "Hoja de Ruta a 5 Años (2026 – 2031)",
+    schedule_desc: "Incluye hitos clave a 5 años basados en la cumbre del ecosistema y perspectivas a mediano plazo. Toca para ver detalles.",
+    schedule_note: "※ Los hitos posteriores al primer trimestre de 2027 reflejan proyecciones a mediano plazo y el progreso de testnet."
   },
   vi: {
     search: "Tìm kiếm tin tức Pi toàn cầu...",
@@ -211,7 +223,9 @@ const rawTranslations: Record<string, TranslationKeys> = {
     wallet: "Ví",
     schedule: "Lịch trình",
     schedule_title: "Lịch Sự Kiện Pi Network",
-    schedule_desc: "Di chuyển Mainnet, cuộc thi hackathon và cập nhật nút là các sự kiện chính."
+    schedule_subtitle: "Lộ Trình 5 Năm (2026 – 2031)",
+    schedule_desc: "Tích hợp sẵn các mốc lịch trình chính 5 năm theo hội nghị hệ sinh thái và triển vọng. Nhấn vào mục để xem chi tiết.",
+    schedule_note: "※ Các mốc sau quý 1/2027 là lộ trình trung hạn dựa trên tiến độ testnet và triển vọng thị trường."
   }
 };
 
