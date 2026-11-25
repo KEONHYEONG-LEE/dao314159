@@ -1,17 +1,16 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import translations from './translations';
 
 interface EventItem {
   id: string;
-  periodKo?: string;
-  periodEn?: string;
+  periodKo: string;
+  periodEn: string;
   titleKo: string;
   titleEn: string;
   statusKo: string;
   statusEn: string;
-  detailKo?: string;
-  detailEn?: string;
+  detailKo: string;
+  detailEn: string;
   badgeType?: 'purple' | 'blue' | 'green';
 }
 
@@ -108,10 +107,11 @@ const DEFAULT_FIVE_YEAR_EVENTS: EventItem[] = [
 
 export const PiCalendar: React.FC<PiCalendarProps> = ({ lang = 'ko' }) => {
   const isKo = lang === 'ko';
-  const t = translations[lang] || translations.ko;
 
   const [events] = useState<EventItem[]>(DEFAULT_FIVE_YEAR_EVENTS);
-  const [expandedId, setExpandedId] = useState<string | null>('2026-2027-hackathon-growth');
+  const [expandedId, setExpandedId] = useState<string | null>(
+    '2026-2027-hackathon-growth'
+  );
 
   const toggleExpand = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -130,9 +130,22 @@ export const PiCalendar: React.FC<PiCalendarProps> = ({ lang = 'ko' }) => {
     }
   };
 
+  const scheduleTitle = isKo
+    ? 'Pi Network 로드맵 및 일정'
+    : 'Pi Network Roadmap & Schedule';
+  const scheduleSubtitle = isKo
+    ? '2026–2031 주요 마일스톤 및 생태계 일정'
+    : '2026–2031 Key Milestones & Ecosystem Schedule';
+  const scheduleDesc = isKo
+    ? '항목을 누르면 상세 설명을 펼치거나 접을 수 있습니다.'
+    : 'Tap any item to expand or collapse details.';
+  const scheduleNote = isKo
+    ? '※ 공개 일정 및 전망 기반 요약이며 실제 진행 상황에 따라 변경될 수 있습니다.'
+    : '※ Summary based on public schedules and outlooks; subject to change.';
+
   return (
     <section
-      aria-label={t.schedule_title}
+      aria-label={scheduleTitle}
       className="w-full max-w-md mx-auto p-4 rounded-2xl bg-gradient-to-b from-[#16192b] to-[#111320] border border-slate-800/90 shadow-xl text-white"
     >
       {/* 상단 헤더 */}
@@ -143,10 +156,10 @@ export const PiCalendar: React.FC<PiCalendarProps> = ({ lang = 'ko' }) => {
           </div>
           <div>
             <h3 className="text-base font-bold tracking-tight text-white leading-snug">
-              {t.schedule_title}
+              {scheduleTitle}
             </h3>
             <p className="text-[11px] font-medium text-indigo-300/90">
-              {t.schedule_subtitle}
+              {scheduleSubtitle}
             </p>
           </div>
         </div>
@@ -158,7 +171,7 @@ export const PiCalendar: React.FC<PiCalendarProps> = ({ lang = 'ko' }) => {
 
       {/* 안내 문구 */}
       <p className="text-xs leading-relaxed text-slate-400 mb-3.5">
-        {t.schedule_desc}
+        {scheduleDesc}
       </p>
 
       {/* 이벤트 리스트 */}
@@ -228,7 +241,7 @@ export const PiCalendar: React.FC<PiCalendarProps> = ({ lang = 'ko' }) => {
 
       {/* 하단 주석 */}
       <p className="mt-3 text-[10px] leading-normal text-slate-500">
-        {t.schedule_note}
+        {scheduleNote}
       </p>
     </section>
   );
